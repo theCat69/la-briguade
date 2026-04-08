@@ -1,0 +1,43 @@
+{
+  "name": "la-briguade",
+  "version": "0.1.0",
+  "description": "Opencode plugin — registers agents, skills, commands, and hooks at runtime",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "la-briguade": "bin/la-briguade.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "files": [
+    "dist",
+    "content",
+    "bin"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "jsonc-parser": "^3.3.1",
+    "yaml": "^2.7.1"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "^1.4.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.4.0",
+    "@opencode-ai/sdk": "^1.4.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.1"
+  },
+  "license": "MIT"
+}
