@@ -1,0 +1,7 @@
+.git
+.idea
+.ai
+*opencode-notifier-state.json
+.config/opencode/opencode-notifier-state.json
+node_modules
+
