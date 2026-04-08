@@ -1,11 +1,15 @@
-import { readdirSync, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Config } from "../types/plugin.js";
+import { readDirSafe } from "../utils/read-dir.js";
 
 /**
  * Extended config shape that includes the `skills` field available in the
  * opencode v2 runtime but not yet typed in the v1 SDK's Config definition.
- * The runtime accepts `skills.paths` to register additional skill directories.
+ *
+ * Cast required because @opencode-ai/sdk ^1.4.0 does not expose the
+ * `skills` property on Config — the runtime accepts it, but the type
+ * lags behind. Remove this cast once the SDK ships the updated type.
  */
 interface ConfigWithSkills extends Config {
   skills?: {
@@ -27,15 +31,8 @@ interface ConfigWithSkills extends Config {
 export function registerSkills(config: Config, contentDir: string): void {
   const skillsDir = resolve(contentDir, "skills");
 
-  let entries: string[];
-  try {
-    entries = readdirSync(skillsDir);
-  } catch {
-    console.warn(
-      `[la-briguade] Could not read skills directory: ${skillsDir}`,
-    );
-    return;
-  }
+  const entries = readDirSafe(skillsDir, "skills");
+  if (entries === undefined) return;
 
   // Verify at least one skill subdirectory exists
   const hasSkillDirs = entries.some((entry) => {

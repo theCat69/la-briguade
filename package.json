@@ -27,7 +27,7 @@
   "dependencies": {
     "commander": "^13.1.0",
     "jsonc-parser": "^3.3.1",
-    "yaml": "^2.7.1"
+    "yaml": "^2.8.3"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": "^1.4.0"

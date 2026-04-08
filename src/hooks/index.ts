@@ -1,5 +1,10 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
 
+/**
+ * Invariant: HEAD_SIZE + TAIL_SIZE must be ≤ TRUNCATION_THRESHOLD.
+ * If the sum exceeds the threshold, the truncated output would be
+ * larger than the original — defeating the purpose of truncation.
+ */
 const TRUNCATION_THRESHOLD = 50_000;
 const HEAD_SIZE = 25_000;
 const TAIL_SIZE = 10_000;
@@ -70,17 +75,24 @@ function appendEditErrorHint(
 function detectEmptyResponse(event: { type: string; properties?: unknown }): void {
   if (event.type !== "message.updated") return;
 
-  const properties = event.properties as
-    | { info?: { role?: string; time?: { completed?: number }; tokens?: { output?: number } } }
-    | undefined;
+  const props = event.properties;
+  if (props == null || typeof props !== "object") return;
 
-  const info = properties?.info;
-  if (info === undefined) return;
-  if (info.role !== "assistant") return;
-  if (info.time?.completed === undefined) return;
+  const info = "info" in props ? props.info : undefined;
+  if (info == null || typeof info !== "object") return;
 
-  // Message is completed — check if output is empty
-  if (info.tokens?.output === 0) {
+  const role = "role" in info ? info.role : undefined;
+  if (role !== "assistant") return;
+
+  const time = "time" in info ? info.time : undefined;
+  if (time == null || typeof time !== "object") return;
+  if (!("completed" in time) || time.completed === undefined) return;
+
+  const tokens = "tokens" in info ? info.tokens : undefined;
+  if (tokens == null || typeof tokens !== "object") return;
+
+  const output = "output" in tokens ? tokens.output : undefined;
+  if (output === 0) {
     console.warn(
       "[la-briguade] Empty assistant response detected — the model produced no output tokens.",
     );

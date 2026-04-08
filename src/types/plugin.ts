@@ -15,8 +15,4 @@ export type HooksResult = Awaited<ReturnType<Plugin>>;
  * The Config object received by the `config` hook.
  * Extracted from the first parameter of `HooksResult["config"]`.
  */
-export type Config = HooksResult["config"] extends
-  | ((input: infer C) => unknown)
-  | undefined
-  ? C
-  : never;
+export type Config = Parameters<NonNullable<HooksResult["config"]>>[0];

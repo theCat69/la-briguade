@@ -2,9 +2,9 @@ import { parse as parseYaml } from "yaml";
 
 const FRONTMATTER_FENCE = "---";
 
-interface ParsedFrontmatter<T> {
+interface ParsedFrontmatter {
   /** Parsed YAML attributes (empty object if no frontmatter found) */
-  attributes: T;
+  attributes: Record<string, unknown>;
   /** Markdown body after the frontmatter block */
   body: string;
 }
@@ -26,19 +26,19 @@ interface ParsedFrontmatter<T> {
  * @param content - Raw markdown file content (string)
  * @returns Parsed frontmatter attributes and the remaining body
  */
-export function parseFrontmatter<T = Record<string, unknown>>(
+export function parseFrontmatter(
   content: string,
-): ParsedFrontmatter<T> {
+): ParsedFrontmatter {
   const trimmed = content.trimStart();
 
   if (!trimmed.startsWith(FRONTMATTER_FENCE)) {
-    return { attributes: {} as T, body: content };
+    return { attributes: {}, body: content };
   }
 
   // Find the closing fence (skip the opening "---" line)
   const afterOpening = trimmed.indexOf("\n");
   if (afterOpening === -1) {
-    return { attributes: {} as T, body: content };
+    return { attributes: {}, body: content };
   }
 
   const closingIndex = trimmed.indexOf(
@@ -46,7 +46,7 @@ export function parseFrontmatter<T = Record<string, unknown>>(
     afterOpening + 1,
   );
   if (closingIndex === -1) {
-    return { attributes: {} as T, body: content };
+    return { attributes: {}, body: content };
   }
 
   const yamlBlock = trimmed.slice(afterOpening + 1, closingIndex);
@@ -57,10 +57,18 @@ export function parseFrontmatter<T = Record<string, unknown>>(
     ? trimmed.slice(bodyStart + 1)
     : trimmed.slice(bodyStart);
 
-  const attributes = parseYaml(yamlBlock) as T;
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(yamlBlock);
+  } catch (err) {
+    console.warn("[la-briguade] Failed to parse YAML frontmatter:", err);
+    return { attributes: {}, body: "" };
+  }
 
-  return {
-    attributes: attributes ?? ({} as T),
-    body,
-  };
+  const attributes =
+    parsed != null && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+
+  return { attributes, body };
 }

@@ -1,18 +1,8 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve, basename } from "node:path";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
-
-/**
- * Shape of the YAML frontmatter in command .md files.
- * Only `description` is common; `agent`, `model`, and `subtask` are optional overrides.
- */
-interface CommandFrontmatter {
-  description?: string;
-  agent?: string;
-  model?: string;
-  subtask?: boolean;
-}
+import { readDirSafe } from "../utils/read-dir.js";
 
 /**
  * Derive the command registration key from a filename.
@@ -35,15 +25,8 @@ function commandNameFromFilename(filename: string): string {
 export function registerCommands(config: Config, contentDir: string): void {
   const commandsDir = resolve(contentDir, "commands");
 
-  let entries: string[];
-  try {
-    entries = readdirSync(commandsDir);
-  } catch {
-    console.warn(
-      `[la-briguade] Could not read commands directory: ${commandsDir}`,
-    );
-    return;
-  }
+  const entries = readDirSafe(commandsDir, "commands");
+  if (entries === undefined) return;
 
   const mdFiles = entries.filter((f) => f.endsWith(".md"));
   if (mdFiles.length === 0) return;
@@ -64,7 +47,7 @@ export function registerCommands(config: Config, contentDir: string): void {
       continue;
     }
 
-    const { attributes, body } = parseFrontmatter<CommandFrontmatter>(raw);
+    const { attributes, body } = parseFrontmatter(raw);
     const commandName = commandNameFromFilename(file);
 
     const commandConfig: {
@@ -77,17 +60,24 @@ export function registerCommands(config: Config, contentDir: string): void {
       template: body,
     };
 
-    if (attributes.description !== undefined) {
-      commandConfig.description = attributes.description;
+    const description = attributes["description"];
+    if (typeof description === "string") {
+      commandConfig.description = description;
     }
-    if (attributes.agent !== undefined) {
-      commandConfig.agent = attributes.agent;
+
+    const agent = attributes["agent"];
+    if (typeof agent === "string") {
+      commandConfig.agent = agent;
     }
-    if (attributes.model !== undefined) {
-      commandConfig.model = attributes.model;
+
+    const model = attributes["model"];
+    if (typeof model === "string") {
+      commandConfig.model = model;
     }
-    if (attributes.subtask !== undefined) {
-      commandConfig.subtask = attributes.subtask;
+
+    const subtask = attributes["subtask"];
+    if (typeof subtask === "boolean") {
+      commandConfig.subtask = subtask;
     }
 
     parsedCommands[commandName] = commandConfig;

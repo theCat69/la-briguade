@@ -1,25 +1,20 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve, basename } from "node:path";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { readDirSafe } from "../utils/read-dir.js";
 
-/**
- * Shape of the YAML frontmatter in agent .md files.
- * All fields are optional — a file with only a body is a valid agent definition.
- */
-interface AgentFrontmatter {
-  description?: string;
-  mode?: "subagent" | "primary" | "all";
-  color?: string;
-  model?: string;
-  temperature?: number;
-  top_p?: number;
-  disable?: boolean;
-  maxSteps?: number;
-  permission?: Record<string, unknown>;
-  tools?: Record<string, boolean>;
-  [key: string]: unknown;
-}
+const ALLOWED_AGENT_KEYS = [
+  "description",
+  "mode",
+  "color",
+  "model",
+  "temperature",
+  "top_p",
+  "maxSteps",
+  "permission",
+  "disable",
+] as const;
 
 /**
  * Derive the agent registration key from a filename.
@@ -44,15 +39,8 @@ function agentNameFromFilename(filename: string): string {
 export function registerAgents(config: Config, contentDir: string): void {
   const agentsDir = resolve(contentDir, "agents");
 
-  let entries: string[];
-  try {
-    entries = readdirSync(agentsDir);
-  } catch {
-    console.warn(
-      `[la-briguade] Could not read agents directory: ${agentsDir}`,
-    );
-    return;
-  }
+  const entries = readDirSafe(agentsDir, "agents");
+  if (entries === undefined) return;
 
   const mdFiles = entries.filter((f) => f.endsWith(".md"));
   if (mdFiles.length === 0) return;
@@ -70,18 +58,17 @@ export function registerAgents(config: Config, contentDir: string): void {
       continue;
     }
 
-    const { attributes, body } = parseFrontmatter<AgentFrontmatter>(raw);
+    const { attributes, body } = parseFrontmatter(raw);
     const agentName = agentNameFromFilename(file);
 
     const agentConfig: Record<string, unknown> = {
       prompt: body,
     };
 
-    // Map all frontmatter keys to AgentConfig properties.
-    // Known keys (model, mode, permission, etc.) become first-class fields.
-    // Unknown keys pass through via AgentConfig's index signature.
-    for (const key of Object.keys(attributes)) {
-      agentConfig[key] = attributes[key];
+    for (const key of ALLOWED_AGENT_KEYS) {
+      if (key in attributes) {
+        agentConfig[key] = attributes[key];
+      }
     }
 
     parsedAgents[agentName] = agentConfig;
