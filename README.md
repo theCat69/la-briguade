@@ -88,6 +88,62 @@ la-briguade uninstall   # Remove plugin from opencode config
 la-briguade doctor      # Run diagnostic checks
 ```
 
+## Configuration
+
+la-briguade supports a layered config system that lets you override agent settings without modifying the package.
+
+### Config file locations
+
+| Scope | Path |
+|---|---|
+| Global | `~/la_briguade/la-briguade.json` (or `.jsonc`) |
+| Project | `<project_root>/la-briguade.json` (or `.jsonc`) |
+
+Both files are optional. When both are present, project values take precedence over global values.
+
+### Merge order (lowest to highest priority)
+
+1. Internal plugin defaults (agent frontmatter in `content/agents/*.md`)
+2. Global user config (`~/la_briguade/la-briguade.json`)
+3. Project-level config (`<project_root>/la-briguade.json`)
+
+### Supported fields
+
+A top-level `model` field applies to all agents unless overridden per-agent. Per-agent overrides live under the `agents` key:
+
+| Field | Type | Description |
+|---|---|---|
+| `model` | `string` (max 200 chars) | Model identifier, e.g. `"anthropic/claude-opus-4"` |
+| `systemPromptSuffix` | `string` (max 8000 chars) | Appended to the agent's internal system prompt with `\n\n` |
+| `temperature` | `number` (0–2) | Sampling temperature |
+| `topP` | `number` (0–1) | Nucleus sampling probability |
+| `topK` | `integer` (≥ 0) | Top-K sampling |
+| `maxTokens` | `integer` (≥ 1) | Maximum output tokens |
+| `reasoningEffort` | `"low" \| "medium" \| "high"` | Reasoning effort hint |
+| `permission` | `Record<string, string \| boolean \| number>` | Permission overrides merged on top of agent defaults |
+| `tools` | `Record<string, boolean>` | Enable or disable specific tools |
+
+`systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
+
+### Example
+
+```jsonc
+{
+  "$schema": "https://la-briguade.dev/config.json",
+  "model": "openai/gpt-4o",
+  "agents": {
+    "coder": {
+      "model": "anthropic/claude-opus-4",
+      "systemPromptSuffix": "Always use PNPM instead of NPM.",
+      "temperature": 0.2
+    },
+    "reviewer": {
+      "systemPromptSuffix": "Focus on security vulnerabilities."
+    }
+  }
+}
+```
+
 ## Adding Custom Content
 
 All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own by placing files in the `content/` directory of the package (or by forking).

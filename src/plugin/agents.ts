@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve, basename } from "node:path";
+
+import type { AgentConfig } from "@opencode-ai/sdk";
+
+import { resolveAgentConfig } from "../config/merge.js";
+import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { readDirSafe } from "../utils/read-dir.js";
@@ -34,9 +39,13 @@ function agentNameFromFilename(filename: string): string {
 /**
  * Register all agent definitions from content/agents/ into the config.
  * Reads .md files with YAML frontmatter, parses them into AgentConfig objects,
- * and merges them into `config.agent`.
+ * applies user overrides from the loaded config, and merges them into `config.agent`.
  */
-export function registerAgents(config: Config, contentDir: string): void {
+export function registerAgents(
+  config: Config,
+  contentDir: string,
+  userConfig?: LaBriguadeConfig,
+): void {
   const agentsDir = resolve(contentDir, "agents");
 
   const entries = readDirSafe(agentsDir, "agents");
@@ -71,7 +80,19 @@ export function registerAgents(config: Config, contentDir: string): void {
       }
     }
 
-    parsedAgents[agentName] = agentConfig;
+    if (userConfig !== undefined) {
+      // AgentConfig has an index signature [key: string]: unknown, so the
+      // Record<string, unknown> built from frontmatter is structurally compatible.
+      // The cast is safe: we only add known AgentConfig fields above.
+      const resolved = resolveAgentConfig(
+        agentName,
+        agentConfig as AgentConfig,
+        userConfig,
+      );
+      parsedAgents[agentName] = resolved as Record<string, unknown>;
+    } else {
+      parsedAgents[agentName] = agentConfig;
+    }
   }
 
   config.agent = { ...config.agent, ...parsedAgents };

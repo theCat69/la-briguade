@@ -1,0 +1,119 @@
+import type { AgentConfig } from "@opencode-ai/sdk";
+
+import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
+
+/**
+ * Apply an AgentOverride on top of a base AgentConfig.
+ *
+ * Returns a new object — the base is never mutated.
+ * systemPromptSuffix is appended to base.prompt (the SDK field for system prompt)
+ * with a "\n\n" separator. If the base has no prompt, the suffix becomes the prompt.
+ */
+export function applyAgentOverride(base: AgentConfig, override: AgentOverride): AgentConfig {
+  // Build the merged prompt from base + suffix
+  let prompt: string | undefined = base.prompt;
+  if (override.systemPromptSuffix !== undefined) {
+    prompt =
+      prompt !== undefined && prompt !== ""
+        ? `${prompt}\n\n${override.systemPromptSuffix}`
+        : override.systemPromptSuffix;
+  }
+
+  // Start with a shallow copy of the base to avoid mutation
+  const merged: AgentConfig = { ...base };
+
+  // Apply optional overrides — only set when a value is present to satisfy
+  // exactOptionalPropertyTypes (present field must not be undefined)
+  if (override.model !== undefined) {
+    merged["model"] = override.model;
+  }
+
+  if (override.temperature !== undefined) {
+    merged["temperature"] = override.temperature;
+  }
+
+  // SDK uses top_p (snake_case) — map from override's camelCase topP
+  if (override.topP !== undefined) {
+    merged["top_p"] = override.topP;
+  }
+
+  // Store fields accepted by AgentConfig's index signature [key: string]: unknown
+  if (override.topK !== undefined) {
+    merged["topK"] = override.topK;
+  }
+  if (override.reasoningEffort !== undefined) {
+    merged["reasoningEffort"] = override.reasoningEffort;
+  }
+  if (override.maxTokens !== undefined) {
+    merged["maxTokens"] = override.maxTokens;
+  }
+
+  // Update prompt (may be undefined if neither base nor override has content)
+  if (prompt !== undefined) {
+    merged["prompt"] = prompt;
+  } else {
+    // If base had no prompt and no suffix — leave as-is (already copied from spread)
+    delete merged["prompt"];
+  }
+
+  // Deep-merge permission: base permission spread then override permission spread.
+  // Cast via unknown is intentional: AgentConfig.permission has a specific SDK type,
+  // but override.permission is Record<string, unknown>. The merged result satisfies
+  // the index signature and real permission fields are subset of Record<string, unknown>.
+  // We use the index signature path (string key) to bypass exactOptionalPropertyTypes
+  // strictness when assigning back the merged permission object.
+  if (override.permission !== undefined) {
+    const mergedPermission = {
+      ...(base.permission as Record<string, unknown> | undefined),
+      ...override.permission,
+    };
+    // Using the index signature to assign avoids exactOptionalPropertyTypes conflict:
+    // AgentConfig has [key: string]: unknown which accepts any value.
+    (merged as Record<string, unknown>)["permission"] = mergedPermission;
+  }
+
+  // Merge tools: base tools spread then override tools spread
+  if (override.tools !== undefined) {
+    merged["tools"] = { ...base.tools, ...override.tools };
+  }
+
+  return merged;
+}
+
+/**
+ * Resolve the final AgentConfig for a given agent by applying user overrides
+ * on top of the base (frontmatter-derived) config.
+ *
+ * Merge order (lowest to highest priority):
+ *   1. base (frontmatter defaults)
+ *   2. global model default (top-level userConfig.model, only if no per-agent model)
+ *   3. per-agent override (userConfig.agents[agentId])
+ */
+export function resolveAgentConfig(
+  agentId: string,
+  base: AgentConfig,
+  userConfig: LaBriguadeConfig,
+): AgentConfig {
+  const agentOverride = userConfig.agents?.[agentId];
+
+  // Apply global model default only when:
+  //   - a top-level model is configured
+  //   - the per-agent override does NOT specify its own model
+  const globalModel = userConfig.model;
+  const globalModelApplies =
+    globalModel !== undefined &&
+    (agentOverride === undefined || agentOverride.model === undefined);
+
+  let current: AgentConfig = base;
+
+  if (globalModelApplies && globalModel !== undefined) {
+    current = { ...current };
+    current["model"] = globalModel;
+  }
+
+  if (agentOverride !== undefined) {
+    current = applyAgentOverride(current, agentOverride);
+  }
+
+  return current;
+}

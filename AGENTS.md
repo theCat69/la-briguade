@@ -46,6 +46,11 @@ src/
     agents.ts        ← Reads content/agents/*.md, registers via input.agent
     commands.ts      ← Reads content/commands/*.md, registers via input.command
     skills.ts        ← Discovers content/skills/ subdirs, registers paths
+  config/
+    index.ts         ← resolveUserConfig() — loads + merges global and project configs
+    loader.ts        ← loadConfig() — JSONC file loading with Zod validation
+    merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
+    schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema
   hooks/
     index.ts         ← createHooks() — output truncation, edit error hints, empty response detection
   cli/

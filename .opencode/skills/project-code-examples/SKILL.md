@@ -12,6 +12,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `hook-creation.md` — Creating tool.execute.after and event hooks with output truncation logic
 - `cli-command.md` — Setting up a Commander.js CLI command with JSONC config editing
 - `safe-dir-read.md` — Defensive directory reading with try-catch and undefined fallback
+- `zod-config-schema.md` — Zod v3 schema definition with nested agent overrides and inferred TypeScript types
 
 ## Location
 
