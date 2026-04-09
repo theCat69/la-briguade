@@ -1,6 +1,7 @@
 ---
 description: "Fetches external technical context with caching"
 mode: subagent 
+model: "github-copilot/grok-code-fast-1"
 permission:
   "*": "deny"
   "context7_*": "allow"

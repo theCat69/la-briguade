@@ -1,6 +1,7 @@
 ---
 description: "Extracts relevant context from the local repository"
 mode: subagent 
+model: "github-copilot/grok-code-fast-1"
 permission:
   "*": "deny"
   read: "allow"
