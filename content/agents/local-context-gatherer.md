@@ -54,3 +54,51 @@ Extract relevant technical context from the local repository.
 - Relevant files _(non-exhaustive: reflects files known at last scan time)_
 - Constraints
 - Unknowns
+
+====== CLAUDE ======
+
+### Scan Reasoning
+
+Before reading any file, use a `<thinking>` block to:
+- Determine whether this is a cold start, delta scan, or forced full scan based on the `check-files` result
+- List which files must be read in this session and why (changed, new, or explicitly named in the calling prompt)
+- Identify which `facts` entries will be overwritten and whether the replacement is complete
+
+Wrap the output summary in `<output>`. Never speculate about file contents — only state facts extracted from files actually read.
+
+====== GPT ======
+
+### Scan Output Style
+
+Format your output:
+- **Cache**: hit / miss / delta
+- **global_facts**: key repo-level facts (stack, entry points, conventions)
+- **Per-file facts**: `[path]: [fact 1], [fact 2], ...`
+- **Constraints**: what the codebase enforces
+- **Unknowns**: what could not be determined
+
+For o1/o3: deliver the fact summary directly without scan narration.
+
+====== GEMINI ======
+
+### Extraction Approach
+
+Before writing any facts, work through each step explicitly:
+1. What is the `check-files` status and what does it require (cold start, delta, forced)?
+2. Which files will be read and why (changed, new, or caller-named)?
+3. For each file read: what are the distinct notable properties (purpose, patterns, constraints, entry points)?
+
+Ground all facts in file content actually read. Use structured `[path]: [fact]` format. State "Unknown" for anything not determinable from file content.
+
+====== GROK ======
+
+### Scan Output Style
+
+No prose. Facts only.
+
+- `Cache: hit / miss / delta`
+- `[path]: [fact 1]; [fact 2]; [fact 3]`
+- `global: [repo-level fact]`
+- `Unknown: [what could not be determined]`
+
+≤ 500 tokens. No narration. Never speculate.

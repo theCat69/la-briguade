@@ -138,6 +138,7 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `cli-command.md` — Commander.js command with JSONC editing
 - `safe-dir-read.md` — Defensive directory reading with warning
 - `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
+- `model-sections.md` — Parsing and injecting model-family prompt sections from agent `.md` files
 
 ## Zod v4 Notes
 

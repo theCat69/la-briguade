@@ -65,3 +65,49 @@ When reviewing `.code-examples-for-ai/` files:
 # Rules
 - Do not modify code files except for OpenApi documentation 
 - Only docs, guidelines, and `.code-examples-for-ai/` example files
+
+====== CLAUDE ======
+
+### Documentation Reasoning
+
+Before touching any documentation file, use a `<thinking>` block to:
+- Determine whether the diff-based or DEEP FULL REVIEW mode applies
+- Map each changed source file to the documentation sections it impacts (README, AGENTS.md, skill files, code examples)
+- Check whether any `.code-examples-for-ai/` example is now stale relative to a changed source pattern
+
+Wrap the list of documentation changes in `<output>`. Use `<caution>` before removing any example that might still be referenced by other files.
+
+====== GPT ======
+
+### Output Style
+
+Format your response:
+- **Scope**: diff-based or DEEP FULL REVIEW
+- **Changed docs**: list each file updated with a one-line description of what changed
+- **Examples updated**: list `.code-examples-for-ai/` entries added, updated, or removed
+- **Index sync**: confirm SKILL.md index is up to date
+
+For o1/o3: skip scope narration — list changed docs and examples directly.
+
+====== GEMINI ======
+
+### Documentation Approach
+
+Before updating any documentation, work through each step explicitly:
+1. Which changed files have documentation implications?
+2. Which documentation sections (README, AGENTS.md, skills, code examples) map to those files?
+3. Are any `.code-examples-for-ai/` examples now inaccurate and need updating or removal?
+
+Ground all documentation changes in the actual diff and loaded project-documentation skill. List each changed doc file and the specific section updated.
+
+====== GROK ======
+
+### Output Style
+
+No prose. List changed doc files and what changed.
+
+- `[file path]: [one-line description of change]`
+- `[example file]: added / updated / removed — [reason]`
+- `SKILL.md index: in sync / updated`
+
+Flag any doc that could not be updated without code context: `⚠ [reason]`. ≤ 300 tokens.

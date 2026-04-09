@@ -70,3 +70,48 @@ After determining scope, gather context using the following rules:
 - Dependabot alerts (if project is on GitHub)
 - Severity: Critical / High / Medium / Low
 - Mitigations
+
+====== CLAUDE ======
+
+### Security Review Reasoning
+
+Before writing any finding, use a `<thinking>` block to:
+- Determine whether diff-based or DEEP FULL REVIEW mode applies
+- Map each potential vulnerability to a specific OWASP category or CVE from the advisory lookup
+- Assess whether each finding is genuinely exploitable in this codebase's specific context — discard findings that require an attack surface that does not exist here
+
+Wrap the security findings list in `<output>`. Use `<caution>` before any finding that could cause a production incident if unaddressed.
+
+====== GPT ======
+
+### Security Review Format
+
+Format your output:
+- **Vulnerabilities**: numbered — each with severity, file/line, description, OWASP category or CVE
+- **CVEs found**: package name, version, CVE ID, severity
+- **Dependabot alerts**: (if applicable) brief summary
+- **Mitigations**: one per finding, minimal viable fix
+
+For o1/o3: skip preamble — deliver findings and mitigations directly.
+
+====== GEMINI ======
+
+### Security Analysis Approach
+
+Before writing findings, work through each scope item explicitly:
+1. What attack surface does this change expose (input paths, auth boundaries, dependency surface)?
+2. For each dependency: what version is in use, and is there a known advisory?
+3. Is each vulnerability genuinely exploitable given this project's runtime and usage patterns?
+
+Ground every finding in the loaded project-security skill or a named OWASP/CVE reference. State severity before each finding. Use numbered lists.
+
+====== GROK ======
+
+### Security Review Style
+
+No prose. Findings as bullets, severity first.
+
+- `[Critical/High/Medium/Low] [CVE or OWASP] — [file/package] — [what is wrong]`
+- `Mitigation: [one line]`
+
+If no findings: `No vulnerabilities found in scope.` No narration. ≤ 300 tokens.

@@ -65,3 +65,48 @@ After determining scope, gather context using the following rules:
 - Issues
 - Improvements
 - Style violations
+
+====== CLAUDE ======
+
+### Review Reasoning
+
+Before writing any finding, use a `<thinking>` block to:
+- Decide whether diff-based or DEEP FULL REVIEW mode applies for this review scope
+- Map each issue to a specific named principle from the loaded project-coding or general-coding skill
+- Distinguish genuine production risks from stylistic preferences — only flag what would be unacceptable in a live system
+
+Wrap the final findings list in `<output>`. Use `<caution>` before any finding that would block merging.
+
+====== GPT ======
+
+### Review Format
+
+Format your output:
+- **Issues**: numbered list — each with file, line (if known), description, named principle violated
+- **Improvements**: numbered list — enhancements, not blockers
+- **Style violations**: bullet list — quick fixes
+
+For o1/o3: skip review preamble — deliver issues, improvements, and style findings directly.
+
+====== GEMINI ======
+
+### Review Approach
+
+Before writing findings, work through each changed file explicitly:
+1. Does this code handle all error cases and edge cases correctly?
+2. Does it follow the naming, module, and pattern conventions from the loaded skills?
+3. Would any part of this be unsafe, fragile, or unmaintainable in a live production system?
+
+Ground every finding in a named principle or project convention. Use numbered lists for issues and improvements. State severity (blocker / improvement / style) before each finding.
+
+====== GROK ======
+
+### Review Style
+
+No prose. Three sections, each as bullets.
+
+- `Issue [N]: [file] — [problem] [principle]`
+- `Improvement [N]: [file] — [suggestion]`
+- `Style: [file] — [violation]`
+
+Blocker issues get `⚠` prefix. ≤ 300 tokens total. No narration.

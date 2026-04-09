@@ -4,7 +4,7 @@
 
 **la-briguade** is an [opencode](https://opencode.ai) plugin that registers a production-grade multi-agent AI engineering pipeline at runtime. It loads agent definitions, skills, and slash commands from Markdown files in the `content/` directory and registers them programmatically via the `@opencode-ai/plugin` API. It also installs output-management hooks (truncation, edit-error recovery, empty-response detection) to keep the AI pipeline reliable.
 
-No files are copied to the host system — everything is registered in-memory at opencode startup.
+No files are copied to the host system — everything is registered in-memory at opencode startup. It also installs output-management hooks: truncation, edit-error recovery, empty-response detection, and model-family prompt section injection.
 
 ---
 
@@ -65,7 +65,7 @@ src/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 
 content/
-  agents/            ← Agent .md files (YAML frontmatter + system prompt body)
+  agents/            ← Agent .md files (YAML frontmatter + system prompt body + optional ====== FAMILY ====== sections)
   skills/            ← Skill directories, each with SKILL.md
   commands/          ← Slash command .md files
 
