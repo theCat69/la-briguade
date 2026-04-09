@@ -28,7 +28,7 @@ export const AgentOverrideSchema = z.object({
   maxTokens: z.number().int().min(1).optional(),
   /** Permission overrides shallow-merged on top of the agent's internal permissions. */
   permission: z
-    .record(z.union([z.string(), z.boolean(), z.number()]))
+    .record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
     .refine(
       (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
       { message: "permission keys must not contain reserved prototype keywords" },
@@ -36,7 +36,7 @@ export const AgentOverrideSchema = z.object({
     .optional(),
   /** Tool enable/disable flags shallow-merged on top of agent defaults. */
   tools: z
-    .record(z.boolean())
+    .record(z.string(), z.boolean())
     .refine(
       (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
       { message: "tools keys must not contain reserved prototype keywords" },
@@ -56,10 +56,18 @@ export const LaBriguadeConfigSchema = z.object({
   /** Default model applied to all agents unless a per-agent model is specified. */
   model: z.string().max(200).optional(),
   /** Per-agent override map keyed by agent identifier (e.g. `"coder"`). */
-  agents: z.record(AgentOverrideSchema).optional(),
+  agents: z.record(z.string(), AgentOverrideSchema).optional(),
 });
 
 /** TypeScript type inferred from {@link AgentOverrideSchema}. */
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 /** TypeScript type inferred from {@link LaBriguadeConfigSchema}. */
 export type LaBriguadeConfig = z.infer<typeof LaBriguadeConfigSchema>;
+
+/**
+ * JSON Schema representation of {@link LaBriguadeConfigSchema}.
+ *
+ * Generated via Zod v4's native `z.toJSONSchema()` — use for IDE validation
+ * (e.g. `$schema` pointer in `la-briguade.json`) and documentation tooling.
+ */
+export const configJsonSchema = z.toJSONSchema(LaBriguadeConfigSchema);

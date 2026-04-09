@@ -1,13 +1,15 @@
-import { Command } from "commander";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+
+import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(
-  readFileSync(join(__dirname, "../../package.json"), "utf-8"),
-) as { version: string };
+const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-8")) as Record<
+  string,
+  unknown
+>;
 
 const PLUGIN_NAME = "la-briguade";
 
@@ -76,7 +78,7 @@ const program = new Command();
 program
   .name("la-briguade")
   .description("CLI for the la-briguade opencode plugin")
-  .version(pkg.version);
+  .version(String(pkg["version"] ?? "0.0.0"));
 
 // ---- install ----
 program

@@ -91,6 +91,43 @@ Hooks are registered via `createHooks(ctx)` returning `Partial<HooksResult>`. Th
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.
 
+## Dependency Guidelines
+
+Declare all runtime libraries in `dependencies`; keep `devDependencies` build/test-only. Before adding a new dependency, verify it ships native ESM or a `"type": "module"`-compatible dual build.
+
+### Production dependencies
+
+| Package | Pinned range | Latest stable | Status | opencode bundled? | Notes |
+|---|---|---|---|---|---|
+| `commander` | `^14.0.0` | 14.0.3 | Current | Yes | Updated to v14. Review `src/cli/index.ts` for any future API changes before upgrading further. |
+| `jsonc-parser` | `^3.3.1` | 3.3.1 | Current | Yes — 3.3.1 exact | Stay at `^3.3.1` |
+| `yaml` | `^2.8.3` | 2.8.3 | Current | Indirect | Stay at `^2.8.3` |
+| `zod` | `^4.3.6` | 4.3.6 | Current | 4.1.8 (older patch) | Stay at `^4.3.6` — we are ahead of opencode's bundled version |
+
+### Dev dependencies
+
+| Package | Pinned range | Status | Notes |
+|---|---|---|---|
+| `typescript` | `^5.8.0` | Current (5.x) | TypeScript 6.0 not yet confirmed stable; wait for ecosystem validation |
+| `vitest` | `^3.1.1` | Current | Stay at `^3.1.1` |
+| `@types/node` | `^22.0.0` | Current (22 LTS) | Keep pinned to Node 22 LTS line — do not follow Node version bumps unless `engines.node` is updated first |
+| `@opencode-ai/plugin` | `^1.4.0` | 1.4.x | Track `^1.4.0` — update when new patch verified stable |
+| `@opencode-ai/sdk` | `^1.4.0` | 1.4.x | Track `^1.4.0` |
+
+### opencode ecosystem alignment
+
+- opencode 1.4.2 bundles: `zod@4.1.8`, `jsonc-parser@3.3.1`, `commander`, and `yaml` (via gray-matter internally)
+- Plugins run in the same Bun runtime as opencode — shared process but no official module-sharing mechanism
+- No `peerDependencies` mechanism for opencode's bundled libs — always declare own `dependencies`
+- Align major versions with opencode's bundled versions to avoid dual-instance issues in the shared runtime
+
+### Updating deps
+
+Before updating any dep to a major version, verify:
+1. It is compatible with Node >=22 and TypeScript strict ESM.
+2. It does not conflict with opencode's bundled version of the same library.
+3. All tests still pass after the update (`npm test`).
+
 ## Code Examples
 
 See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
@@ -100,3 +137,12 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `hook-creation.md` — Hook registration and output mutation
 - `cli-command.md` — Commander.js command with JSONC editing
 - `safe-dir-read.md` — Defensive directory reading with warning
+- `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
+
+## Zod v4 Notes
+
+This project uses **Zod v4** (`zod ^4.3.6`). Key differences from v3 to be aware of:
+
+- **`z.record` requires two arguments**: `z.record(z.string(), valueSchema)` — the one-arg form is removed in v4.
+- **Native JSON Schema**: use `z.toJSONSchema(schema)` — no extra libraries needed (`zod-to-json-schema` is not installed).
+- Zod v4 error format is unchanged: access issues via `result.error.issues.length`.

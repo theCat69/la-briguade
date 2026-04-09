@@ -50,7 +50,7 @@ src/
     index.ts         ← resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
     merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
-    schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema
+    schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
     index.ts         ← createHooks() — output truncation, edit error hints, empty response detection
   cli/
@@ -78,5 +78,5 @@ bin/
 - **Runtime**: Node.js ≥ 22
 - **Build**: `tsc` → `dist/`
 - **Test**: Vitest v3
-- **Key deps**: `commander`, `yaml`, `jsonc-parser`
+- **Key deps**: `commander`, `yaml`, `jsonc-parser`, `zod`
 - **Peer dep**: `@opencode-ai/plugin ^1.4.0`

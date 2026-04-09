@@ -102,3 +102,11 @@ jobs:
 6. `npm publish`
 
 > **Never commit `dist/` or `node_modules/`** — both are in `.gitignore`. Published package includes `dist/`, `content/`, and `bin/` (declared in `package.json` `files` field).
+
+## Dependency Alignment
+
+Run `npm outdated` before each release to detect stale dependencies.
+
+- `commander` is at v14 — review `src/cli/index.ts` for API changes before upgrading to v15+.
+- Keep `@types/node` pinned to the Node 22 LTS line (`^22.0.0`) — do not follow Node version bumps unless `engines.node` is updated first.
+- See the `## Dependency Guidelines` section in `project-coding/SKILL.md` for the full per-package audit table and update rules.
