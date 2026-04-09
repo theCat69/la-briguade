@@ -7,6 +7,8 @@ import { resolveAgentConfig } from "../config/merge.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { parseModelSections } from "../utils/model-sections.js";
+import type { AgentSectionsEntry } from "../hooks/index.js";
 import { readDirSafe } from "../utils/read-dir.js";
 
 const ALLOWED_AGENT_KEYS = [
@@ -36,23 +38,32 @@ function agentNameFromFilename(filename: string): string {
   return stem.charAt(0).toLowerCase() + stem.slice(1);
 }
 
+/** Return type for registerAgents — includes the per-agent model sections map. */
+export type RegisterAgentsResult = {
+  agentSections: Map<string, AgentSectionsEntry>;
+};
+
 /**
  * Register all agent definitions from content/agents/ into the config.
  * Reads .md files with YAML frontmatter, parses them into AgentConfig objects,
  * applies user overrides from the loaded config, and merges them into `config.agent`.
+ *
+ * Also parses model-specific sections from each agent body and returns them
+ * keyed by the trimmed base prompt text for use in the system transform hook.
  */
 export function registerAgents(
   config: Config,
   contentDir: string,
   userConfig?: LaBriguadeConfig,
-): void {
+): RegisterAgentsResult {
+  const agentSections: Map<string, AgentSectionsEntry> = new Map();
   const agentsDir = resolve(contentDir, "agents");
 
   const entries = readDirSafe(agentsDir, "agents");
-  if (entries === undefined) return;
+  if (entries === undefined) return { agentSections };
 
   const mdFiles = entries.filter((f) => f.endsWith(".md"));
-  if (mdFiles.length === 0) return;
+  if (mdFiles.length === 0) return { agentSections };
 
   const parsedAgents: Record<string, Record<string, unknown>> = {};
 
@@ -68,10 +79,11 @@ export function registerAgents(
     }
 
     const { attributes, body } = parseFrontmatter(raw);
+    const { base, sections } = parseModelSections(body);
     const agentName = agentNameFromFilename(file);
 
     const agentConfig: Record<string, unknown> = {
-      prompt: body,
+      prompt: base,
     };
 
     for (const key of ALLOWED_AGENT_KEYS) {
@@ -93,7 +105,16 @@ export function registerAgents(
     } else {
       parsedAgents[agentName] = agentConfig;
     }
+
+    if (Object.keys(sections).length > 0) {
+      if (agentSections.has(agentName)) {
+        console.warn(`[la-briguade] duplicate agent name in sections map: '${agentName}'`);
+      }
+      agentSections.set(agentName, { base, sections });
+    }
   }
 
   config.agent = { ...config.agent, ...parsedAgents };
+
+  return { agentSections };
 }

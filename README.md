@@ -72,13 +72,15 @@ npx la-briguade uninstall
 
 ## Hooks
 
-The plugin registers three built-in hooks that run automatically:
+The plugin registers four built-in hooks that run automatically:
 
 1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed.
 
 2. **Edit Error Recovery** — When an `edit` tool call fails with "oldString not found" or "Found multiple matches", appends a hint telling the agent to re-read the file before retrying.
 
 3. **Empty Response Detector** — Monitors `message.updated` events and warns when the assistant produces zero output tokens, catching silent failures early.
+
+4. **Model Section Injector** — At chat time, inspects the active model ID and appends the matching model-family section from the agent body to its system prompt (see [Model-Specific Prompt Sections](#model-specific-prompt-sections) below).
 
 ## CLI Commands
 
@@ -194,6 +196,39 @@ description: Brief description of what this command does
 
 Command prompt template in markdown. Use $ARGUMENTS for user input.
 ```
+
+### Model-Specific Prompt Sections
+
+Agent body files support optional **model-family sections** that append extra instructions only when the agent is running on a matching model. The base body (everything before the first section header) is always applied.
+
+**Syntax** — add one or more `====== FAMILY ======` headers anywhere after the base body:
+
+```markdown
+---
+description: "My coder agent"
+mode: subagent
+---
+
+You are a coder. Always write tests alongside the implementation.
+
+====== CLAUDE ======
+Reason step-by-step before writing any code.
+
+====== GPT ======
+Use structured output format. Show a plan before code.
+
+====== GEMINI ======
+Use markdown headers for all responses.
+
+====== GROK ======
+Be terse. No filler. Code only.
+```
+
+**Supported families** (case-insensitive): `claude`, `gpt`, `gemini`, `grok`.
+
+**Matching logic** — the active model ID (e.g. `"github-copilot/claude-sonnet-4-6"`) is matched against each family name as a substring. The first match wins. If no family matches, the `claude` section is used as a fallback. If there is no `claude` section either, only the base body is sent.
+
+**Unknown families** produce a `console.warn` and are skipped.
 
 ## Requirements
 

@@ -1,4 +1,5 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
+import { resolveModelSection, type ModelFamily } from "../utils/model-sections.js";
 
 /**
  * Invariant: HEAD_SIZE + TAIL_SIZE must be ≤ TRUNCATION_THRESHOLD.
@@ -14,11 +15,26 @@ const EDIT_ERROR_PATTERNS = [
   "Found multiple matches for oldString",
 ] as const;
 
+/** Per-agent entry holding both the base prompt text and per-family sections. */
+export type AgentSectionsEntry = {
+  base: string;
+  sections: Partial<Record<ModelFamily, string>>;
+};
+
 /**
  * Build the plugin hooks object (event, tool.execute.after, etc.).
  * Returns a partial Hooks object to be spread into the plugin return value.
+ *
+ * @param _ctx - Plugin context (reserved for future use)
+ * @param agentSections - Per-agent model-specific sections keyed by agent name.
+ *   Invariant: config() must fully populate this map before any chat session begins —
+ *   the system transform hook reads from it. Both config() and hooks are wired in the
+ *   same Plugin call, so population always precedes hook execution.
  */
-export function createHooks(_ctx: PluginInput): Partial<HooksResult> {
+export function createHooks(
+  _ctx: PluginInput,
+  agentSections: Map<string, AgentSectionsEntry>,
+): Partial<HooksResult> {
   return {
     "tool.execute.after": async (_input, output) => {
       truncateLargeOutput(output);
@@ -27,6 +43,12 @@ export function createHooks(_ctx: PluginInput): Partial<HooksResult> {
 
     event: async ({ event }) => {
       detectEmptyResponse(event);
+    },
+
+    "experimental.chat.system.transform": async (input, output) => {
+      // Safe access: id may be absent on unexpected model shapes
+      const modelId = input.model?.id?.toLowerCase() ?? "";
+      injectModelSections(agentSections, modelId, output.system);
     },
   };
 }
@@ -65,6 +87,37 @@ function appendEditErrorHint(
   if (hasEditError) {
     output.output +=
       "\nHint: Re-read the file to get current content before retrying the edit.";
+  }
+}
+
+/**
+ * For each system prompt string, check if it matches a known agent base prompt.
+ * If a match is found, append the best-matching model-family section to that string.
+ *
+ * Matching strategy (KNOWN_FAMILIES order, then claude fallback):
+ * 1. Iterate families in order — first family whose name appears in `modelId` wins
+ * 2. Fall back to the `claude` section if no direct match
+ * 3. If neither, leave the system string unchanged
+ */
+function injectModelSections(
+  agentSections: Map<string, AgentSectionsEntry>,
+  modelId: string,
+  system: string[],
+): void {
+  // Fast-path: nothing registered, skip all iteration
+  if (agentSections.size === 0) return;
+
+  for (const [_agentName, entry] of agentSections) {
+    const idx = system.findIndex((s) => s.trim() === entry.base.trim());
+    if (idx === -1) continue;
+
+    const match = resolveModelSection(entry.sections, modelId);
+    if (match === undefined) continue;
+
+    const current = system[idx];
+    if (current !== undefined) {
+      system[idx] = current + "\n\n" + match;
+    }
   }
 }
 

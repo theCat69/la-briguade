@@ -34,6 +34,8 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `hook-creation.md` | `tool.execute.after` and `event` hooks with output mutation helpers |
 | `cli-command.md` | Commander.js command with `jsonc-parser` config editing |
 | `safe-dir-read.md` | Defensive `readdirSync` wrapper returning `undefined` on failure |
+| `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
+| `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 
 ---
 
@@ -52,12 +54,13 @@ src/
     merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
-    index.ts         ← createHooks() — output truncation, edit error hints, empty response detection
+    index.ts         ← createHooks(ctx, agentSections) — output truncation, edit error hints, empty response detection, model section injection
   cli/
     index.ts         ← Commander CLI: install / uninstall / doctor
   utils/
     frontmatter.ts   ← YAML frontmatter parser
     read-dir.ts      ← Safe directory reader
+    model-sections.ts ← parseModelSections(), resolveModelSection() — model-family prompt section support
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 

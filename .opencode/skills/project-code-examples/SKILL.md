@@ -13,6 +13,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `cli-command.md` — Setting up a Commander.js CLI command with JSONC config editing
 - `safe-dir-read.md` — Defensive directory reading with try-catch and undefined fallback
 - `zod-config-schema.md` — Zod v4 config schema with two-arg `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` export
+- `model-sections.md` — Parsing model-family sections from agent body text and injecting them at runtime via `experimental.chat.system.transform`
 
 ## Location
 
