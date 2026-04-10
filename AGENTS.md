@@ -37,8 +37,9 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
-| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, and command-injection guard |
+| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations |
 | `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
+| `content-override-merge.md` | Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()` |
 
 ---
 
@@ -48,13 +49,13 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 src/
   index.ts           ← Plugin entry point — wires config() + hooks
   plugin/
-    agents.ts        ← Reads content/agents/*.md, registers via input.agent
-    commands.ts      ← Reads content/commands/*.md, registers via input.command
-    skills.ts        ← Discovers content/skills/ subdirs, registers paths; returns { dirs }
-    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill
-    vendors.ts       ← loadVendorPrompts() — reads content/vendor-prompts/*.md into a Map
+    agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides
+    commands.ts      ← registerCommands(config, commandDirs[]) — merges .md files across builtin + user dirs via collectFiles()
+    skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
+    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill; collectSkillBashPermissions() / injectSkillBashPermissions() — reads permission.bash from SKILL.md and injects bash command permissions into agents that allow the skill
+    vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
   config/
-    index.ts         ← resolveUserConfig() — loads + merges global and project configs
+    index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
     merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
@@ -65,6 +66,7 @@ src/
   utils/
     frontmatter.ts   ← YAML frontmatter parser
     read-dir.ts      ← Safe directory reader
+    content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
     model-sections.ts ← parseModelSections(), resolveModelSection() — model-family prompt section support
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API

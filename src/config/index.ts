@@ -4,6 +4,16 @@ import { join } from "node:path";
 import { loadConfig } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
 
+export function resolveConfigBaseDirs(projectDir: string): {
+  globalDir: string;
+  projectDir: string;
+} {
+  return {
+    globalDir: join(homedir(), "la_briguade"),
+    projectDir,
+  };
+}
+
 /**
  * Resolve the merged user configuration for la-briguade.
  *
@@ -17,8 +27,9 @@ import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
  * @returns Merged LaBriguadeConfig, or an empty config if both files are absent
  */
 export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
-  const globalConfigBase = join(homedir(), "la_briguade", "la-briguade");
-  const projectConfigBase = join(projectDir, "la-briguade");
+  const { globalDir, projectDir: resolvedProjectDir } = resolveConfigBaseDirs(projectDir);
+  const globalConfigBase = join(globalDir, "la-briguade");
+  const projectConfigBase = join(resolvedProjectDir, "la-briguade");
 
   const globalResult = loadConfig(globalConfigBase);
   const projectResult = loadConfig(projectConfigBase);

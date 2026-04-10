@@ -3,13 +3,15 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  collectSkillBashPermissions,
   collectSkillMcps,
+  injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
 } from "./mcp.js";
 
 import type { Config } from "../types/plugin.js";
-import type { SkillMcpIndex, SkillMcpMap } from "./mcp.js";
+import type { SkillBashPermIndex, SkillMcpIndex, SkillMcpMap } from "./mcp.js";
 
 vi.mock("node:fs");
 
@@ -761,6 +763,373 @@ describe("injectSkillMcpPermissions", () => {
       skill: { context7: "allow" },
       "context7_*": "allow",
       "context7-extra_*": "allow",
+    });
+  });
+});
+
+describe("collectSkillBashPermissions", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should collect bash permissions from skill with permission.bash frontmatter", () => {
+    // Arrange
+    const skillDir = "/skills/playwright-cli";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "permission:",
+        "  bash:",
+        '    "playwright-cli *": "allow"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions([skillDir]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({
+      "playwright-cli": {
+        "playwright-cli *": "allow",
+      },
+    });
+  });
+
+  it("should return empty index when skill has no permission field", () => {
+    // Arrange
+    const skillDir = "/skills/no-permission";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "name: no-permission",
+        "description: no permission field",
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions([skillDir]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({});
+  });
+
+  it("should return empty index when permission.bash is absent", () => {
+    // Arrange
+    const skillDir = "/skills/permission-without-bash";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "permission:",
+        "  other: something",
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions([skillDir]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({});
+  });
+
+  it("should warn and skip skill with invalid permission frontmatter", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/invalid-permission";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "permission: not-an-object",
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions([skillDir]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({});
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[la-briguade] Invalid skill permission frontmatter in:"),
+      expect.any(Array),
+    );
+  });
+
+  it("should skip missing SKILL.md file without warning", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mockReadFileSync.mockImplementation(() => {
+      const missingError = new Error("ENOENT");
+      Object.assign(missingError, { code: "ENOENT" });
+      throw missingError;
+    });
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions(["/skills/missing-skill"]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({});
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("should collect bash permissions from multiple skill dirs", () => {
+    // Arrange
+    const frontendSkillDir = "/skills/frontend";
+    const playwrightSkillDir = "/skills/playwright-cli";
+
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).includes("frontend")) {
+        return [
+          "---",
+          "permission:",
+          "  bash:",
+          '    "playwright-cli *": "allow"',
+          "---",
+          "Body",
+        ].join("\n");
+      }
+
+      return [
+        "---",
+        "permission:",
+        "  bash:",
+        '    "other-tool *": "ask"',
+        "---",
+        "Body",
+      ].join("\n");
+    });
+
+    // Act
+    const skillBashPermIndex = collectSkillBashPermissions([frontendSkillDir, playwrightSkillDir]);
+
+    // Assert
+    expect(skillBashPermIndex).toEqual({
+      frontend: {
+        "playwright-cli *": "allow",
+      },
+      "playwright-cli": {
+        "other-tool *": "ask",
+      },
+    });
+  });
+});
+
+describe("injectSkillBashPermissions", () => {
+  it("should inject bash permission section when skill is 'allow'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "allow" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: { "playwright-cli *": "allow" },
+    });
+  });
+
+  it("should inject bash permission section when skill is 'ask'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "ask" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "ask" },
+      bash: { "playwright-cli *": "allow" },
+    });
+  });
+
+  it("should NOT inject when skill is 'deny'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "deny" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "deny" },
+    });
+  });
+
+  it("should inject via wildcard skill allow", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "allow" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "allow" },
+      bash: { "playwright-cli *": "allow" },
+    });
+  });
+
+  it("should NOT inject via wildcard skill deny", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "deny" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "deny" },
+    });
+  });
+
+  it("should NOT overwrite existing bash permission key", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: { "playwright-cli *": "ask" },
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: { "playwright-cli *": "ask" },
+    });
+  });
+
+  it("should skip 'deny' values in skill bash permission block", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "allow" } });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "deny" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+    });
+  });
+
+  it("should do nothing when agent has no permission block", () => {
+    // Arrange
+    const config = createInjectConfig(undefined);
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(config.agent?.ask).toEqual({});
+  });
+
+  it("should do nothing when agent has no skill sub-block", () => {
+    // Arrange
+    const config = createInjectConfig({ read: "allow" });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      read: "allow",
+    });
+  });
+
+  it("should append to existing bash section without overwriting other entries", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: { "other-tool *": "allow" },
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: {
+        "other-tool *": "allow",
+        "playwright-cli *": "allow",
+      },
+    });
+  });
+
+  it("should preserve scalar bash permission and skip skill injection", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: "allow",
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: "allow",
+    });
+  });
+
+  it("should treat null bash permission as absent and inject patterns", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: null,
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: { "playwright-cli *": "allow" },
     });
   });
 });

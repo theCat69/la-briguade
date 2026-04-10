@@ -2,6 +2,8 @@
 
 An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 13 agents, 17 skills, 7 slash commands, and smart hooks.
 
+:> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
+
 ## Installation
 
 ```bash
@@ -127,7 +129,7 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `topK` | `integer` (≥ 0) | Top-K sampling |
 | `maxTokens` | `integer` (≥ 1) | Maximum output tokens |
 | `reasoningEffort` | `"low" \| "medium" \| "high"` | Reasoning effort hint |
-| `permission` | `Record<string, string \| boolean \| number>` | Permission overrides merged on top of agent defaults |
+| `permission` | `Record<string, string \| boolean \| number \| Record<string, string \| boolean \| number>>` | Permission overrides merged on top of agent defaults. Top-level values may be scalars or nested objects (e.g. `{ "bash": { "playwright-cli *": "allow" } }`) |
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
@@ -153,7 +155,17 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 
 ## Adding Custom Content
 
-All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own by placing files in the `content/` directory of the package (or by forking).
+All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own without modifying the package by placing files in user content directories. The plugin resolves three layers of content in priority order (lowest to highest):
+
+1. **Built-in** — bundled inside the npm package (`content/` directory)
+2. **Global user** — `~/la_briguade/content/{agents,commands,skills,vendor-prompts}/`
+3. **Project user** — `<project_root>/content/{agents,commands,skills,vendor-prompts}/`
+
+Files in higher-priority layers override built-in files with the same stem name. All layers are optional — missing directories are silently skipped.
+
+**Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/content/agents/coder.md` (applies globally) or `<project_root>/content/agents/coder.md` (applies to that project only).
+
+Content files have a maximum size of 50,000 characters — files exceeding this limit are skipped with a warning.
 
 ### Agent
 
@@ -275,7 +287,7 @@ This is the recommended place for cross-cutting, model-specific instructions tha
 
 ## Architecture
 
-The plugin reads `.md` files from its own `content/` directory at initialization, parses YAML frontmatter, and registers everything programmatically via the opencode plugin config hook. No files are copied to your system — agents, skills, and commands all live inside the npm package and are resolved at runtime.
+The plugin resolves content from three ordered layers (built-in package, global user `~/la_briguade/`, project `<root>/`) using a last-wins merge by filename stem. All content loaders use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts`. No files are copied to your system — agents, skills, and commands are registered in-memory at runtime.
 
 ## License
 

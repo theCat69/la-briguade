@@ -57,6 +57,8 @@ import type { HooksResult } from "../types/plugin.js";
 ### Plugin Registration
 The `Plugin` export (`src/index.ts`) is an async function that returns `{ config, ...hooks }`. The `config` callback receives the mutable `input` config object and calls `register*` helpers to merge into it. **Never mutate globals** — only mutate the `input` passed to the `config` callback.
 
+`resolveConfigBaseDirs(projectDir)` (from `src/config/index.ts`) returns `{ globalDir, projectDir }` — the two user content roots (`~/la_briguade/` and the project root). All content loaders receive ordered arrays of dirs (`[builtin, globalUser, projectUser]`) and use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts` for priority-based last-wins merging.
+
 ```typescript
 const LaBriguadePlugin: Plugin = async (ctx) => ({
   config: async (input) => {
@@ -69,7 +71,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => ({
 ```
 
 ### Content-Driven Registration
-Agents, skills, and commands are loaded from `.md` files in `content/{agents,skills,commands}/` at init time. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+Agents, skills, and commands are loaded from `.md` files resolved across three ordered layers: built-in `content/`, global user `~/la_briguade/content/`, and project-level `<root>/content/`. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
 
 ### Frontmatter Parsing
 Use the `yaml` library's `parse()` with default `schema: "core"` behavior to avoid YAML 1.1 quirks (`on`/`off` → boolean). Always validate the parsed value before casting:
@@ -99,6 +101,14 @@ Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. A
 `collectSkillMcps()` returns `{ mcpMap, skillMcpIndex }`. The `skillMcpIndex` maps each skill dir basename to its prefixed tool permission map. A skill entry with no `permission:` block defaults to `{ "<id>_*": "allow" }`; a custom `permission:` block pre-prefixes each key (e.g. `"resolve-library-id"` → `"<id>_resolve-library-id"`). `injectSkillMcpPermissions(input, skillMcpIndex)` is called from the `config()` callback and adds missing prefixed entries to agents that opt in to a skill — without overwriting any key the agent already declares.
 
 See `.code-examples-for-ai/skill-embedded-mcp.md` for a full annotated example.
+
+### Non-MCP Skill Permissions — `permission.bash`
+
+SKILL.md files can also declare bash command permissions under `permission.bash`. These are independent of MCP servers and do not require an `mcp:` block.
+
+`collectSkillBashPermissions(skillDirs)` reads `permission.bash` from each SKILL.md and returns a `SkillBashPermIndex` (`Record<skillName, Record<string, string>>`). `injectSkillBashPermissions(input, skillBashPermIndex)` injects missing patterns into `agent.permission.bash` for agents that opt into the skill via `permission.skill`. Injection rules mirror MCP: deny in skill permission → skip; deny value in bash block → skip; existing agent pattern → not overwritten; `permission.bash` is lazily initialised (only created when a non-deny pattern is injected).
+
+Keys in `permission.bash` may contain spaces and glob patterns (e.g. `"playwright-cli *": "allow"`). They are validated with `isSafePermissionSubKey` (blocks prototype pollution names, allows all other characters).
 
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.
@@ -152,6 +162,7 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
 - `model-sections.md` — Parsing and injecting model-family prompt sections from agent `.md` files
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
+- `content-override-merge.md` — Priority-based merge of layered content dirs using `collectFiles()` / `collectDirs()`
 
 ## Zod v4 Notes
 

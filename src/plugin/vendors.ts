@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from "node:fs";
-import type { Dirent } from "node:fs";
-import { join, basename } from "node:path";
+import { readFileSync } from "node:fs";
+
+import { collectFiles } from "../utils/content-merge.js";
 
 const MAX_VENDOR_PROMPT_LENGTH = 4_000; // chars
 
@@ -15,25 +15,15 @@ const MAX_VENDOR_PROMPT_LENGTH = 4_000; // chars
  * path traversal. Files exceeding MAX_VENDOR_PROMPT_LENGTH chars are
  * also skipped to prevent bloating system calls.
  *
- * @param contentDir - Absolute path to the content/ directory
+ * @param vendorDirs - Ordered vendor-prompts directories (later overrides earlier)
  * @returns Map of model-family name → vendor prompt text
  */
-export function loadVendorPrompts(contentDir: string): Map<string, string> {
-  const vendorPromptsDir = join(contentDir, "vendor-prompts");
+export function loadVendorPrompts(vendorDirs: string[]): Map<string, string> {
   const result: Map<string, string> = new Map();
 
-  let entries: Dirent[];
-  try {
-    entries = readdirSync(vendorPromptsDir, { withFileTypes: true });
-  } catch {
-    return result; // dir doesn't exist or isn't readable
-  }
-
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-
-    const filePath = join(vendorPromptsDir, entry.name);
-    const key = basename(entry.name, ".md").toLowerCase();
+  const mergedVendorFiles = collectFiles(vendorDirs, ".md");
+  for (const [stem, filePath] of mergedVendorFiles) {
+    const key = stem.toLowerCase();
 
     let body: string;
     try {
@@ -47,7 +37,7 @@ export function loadVendorPrompts(contentDir: string): Map<string, string> {
 
     if (trimmed.length > MAX_VENDOR_PROMPT_LENGTH) {
       console.warn(
-        `[la-briguade] Vendor prompt '${entry.name}' exceeds max length (${MAX_VENDOR_PROMPT_LENGTH} chars), skipping.`,
+        `[la-briguade] Vendor prompt '${stem}.md' exceeds max length (${MAX_VENDOR_PROMPT_LENGTH} chars), skipping.`,
       );
       continue;
     }

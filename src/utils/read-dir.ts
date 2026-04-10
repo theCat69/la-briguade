@@ -7,7 +7,14 @@ import { readdirSync } from "node:fs";
 export function readDirSafe(dir: string, label: string): string[] | undefined {
   try {
     return readdirSync(dir);
-  } catch {
+  } catch (error) {
+    const code =
+      error != null && typeof error === "object" && "code" in error
+        ? (error.code as string | undefined)
+        : undefined;
+    if (code === "ENOENT") {
+      return undefined;
+    }
     console.warn(`[la-briguade] Could not read ${label} directory: ${dir}`);
     return undefined;
   }

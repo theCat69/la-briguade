@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve, basename } from "node:path";
+import { basename } from "node:path";
 
 import type { AgentConfig } from "@opencode-ai/sdk";
 
@@ -7,10 +7,10 @@ import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
 import { AgentToolsSchema } from "../config/schema.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
+import { collectFiles } from "../utils/content-merge.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { parseModelSections } from "../utils/model-sections.js";
 import type { AgentSectionsEntry } from "../hooks/index.js";
-import { readDirSafe } from "../utils/read-dir.js";
 
 const ALLOWED_AGENT_KEYS = [
   "description",
@@ -23,6 +23,7 @@ const ALLOWED_AGENT_KEYS = [
   "permission",
   "disable",
 ] as const;
+const MAX_AGENT_FILE_LENGTH = 50_000;
 
 /**
  * Derive the agent registration key from a filename.
@@ -54,26 +55,19 @@ export type RegisterAgentsResult = {
  */
 export function registerAgents(
   config: Config,
-  contentDir: string,
+  agentDirs: string[],
   userConfig?: LaBriguadeConfig,
 ): RegisterAgentsResult {
   const agentSections: Map<string, AgentSectionsEntry> = new Map();
-  const agentsDir = resolve(contentDir, "agents");
-
-  const entries = readDirSafe(agentsDir, "agents");
-  if (entries === undefined) return { agentSections };
-
-  const mdFiles = entries.filter((f) => f.endsWith(".md"));
-  if (mdFiles.length === 0) return { agentSections };
+  const mergedAgentFiles = collectFiles(agentDirs, ".md");
+  if (mergedAgentFiles.size === 0) return { agentSections };
 
   // Compute once outside the per-agent loop — the flag is the same for all agents.
   const opusEnabled = userConfig?.opus_enabled ?? false;
 
   const parsedAgents: Record<string, Record<string, unknown>> = {};
 
-  for (const file of mdFiles) {
-    const filePath = resolve(agentsDir, file);
-
+  for (const [stem, filePath] of mergedAgentFiles) {
     let raw: string;
     try {
       raw = readFileSync(filePath, "utf-8");
@@ -82,9 +76,14 @@ export function registerAgents(
       continue;
     }
 
+    if (raw.length > MAX_AGENT_FILE_LENGTH) {
+      console.warn(`[la-briguade] Agent file exceeds size limit, skipping: ${filePath}`);
+      continue;
+    }
+
     const { attributes, body } = parseFrontmatter(raw);
     const { base, sections } = parseModelSections(body);
-    const agentName = agentNameFromFilename(file);
+    const agentName = agentNameFromFilename(`${stem}.md`);
 
     const agentConfig: Record<string, unknown> = {
       prompt: base,

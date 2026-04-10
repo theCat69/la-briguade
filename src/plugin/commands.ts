@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
-import { resolve, basename } from "node:path";
+import { basename } from "node:path";
+
 import type { Config } from "../types/plugin.js";
+import { collectFiles } from "../utils/content-merge.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
-import { readDirSafe } from "../utils/read-dir.js";
 
 interface CommandConfig {
   template: string;
@@ -11,6 +12,8 @@ interface CommandConfig {
   model?: string;
   subtask?: boolean;
 }
+
+const MAX_COMMAND_FILE_LENGTH = 50_000;
 
 /**
  * Derive the command registration key from a filename.
@@ -30,20 +33,13 @@ function commandNameFromFilename(filename: string): string {
  * Reads .md files with YAML frontmatter, parses them into command config objects,
  * and merges them into `config.command`.
  */
-export function registerCommands(config: Config, contentDir: string): void {
-  const commandsDir = resolve(contentDir, "commands");
-
-  const entries = readDirSafe(commandsDir, "commands");
-  if (entries === undefined) return;
-
-  const mdFiles = entries.filter((f) => f.endsWith(".md"));
-  if (mdFiles.length === 0) return;
+export function registerCommands(config: Config, commandDirs: string[]): void {
+  const mergedCommandFiles = collectFiles(commandDirs, ".md");
+  if (mergedCommandFiles.size === 0) return;
 
   const parsedCommands: Record<string, CommandConfig> = {};
 
-  for (const file of mdFiles) {
-    const filePath = resolve(commandsDir, file);
-
+  for (const [stem, filePath] of mergedCommandFiles) {
     let raw: string;
     try {
       raw = readFileSync(filePath, "utf-8");
@@ -52,8 +48,13 @@ export function registerCommands(config: Config, contentDir: string): void {
       continue;
     }
 
+    if (raw.length > MAX_COMMAND_FILE_LENGTH) {
+      console.warn(`[la-briguade] Command file exceeds size limit, skipping: ${filePath}`);
+      continue;
+    }
+
     const { attributes, body } = parseFrontmatter(raw);
-    const commandName = commandNameFromFilename(file);
+    const commandName = commandNameFromFilename(`${stem}.md`);
 
     const commandConfig: CommandConfig = {
       template: body,
