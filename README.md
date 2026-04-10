@@ -2,6 +2,8 @@
 
 An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 13 agents, 17 skills, 7 slash commands, and smart hooks.
 
+:> [!WARNING] This project at this stage needs [cache-ctrl]() and [playwright-cli]() to work properly. They are plan to become optional in the futur
+
 ## Installation
 
 ```bash
