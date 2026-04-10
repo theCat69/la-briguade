@@ -2,18 +2,21 @@ import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { collectSkillMcps, mergeSkillMcps } from "./mcp.js";
+import {
+  collectSkillMcps,
+  injectSkillMcpPermissions,
+  mergeSkillMcps,
+} from "./mcp.js";
 
 import type { Config } from "../types/plugin.js";
-import type { SkillMcpMap } from "./mcp.js";
+import type { SkillMcpIndex, SkillMcpMap } from "./mcp.js";
 
 vi.mock("node:fs");
 
 const mockReadFileSync = vi.mocked(readFileSync);
 
 function createConfig(): Config {
-  // Partial fixture is acceptable in unit tests; only `mcp` is exercised here.
-  return { mcp: {} } as unknown as Config;
+  return { mcp: {} };
 }
 
 describe("collectSkillMcps", () => {
@@ -24,16 +27,16 @@ describe("collectSkillMcps", () => {
 
   it("should collect local MCP entries from skill frontmatter", () => {
     // Arrange
-    const localSkillDir = "/skills/local-skill";
+    const localSkillDir = "/skills/context7";
     mockReadFileSync.mockReturnValue(
       [
         "---",
         "mcp:",
-        "  playwright:",
+        "  context7:",
         "    type: local",
-        "    command: [\"npx\", \"-y\", \"playwright-mcp-latest\"]",
+        "    command: [\"npx\", \"-y\", \"@upstash/context7-mcp@2.1.7\"]",
         "    environment:",
-        "      PLAYWRIGHT_BROWSERS_PATH: \"0\"",
+        "      CONTEXT7_CACHE: \"enabled\"",
         "    enabled: true",
         "    timeout: 5000",
         "---",
@@ -42,17 +45,20 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([localSkillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([localSkillDir]);
 
     // Assert
-    expect(result).toEqual({
-      playwright: {
+    expect(mcpMap).toEqual({
+      context7: {
         type: "local",
-        command: ["npx", "-y", "playwright-mcp-latest"],
-        environment: { PLAYWRIGHT_BROWSERS_PATH: "0" },
+        command: ["npx", "-y", "@upstash/context7-mcp@2.1.7"],
+        environment: { CONTEXT7_CACHE: "enabled" },
         enabled: true,
         timeout: 5000,
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
     });
   });
 
@@ -76,10 +82,10 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([remoteSkillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([remoteSkillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       docs: {
         type: "remote",
         url: "https://mcp.example.com/sse",
@@ -87,6 +93,9 @@ describe("collectSkillMcps", () => {
         enabled: true,
         timeout: 4000,
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "remote-skill": [{ id: "docs", permission: { "docs_*": "allow" } }],
     });
   });
 
@@ -107,14 +116,17 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", "--api-key", "secret-123"],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-env-command": [{ id: "context7", permission: { "context7_*": "allow" } }],
     });
   });
 
@@ -135,14 +147,19 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", "--api-key", ""],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-missing-env-command": [
+        { id: "context7", permission: { "context7_*": "allow" } },
+      ],
     });
     expect(warnSpy).toHaveBeenCalledWith(
       "[la-briguade] MCP server 'context7': env var " +
@@ -169,10 +186,10 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       playwright: {
         type: "local",
         command: ["npx", "-y", "playwright-mcp-latest"],
@@ -180,6 +197,9 @@ describe("collectSkillMcps", () => {
           PLAYWRIGHT_BROWSERS_PATH: "0",
         },
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-env-map": [{ id: "playwright", permission: { "playwright_*": "allow" } }],
     });
   });
 
@@ -202,10 +222,10 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       docs: {
         type: "remote",
         url: "https://mcp.example.com/sse",
@@ -213,6 +233,9 @@ describe("collectSkillMcps", () => {
           Authorization: "Bearer abc123",
         },
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "remote-env-headers": [{ id: "docs", permission: { "docs_*": "allow" } }],
     });
   });
 
@@ -232,14 +255,17 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", "-y", "@upstash/context7-mcp@2.1.7"],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-no-env-tokens": [{ id: "context7", permission: { "context7_*": "allow" } }],
     });
   });
 
@@ -261,15 +287,20 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
     // This remains one argv element; no shell splitting is performed.
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", "Bearer abc123"],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-multiple-env-tokens": [
+        { id: "context7", permission: { "context7_*": "allow" } },
+      ],
     });
   });
 
@@ -290,14 +321,19 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", "trimmed-value"],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-trimmed-env-token": [
+        { id: "context7", permission: { "context7_*": "allow" } },
+      ],
     });
   });
 
@@ -319,14 +355,19 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       context7: {
         type: "local",
         command: ["npx", ""],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-disallowed-resolved-command": [
+        { id: "context7", permission: { "context7_*": "allow" } },
+      ],
     });
     expect(warnSpy).toHaveBeenCalledWith(
       "[la-briguade] MCP server 'context7': resolved command element contains disallowed " +
@@ -351,10 +392,11 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([invalidSkillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([invalidSkillDir]);
 
     // Assert
-    expect(result).toEqual({});
+    expect(mcpMap).toEqual({});
+    expect(skillMcpIndex).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] Invalid skill MCP frontmatter in:"),
       expect.any(Array),
@@ -391,14 +433,17 @@ describe("collectSkillMcps", () => {
     });
 
     // Act
-    const result = collectSkillMcps([firstSkillDir, secondSkillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([firstSkillDir, secondSkillDir]);
 
     // Assert
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       playwright: {
         type: "local",
         command: ["npx", "-y", "playwright-mcp-latest"],
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "first-skill": [{ id: "playwright", permission: { "playwright_*": "allow" } }],
     });
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] skill MCP conflict:"),
@@ -419,10 +464,11 @@ describe("collectSkillMcps", () => {
     );
 
     // Act
-    const result = collectSkillMcps([skillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
 
     // Assert
-    expect(result).toEqual({});
+    expect(mcpMap).toEqual({});
+    expect(skillMcpIndex).toEqual({});
   });
 
   it("should skip missing SKILL.md file without warning", () => {
@@ -435,10 +481,11 @@ describe("collectSkillMcps", () => {
     });
 
     // Act
-    const result = collectSkillMcps(["/skills/missing-skill"]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps(["/skills/missing-skill"]);
 
     // Assert
-    expect(result).toEqual({});
+    expect(mcpMap).toEqual({});
+    expect(skillMcpIndex).toEqual({});
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
@@ -465,18 +512,255 @@ describe("collectSkillMcps", () => {
     });
 
     // Act
-    const result = collectSkillMcps([unreadableSkillDir, validSkillDir]);
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([unreadableSkillDir, validSkillDir]);
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] Could not read skill file:"),
       expect.any(Error),
     );
-    expect(result).toEqual({
+    expect(mcpMap).toEqual({
       docs: {
         type: "remote",
         url: "https://mcp.example.com/sse",
       },
+    });
+    expect(skillMcpIndex).toEqual({
+      "valid-skill": [{ id: "docs", permission: { "docs_*": "allow" } }],
+    });
+  });
+});
+
+function createInjectConfig(permission: Record<string, unknown> | undefined): Config {
+  const config = createConfig();
+  // Config comes from plugin API typing; tests attach `agent` dynamically for fixtures.
+  const mutableConfig = config as Record<string, unknown>;
+  if (permission === undefined) {
+    mutableConfig["agent"] = { ask: {} };
+    return config;
+  }
+
+  mutableConfig["agent"] = {
+    ask: {
+      permission,
+    },
+  };
+  return config;
+}
+
+function getAskPermission(config: Config): Record<string, unknown> | undefined {
+  // Fixture shape is controlled in this file via createInjectConfig.
+  const configRecord = config as Record<string, unknown>;
+  const agent = configRecord["agent"] as Record<string, unknown> | undefined;
+  const ask = agent?.["ask"] as Record<string, unknown> | undefined;
+  const permission = ask?.["permission"];
+  return permission != null && typeof permission === "object" && !Array.isArray(permission)
+    ? (permission as Record<string, unknown>)
+    : undefined;
+}
+
+describe("injectSkillMcpPermissions", () => {
+  it("should inject prefixed permissions when skill is 'allow'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "allow" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "allow" },
+      "context7_*": "allow",
+    });
+  });
+
+  it("should inject prefixed permissions when skill is 'ask'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "ask" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "ask" },
+      "context7_*": "allow",
+    });
+  });
+
+  it("should NOT inject when skill is 'deny'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "deny" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "deny" },
+    });
+  });
+
+  it("should inject via wildcard skill allow", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "allow" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "allow" },
+      "context7_*": "allow",
+    });
+  });
+
+  it("should NOT inject via wildcard skill deny", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "deny" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "deny" },
+    });
+  });
+
+  it("should NOT overwrite existing agent permission key", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { context7: "allow" },
+      "context7_*": "ask",
+    });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "allow" },
+      "context7_*": "ask",
+    });
+  });
+
+  it("should do nothing when agent has no permission block", () => {
+    // Arrange
+    const config = createInjectConfig(undefined);
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(config.agent?.ask).toEqual({});
+  });
+
+  it("should do nothing when agent has no skill sub-block", () => {
+    // Arrange
+    const config = createInjectConfig({ read: "allow" });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      read: "allow",
+    });
+  });
+
+  it("should use custom permission block from SKILL.md (prefixed)", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "allow" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [
+        {
+          id: "context7",
+          permission: {
+            "context7_resolve-library-id": "allow",
+          },
+        },
+      ],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "allow" },
+      "context7_resolve-library-id": "allow",
+    });
+  });
+
+  it("should NOT inject 'deny' values from permission block", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "allow" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [
+        {
+          id: "context7",
+          permission: {
+            "context7_dangerous-tool": "deny",
+          },
+        },
+      ],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "allow" },
+    });
+  });
+
+  it("should inject multiple MCP bindings from same skill", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { context7: "allow" } });
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [
+        { id: "context7", permission: { "context7_*": "allow" } },
+        {
+          id: "context7-extra",
+          permission: { "context7-extra_*": "allow" },
+        },
+      ],
+    };
+
+    // Act
+    injectSkillMcpPermissions(config, skillMcpIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { context7: "allow" },
+      "context7_*": "allow",
+      "context7-extra_*": "allow",
     });
   });
 });

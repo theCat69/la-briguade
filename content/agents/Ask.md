@@ -24,9 +24,9 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "context7": "allow"
   webfetch: "allow"
   websearch: "allow"
-  "context7_*": "allow"
   "youtube-transcript_*": "allow"
   bash: 
     "*": "deny"

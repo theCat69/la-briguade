@@ -94,7 +94,9 @@ Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. A
 
 **`{env:VAR_NAME}` tokens** are supported in `command` elements, `environment` values, and `headers` values. They are resolved via `resolveEnvTokens()` at startup:
 - Unset var → `""` + `console.warn`
-- Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`/ \ ; | & $ \` < > !`) → `""` + `console.warn` (injection guard)
+- Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$`) → `""` + `console.warn` (injection guard). `/` and `\` are **allowed** (needed for scoped packages like `@scope/pkg`).
+
+`collectSkillMcps()` returns `{ mcpMap, skillMcpIndex }`. The `skillMcpIndex` maps each skill dir basename to its prefixed tool permission map. A skill entry with no `permission:` block defaults to `{ "<id>_*": "allow" }`; a custom `permission:` block pre-prefixes each key (e.g. `"resolve-library-id"` → `"<id>_resolve-library-id"`). `injectSkillMcpPermissions(input, skillMcpIndex)` is called from the `config()` callback and adds missing prefixed entries to agents that opt in to a skill — without overwriting any key the agent already declares.
 
 See `.code-examples-for-ai/skill-embedded-mcp.md` for a full annotated example.
 

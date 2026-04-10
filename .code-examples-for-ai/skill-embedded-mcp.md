@@ -15,6 +15,9 @@ mcp:
 
   context7:
     type: local
+    permission:
+      "*": allow
+      "resolve-library-id": allow
     # {env:CONTEXT7_API_KEY} is resolved from process.env at startup.
     # If the variable is unset, la-briguade warns and passes an empty string.
     command: ["npx", "-y", "@upstash/context7-mcp@2.1.7", "--api-key", "{env:CONTEXT7_API_KEY}"]
@@ -33,6 +36,12 @@ mcp:
 // Startup collection parses `attributes.mcp` and writes each entry into `config.mcp`.
 // If user config already defines an MCP with the same key, user config wins.
 // `command` is always argv array format (e.g. ["npx", "-y", "pkg@version"]).
+// Permission injection index is also built per skill dir basename:
+// - default (no permission block): { "<id>_*": "allow" }
+// - custom block: each key is pre-prefixed ("*" -> "<id>_*",
+//   "resolve-library-id" -> "<id>_resolve-library-id").
+// Agents that allow a skill via permission.skill["<skill>"] or wildcard
+// permission.skill["*"] automatically receive missing prefixed tool permissions.
 
 ## {env:VAR_NAME} token resolution
 
@@ -41,7 +50,7 @@ mcp:
 //   - Trims the var name before lookup (e.g. {env: FOO } → process.env["FOO"]).
 //   - Unset variable → empty string + console.warn.
 //   - After substitution in a command element, if the resolved value contains
-//     disallowed shell metacharacters (/ \ ; | & $ ` < > !) the element is
+     //     disallowed shell metacharacters (; | & ` < > ! $) the element is
 //     replaced with "" and a warning is emitted. This prevents command injection
 //     via a compromised environment variable.
 ```

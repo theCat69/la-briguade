@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 
 import type { McpLocalConfig, McpRemoteConfig } from "@opencode-ai/sdk";
 import { z } from "zod";
@@ -47,10 +47,18 @@ const SkillMcpCommandElementSchema = z
     message: "command entries must not contain shell metacharacters",
   });
 
+const SkillMcpPermissionRecordSchema = z
+  .record(z.string(), z.enum(["allow", "ask", "deny"]))
+  .refine(
+    (value) => Object.keys(value).length <= 50,
+    "MCP permission block must not exceed 50 entries",
+  );
+
 export const SkillMcpLocalConfigSchema = z.object({
   type: z.literal("local"),
   command: z.array(SkillMcpCommandElementSchema).min(1),
   environment: z.record(z.string(), z.string()).optional(),
+  permission: SkillMcpPermissionRecordSchema.optional(),
   enabled: z.boolean().optional(),
   timeout: z.number().int().positive().optional(),
 });
@@ -58,6 +66,7 @@ export const SkillMcpLocalConfigSchema = z.object({
 export const SkillMcpRemoteConfigSchema = z.object({
   type: z.literal("remote"),
   url: z.string().url(),
+  permission: SkillMcpPermissionRecordSchema.optional(),
   enabled: z.boolean().optional(),
   headers: z.record(z.string(), z.string()).optional(),
   timeout: z.number().int().positive().optional(),
@@ -84,6 +93,27 @@ export const SkillMcpMapSchema = z
 
 export type SkillMcpEntry = z.infer<typeof SkillMcpEntrySchema>;
 export type SkillMcpMap = Record<string, McpLocalConfig | McpRemoteConfig>;
+export type SkillMcpBinding = { id: string; permission: Record<string, string> };
+export type SkillMcpIndex = Record<string, SkillMcpBinding[]>;
+
+function buildPrefixedPermissionMap(
+  id: string,
+  permissionBlock: Record<string, string> | undefined,
+): Record<string, string> {
+  if (permissionBlock === undefined) {
+    return { [`${id}_*`]: "allow" };
+  }
+
+  const prefixedPermissions: Record<string, string> = {};
+  for (const [toolName, value] of Object.entries(permissionBlock)) {
+    prefixedPermissions[`${id}_${toolName}`] = value;
+  }
+  return prefixedPermissions;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
 
 function toSdkMcpEntry(key: string, entry: SkillMcpEntry): McpLocalConfig | McpRemoteConfig {
   if (entry.type === "local") {
@@ -141,8 +171,11 @@ function getErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-export function collectSkillMcps(skillDirs: string[]): SkillMcpMap {
+export function collectSkillMcps(
+  skillDirs: string[],
+): { mcpMap: SkillMcpMap; skillMcpIndex: SkillMcpIndex } {
   const collected: SkillMcpMap = {};
+  const skillMcpIndex: SkillMcpIndex = {};
   const seenBySkillDir = new Map<string, string>();
 
   for (const skillDir of skillDirs) {
@@ -175,6 +208,8 @@ export function collectSkillMcps(skillDirs: string[]): SkillMcpMap {
       continue;
     }
 
+    const skillName = basename(skillDir);
+
     for (const [key, entry] of Object.entries(parsedMcpMap.data)) {
       const firstSkillDir = seenBySkillDir.get(key);
       if (firstSkillDir !== undefined) {
@@ -187,10 +222,69 @@ export function collectSkillMcps(skillDirs: string[]): SkillMcpMap {
 
       seenBySkillDir.set(key, skillDir);
       collected[key] = toSdkMcpEntry(key, entry);
+
+      const skillBindings = skillMcpIndex[skillName] ?? [];
+      skillBindings.push({
+        id: key,
+        permission: buildPrefixedPermissionMap(key, entry.permission),
+      });
+      skillMcpIndex[skillName] = skillBindings;
     }
   }
 
-  return collected;
+  return { mcpMap: collected, skillMcpIndex };
+}
+
+export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcpIndex): void {
+  if (!isRecord(input.agent)) {
+    return;
+  }
+
+  for (const agentConfig of Object.values(input.agent)) {
+    const maybeAgentConfig: unknown = agentConfig;
+    if (!isRecord(maybeAgentConfig)) {
+      continue;
+    }
+
+    const rawPermission = maybeAgentConfig["permission"];
+    if (!isRecord(rawPermission)) {
+      continue;
+    }
+
+    const rawSkillPerms = rawPermission["skill"];
+    if (!isRecord(rawSkillPerms)) {
+      continue;
+    }
+
+    for (const [skillName, bindings] of Object.entries(skillMcpIndex)) {
+      const directPermission = rawSkillPerms[skillName];
+      if (directPermission === "deny") {
+        continue;
+      }
+
+      let resolvedSkillPermission: unknown;
+      if (directPermission === "allow" || directPermission === "ask") {
+        resolvedSkillPermission = directPermission;
+      } else {
+        resolvedSkillPermission = rawSkillPerms["*"];
+      }
+
+      if (resolvedSkillPermission !== "allow" && resolvedSkillPermission !== "ask") {
+        continue;
+      }
+
+      for (const binding of bindings) {
+        for (const [permissionKey, permissionValue] of Object.entries(binding.permission)) {
+          if (permissionValue === "deny") {
+            continue;
+          }
+          if (rawPermission[permissionKey] === undefined) {
+            rawPermission[permissionKey] = permissionValue;
+          }
+        }
+      }
+    }
+  }
 }
 
 export function mergeSkillMcps(config: Config, collected: SkillMcpMap): void {

@@ -45,9 +45,17 @@ All YAML frontmatter from `.md` files is **untrusted input**:
 Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `environment` values, and `headers` values. The `resolveEnvTokens()` helper in `src/plugin/mcp.ts` enforces the following security constraints:
 
 - **Unset variable** → resolves to `""` and emits `console.warn`. Never throws — avoids startup failures from missing optional keys.
-- **Post-substitution command validation** — after substituting the env value into a command element, the resolved string is checked against `DISALLOWED_COMMAND_CHARS` (`/[\\/;|&$\`<>!]/`). If it matches, the element is replaced with `""` and a warning is logged. This prevents command injection via a compromised or maliciously-set environment variable.
+- **Post-substitution command validation** — after substituting the env value into a command element, the resolved string is checked against `DISALLOWED_COMMAND_CHARS` (`/[;|&$\`<>!]/`). Note: `/` and `\` are **not** disallowed (needed for npm scoped packages like `@scope/pkg`). If it matches, the element is replaced with `""` and a warning is logged. This prevents command injection via a compromised or maliciously-set environment variable.
 - **Never put secrets in `.md` content files** — always use `{env:VAR}` references. Content files in `content/skills/` are committed to source control.
 - **Var name trimming** — the var name is `.trim()`-ed before lookup (e.g. `{env: FOO }` looks up `process.env["FOO"]`). Do not rely on whitespace tolerance in names.
+
+### MCP `permission:` Block Validation
+
+Skill frontmatter MCP entries may include a `permission:` block declaring tool-level permissions for the MCP server's tools. The following constraints are enforced:
+
+- **Values are validated** as `"allow" | "ask" | "deny"` — invalid values are rejected by the Zod schema at startup.
+- **Capped at 50 entries** per permission block — `z.record()` is refined to prevent unbounded permission maps.
+- **Injection never overwrites** — `injectSkillMcpPermissions()` only adds missing prefixed keys to an agent; if the agent already declares a key (e.g. `"context7_*"`), it is left untouched. This preserves explicit agent overrides.
 
 ### JSONC Editing
 - Use `jsonc-parser` — `modify()` + `applyEdits()` — for all config file mutations
@@ -90,6 +98,6 @@ Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `e
 | Prototype pollution | ✅ Safe | Explicit property extraction in all `register*.ts` |
 | Code injection | ✅ Safe | No `eval`, `Function()`, or dynamic `require()` |
 | JSONC injection | ✅ Safe | `jsonc-parser` modify/applyEdits only |
-| MCP command injection | ✅ Safe | `resolveEnvTokens()` validates post-substitution values against `DISALLOWED_COMMAND_CHARS` |
+| MCP command injection | ✅ Safe | `resolveEnvTokens()` validates post-substitution values against `DISALLOWED_COMMAND_CHARS` (`;|&$\`<>!` — `/` and `\` are allowed) |
 | Dependency confusion | ⚠️ Pre-release | Ensure `la-briguade` is published to npm before public release |
 | Secret leakage | ✅ Safe | No credentials in codebase; `.ai/` gitignored; `{env:VAR}` pattern keeps secrets out of `.md` files |

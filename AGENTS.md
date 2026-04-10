@@ -51,7 +51,7 @@ src/
     agents.ts        ← Reads content/agents/*.md, registers via input.agent
     commands.ts      ← Reads content/commands/*.md, registers via input.command
     skills.ts        ← Discovers content/skills/ subdirs, registers paths; returns { dirs }
-    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp
+    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill
     vendors.ts       ← loadVendorPrompts() — reads content/vendor-prompts/*.md into a Map
   config/
     index.ts         ← resolveUserConfig() — loads + merges global and project configs

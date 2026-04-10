@@ -4,7 +4,6 @@ mode: subagent
 model: "github-copilot/gpt-5.4-mini"
 permission:
   "*": "deny"
-  "context7_*": "allow"
   "github_*": "allow"
   "cache_ctrl_*": "allow"
   webfetch: "allow"
@@ -22,6 +21,7 @@ permission:
   skill:
     "*": "deny"
     "cache-ctrl-external": "allow"
+    "context7": "allow"
 ---
 # Identity
 You are an External Context Gatherer using web sources and MCP servers (e.g., context7, GitHub MCP).

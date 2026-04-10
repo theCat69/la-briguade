@@ -1,11 +1,16 @@
-import type { Plugin } from "@opencode-ai/plugin";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type { Plugin } from "@opencode-ai/plugin";
 
 import { resolveUserConfig } from "./config/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerCommands } from "./plugin/commands.js";
-import { collectSkillMcps, mergeSkillMcps } from "./plugin/mcp.js";
+import {
+  collectSkillMcps,
+  injectSkillMcpPermissions,
+  mergeSkillMcps,
+} from "./plugin/mcp.js";
 import { registerSkills } from "./plugin/skills.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
 import { createHooks } from "./hooks/index.js";
@@ -32,8 +37,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       }
       registerCommands(input, contentDir);
       const { dirs: skillDirs } = registerSkills(input, contentDir);
-      const skillMcps = collectSkillMcps(skillDirs);
-      mergeSkillMcps(input, skillMcps);
+      const { mcpMap, skillMcpIndex } = collectSkillMcps(skillDirs);
+      mergeSkillMcps(input, mcpMap);
+      injectSkillMcpPermissions(input, skillMcpIndex);
     },
     ...createHooks(ctx, agentSections, vendorPrompts),
   };
