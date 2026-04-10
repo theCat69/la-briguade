@@ -1,4 +1,5 @@
 ---
+model: github-copilot/claude-opus-4.6
 description: "Production-grade orchestrator for multi-agent software engineering on production systems"
 mode: primary
 color: "#cf880e"

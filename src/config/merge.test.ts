@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import type { AgentConfig } from "@opencode-ai/sdk";
 
-import { applyAgentOverride, resolveAgentConfig } from "./merge.js";
+import { applyAgentOverride, resolveAgentConfig, swapOpusModel } from "./merge.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
 
 // Helper to create a base AgentConfig with minimal required fields
@@ -198,5 +198,73 @@ describe("resolveAgentConfig", () => {
     // Assert — base is completely unchanged
     expect(base.model).toBe(originalModel);
     expect(base.prompt).toBe(originalPrompt);
+  });
+});
+
+describe("swapOpusModel", () => {
+  it("should swap claude-opus-4.6 to claude-sonnet-4.6", () => {
+    // Arrange
+    const input = "github-copilot/claude-opus-4.6";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert
+    expect(result).toBe("github-copilot/claude-sonnet-4.6");
+  });
+
+  it("should swap claude-opus-4.5 to claude-sonnet-4.5", () => {
+    // Arrange
+    const input = "github-copilot/claude-opus-4.5";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert
+    expect(result).toBe("github-copilot/claude-sonnet-4.5");
+  });
+
+  it("should return sonnet model unchanged (not opus)", () => {
+    // Arrange
+    const input = "github-copilot/claude-sonnet-4.6";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert
+    expect(result).toBe("github-copilot/claude-sonnet-4.6");
+  });
+
+  it("should return non-claude model unchanged", () => {
+    // Arrange
+    const input = "github-copilot/gpt-5.3-codex";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert
+    expect(result).toBe("github-copilot/gpt-5.3-codex");
+  });
+
+  it("should swap claude-opus-4 (bare version, no dot) to claude-sonnet-4", () => {
+    // Arrange
+    const input = "anthropic/claude-opus-4";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert
+    expect(result).toBe("anthropic/claude-sonnet-4");
+  });
+
+  it("should NOT swap a theme-style name that has no digit after opus-", () => {
+    // Arrange — non-version suffix starting with a letter must not match
+    const input = "github-copilot/claude-opus-themed-dark";
+
+    // Act
+    const result = swapOpusModel(input);
+
+    // Assert — unchanged because 't' is not a digit
+    expect(result).toBe("github-copilot/claude-opus-themed-dark");
   });
 });

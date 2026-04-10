@@ -1,4 +1,5 @@
 ---
+model: github-copilot/gemini-2.5-pro
 description: "Feature Planning Orchestrator for production-grade software systems."
 mode: primary 
 color: "#138f15"

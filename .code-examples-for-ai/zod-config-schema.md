@@ -8,7 +8,8 @@
 //   3. Export both schema (for validation) and type (for TypeScript usage)
 //   4. Use z.toJSONSchema() (Zod v4 native) — no extra library needed
 //   5. .refine() on record fields for prototype-pollution key safety
-//   6. import type for Zod-inferred types — compile-time only
+//   6. .refine() on string fields for allowlist character validation (e.g. model identifiers)
+//   7. import type for Zod-inferred types — compile-time only
 
 import { z } from "zod";
 
@@ -16,7 +17,14 @@ import { z } from "zod";
 const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
 
 export const AgentOverrideSchema = z.object({
-  model: z.string().max(200).optional(),
+  // .refine() on string fields enforces an allowlist — not just .max()
+  model: z
+    .string()
+    .max(200)
+    .refine((v) => /^[\w\-./@]+$/.test(v), {
+      message: "model identifier contains disallowed characters",
+    })
+    .optional(),
   systemPromptSuffix: z.string().max(8000).optional(),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
@@ -42,7 +50,18 @@ export const AgentOverrideSchema = z.object({
 
 export const LaBriguadeConfigSchema = z.object({
   $schema: z.string().optional(),
-  model: z.string().max(200).optional(),
+  // Same .refine() allowlist as AgentOverrideSchema.model — keep them in sync
+  model: z
+    .string()
+    .max(200)
+    .refine((v) => /^[\w\-./@]+$/.test(v), {
+      message: "model identifier contains disallowed characters",
+    })
+    .optional(),
+  // Boolean flag — no refine needed, Zod guarantees the type
+  // false (default): claude-opus-* swapped to claude-sonnet-* at startup
+  // true: opus models kept as-is
+  opus_enabled: z.boolean().optional(),
   // Two-arg z.record: first arg is key schema, second is value schema
   agents: z.record(z.string(), AgentOverrideSchema).optional(),
 });

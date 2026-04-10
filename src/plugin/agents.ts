@@ -3,7 +3,7 @@ import { resolve, basename } from "node:path";
 
 import type { AgentConfig } from "@opencode-ai/sdk";
 
-import { resolveAgentConfig } from "../config/merge.js";
+import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
@@ -65,6 +65,9 @@ export function registerAgents(
   const mdFiles = entries.filter((f) => f.endsWith(".md"));
   if (mdFiles.length === 0) return { agentSections };
 
+  // Compute once outside the per-agent loop — the flag is the same for all agents.
+  const opusEnabled = userConfig?.opus_enabled ?? false;
+
   const parsedAgents: Record<string, Record<string, unknown>> = {};
 
   for (const file of mdFiles) {
@@ -92,19 +95,22 @@ export function registerAgents(
       }
     }
 
-    if (userConfig !== undefined) {
-      // AgentConfig has an index signature [key: string]: unknown, so the
-      // Record<string, unknown> built from frontmatter is structurally compatible.
-      // The cast is safe: we only add known AgentConfig fields above.
-      const resolved = resolveAgentConfig(
-        agentName,
-        agentConfig as AgentConfig,
-        userConfig,
-      );
-      parsedAgents[agentName] = resolved as Record<string, unknown>;
-    } else {
-      parsedAgents[agentName] = agentConfig;
-    }
+    // AgentConfig has an index signature [key: string]: unknown, so the
+    // Record<string, unknown> built from frontmatter is structurally compatible.
+    // The cast is safe: we only add known AgentConfig fields above.
+    const resolved: AgentConfig =
+      userConfig !== undefined
+        ? resolveAgentConfig(agentName, agentConfig as AgentConfig, userConfig)
+        : (agentConfig as AgentConfig);
+
+    // When opus_enabled is false (default), swap any claude-opus-* model to
+    // the equivalent claude-sonnet-* — produces a new object, never mutates.
+    // This applies regardless of whether a user config was found.
+    const final =
+      !opusEnabled && resolved.model != null
+        ? { ...resolved, model: swapOpusModel(resolved.model) }
+        : resolved;
+    parsedAgents[agentName] = final as Record<string, unknown>;
 
     if (Object.keys(sections).length > 0) {
       if (agentSections.has(agentName)) {

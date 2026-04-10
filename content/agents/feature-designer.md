@@ -1,4 +1,5 @@
 ---
+model: github-copilot/gemini-2.5-pro
 description: "product manager and technical lead for production-grade software systems"
 mode: subagent 
 permission:

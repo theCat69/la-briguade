@@ -202,4 +202,48 @@ describe("resolveUserConfig", () => {
     // systemPromptSuffix is chained: global first, then project
     expect(coder?.systemPromptSuffix).toBe("Use PNPM.\n\nUse tabs.");
   });
+
+  it("should carry project opus_enabled: true through to merged config", () => {
+    // Arrange — global has no opus_enabled, project sets it to true
+    mockHomedir.mockReturnValue("/home/user");
+    mockLoadConfig.mockImplementation((filePath) => {
+      if (filePath.includes("la_briguade")) {
+        return okResult({ model: "global-model" });
+      }
+      if (filePath.includes("/project")) {
+        return okResult({ opus_enabled: true });
+      }
+      return notFoundResult();
+    });
+
+    // Act
+    const result = resolveUserConfig("/project");
+
+    // Assert — project opus_enabled: true is present in merged result
+    expect(result.opus_enabled).toBe(true);
+    // Global model is still inherited
+    expect(result.model).toBe("global-model");
+  });
+
+  it("should preserve global opus_enabled: true when project config omits it", () => {
+    // Arrange — global sets opus_enabled: true, project omits the field entirely
+    mockHomedir.mockReturnValue("/home/user");
+    mockLoadConfig.mockImplementation((filePath) => {
+      if (filePath.includes("la_briguade")) {
+        return okResult({ opus_enabled: true, model: "global-model" });
+      }
+      if (filePath.includes("/project")) {
+        return okResult({ agents: { coder: { temperature: 0.5 } } });
+      }
+      return notFoundResult();
+    });
+
+    // Act
+    const result = resolveUserConfig("/project");
+
+    // Assert — spread does not reset opus_enabled to undefined when project omits it
+    expect(result.opus_enabled).toBe(true);
+    expect(result.model).toBe("global-model");
+    expect(result.agents?.["coder"]?.temperature).toBe(0.5);
+  });
 });

@@ -192,4 +192,58 @@ describe("loadConfig", () => {
       expect(result.value.model).toBe("from-json");
     }
   });
+
+  it("should parse opus_enabled: true correctly", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) return JSON.stringify({ opus_enabled: true });
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.opus_enabled).toBe(true);
+    }
+  });
+
+  it("should parse opus_enabled: false correctly", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) return JSON.stringify({ opus_enabled: false });
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.opus_enabled).toBe(false);
+    }
+  });
+
+  it("should resolve opus_enabled to undefined when field is absent", () => {
+    // Arrange — config with no opus_enabled field
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) return JSON.stringify({ model: "anthropic/claude-sonnet-4.6" });
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert — field absent means undefined, NOT false (default applied at consumption)
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.opus_enabled).toBeUndefined();
+    }
+  });
 });

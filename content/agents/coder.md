@@ -1,4 +1,5 @@
 ---
+model: github-copilot/gpt-5.3-codex
 description: "Writes production-grade code from curated snapshot for live production systems"
 mode: subagent
 temperature: 0.1

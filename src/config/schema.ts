@@ -13,7 +13,13 @@ const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
  */
 export const AgentOverrideSchema = z.object({
   /** Model identifier, e.g. `"anthropic/claude-opus-4"`. Max 200 chars. */
-  model: z.string().max(200).optional(),
+  model: z
+    .string()
+    .max(200)
+    .refine((v) => /^[\w\-./@]+$/.test(v), {
+      message: "model identifier contains disallowed characters",
+    })
+    .optional(),
   /** Text appended to the agent's system prompt with a `\n\n` separator. Max 8000 chars. */
   systemPromptSuffix: z.string().max(8000).optional(),
   /** Sampling temperature (0–2). */
@@ -54,7 +60,19 @@ export const LaBriguadeConfigSchema = z.object({
   /** JSON Schema URL for editor autocompletion — not validated at runtime. */
   $schema: z.string().optional(),
   /** Default model applied to all agents unless a per-agent model is specified. */
-  model: z.string().max(200).optional(),
+  model: z
+    .string()
+    .max(200)
+    .refine((v) => /^[\w\-./@]+$/.test(v), {
+      message: "model identifier contains disallowed characters",
+    })
+    .optional(),
+  /**
+   * When `false` (the default), any agent using a `claude-opus-*` model is
+   * automatically swapped to the equivalent `claude-sonnet-*` at startup.
+   * Set to `true` to keep claude-opus models as-is.
+   */
+  opus_enabled: z.boolean().optional(),
   /** Per-agent override map keyed by agent identifier (e.g. `"coder"`). */
   agents: z.record(z.string(), AgentOverrideSchema).optional(),
 });

@@ -1,4 +1,5 @@
 ---
+model: github-copilot/claude-opus-4.6
 description: "Adversarial design challenger — challenges plans, feature specs, and architectural decisions from first principles before implementation"
 mode: subagent
 permission:

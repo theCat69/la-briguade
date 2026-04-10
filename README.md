@@ -117,7 +117,8 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 
 | Field | Type | Description |
 |---|---|---|
-| `model` | `string` (max 200 chars) | Model identifier, e.g. `"anthropic/claude-opus-4"` |
+| `model` | `string` (max 200 chars) | Model identifier, e.g. `"anthropic/claude-opus-4"`. Only `[A-Za-z0-9_\-./@]` characters allowed. |
+| `opus_enabled` | `boolean` | When `false` (the default), any `claude-opus-*` model is automatically swapped to `claude-sonnet-*` at startup. Set to `true` to keep opus models as-is. |
 | `systemPromptSuffix` | `string` (max 8000 chars) | Appended to the agent's internal system prompt with `\n\n` |
 | `temperature` | `number` (0–2) | Sampling temperature |
 | `topP` | `number` (0–1) | Nucleus sampling probability |

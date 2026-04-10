@@ -1,4 +1,5 @@
 ---
+model: github-copilot/claude-sonnet-4.6
 description: "Personal assistant — responds to any question about any subject"
 mode: primary 
 permission:

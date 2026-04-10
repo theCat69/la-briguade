@@ -1,4 +1,5 @@
 ---
+model: github-copilot/gemini-2.5-pro
 description: "Security-focused code reviewer for production systems"
 mode: subagent 
 permission:

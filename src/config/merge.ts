@@ -3,6 +3,20 @@ import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
 
 /**
+ * Swap a `claude-opus-*` model string to the equivalent `claude-sonnet-*`.
+ *
+ * Pure function — no side effects. Applied when `opus_enabled` is false (the
+ * default) so that agents do not inadvertently use expensive opus models.
+ *
+ * Examples:
+ *   `github-copilot/claude-opus-4.6` → `github-copilot/claude-sonnet-4.6`
+ *   `github-copilot/claude-sonnet-4.6` → unchanged (not an opus model)
+ */
+export function swapOpusModel(model: string): string {
+  return model.replace(/claude-opus-(\d\S*)/, "claude-sonnet-$1");
+}
+
+/**
  * Apply an AgentOverride on top of a base AgentConfig.
  *
  * Returns a new object — the base is never mutated.
