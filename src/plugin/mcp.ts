@@ -10,7 +10,7 @@ import { parseFrontmatter } from "../utils/frontmatter.js";
 import type { Config } from "../types/plugin.js";
 
 const SKILL_FILE_NAME = "SKILL.md";
-const DISALLOWED_COMMAND_CHARS = /[\\/;|&$`<>!]/;
+const DISALLOWED_COMMAND_CHARS = /[;|&$`<>!]/;
 
 function resolveEnvTokens(value: string, key: string, field: string): string {
   const resolvedValue = value.replace(/\{env:([^}]+)\}/g, (_, varName: string) => {
@@ -44,7 +44,7 @@ const SkillMcpCommandElementSchema = z
     message: "command entries must not be empty",
   })
   .refine((value) => !DISALLOWED_COMMAND_CHARS.test(value), {
-    message: "command entries must not contain path separators or shell metacharacters",
+    message: "command entries must not contain shell metacharacters",
   });
 
 export const SkillMcpLocalConfigSchema = z.object({

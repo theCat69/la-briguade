@@ -216,7 +216,7 @@ describe("collectSkillMcps", () => {
     });
   });
 
-  it("should keep non-{env:...} command elements unchanged", () => {
+  it("should accept scoped npm package command elements", () => {
     // Arrange
     const skillDir = "/skills/local-no-env-tokens";
     mockReadFileSync.mockReturnValue(
@@ -225,7 +225,7 @@ describe("collectSkillMcps", () => {
         "mcp:",
         "  context7:",
         "    type: local",
-        '    command: ["npx", "-y", "context7-mcp-2.1.7"]',
+        '    command: ["npx", "-y", "@upstash/context7-mcp@2.1.7"]',
         "---",
         "Body",
       ].join("\n"),
@@ -238,7 +238,7 @@ describe("collectSkillMcps", () => {
     expect(result).toEqual({
       context7: {
         type: "local",
-        command: ["npx", "-y", "context7-mcp-2.1.7"],
+        command: ["npx", "-y", "@upstash/context7-mcp@2.1.7"],
       },
     });
   });
@@ -344,7 +344,7 @@ describe("collectSkillMcps", () => {
         "mcp:",
         "  shell:",
         "    type: local",
-        "    command: [\"/bin/sh\", \"-c\", \"echo hi\"]",
+        "    command: [\"npx\", \"echo$hi\"]",
         "---",
         "Invalid skill body",
       ].join("\n"),
