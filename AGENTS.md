@@ -4,7 +4,7 @@
 
 **la-briguade** is an [opencode](https://opencode.ai) plugin that registers a production-grade multi-agent AI engineering pipeline at runtime. It loads agent definitions, skills, and slash commands from Markdown files in the `content/` directory and registers them programmatically via the `@opencode-ai/plugin` API. It also installs output-management hooks (truncation, edit-error recovery, empty-response detection) to keep the AI pipeline reliable.
 
-No files are copied to the host system — everything is registered in-memory at opencode startup. It also installs output-management hooks: truncation, edit-error recovery, empty-response detection, and model-family prompt section injection.
+No files are copied to the host system — everything is registered in-memory at opencode startup. It also installs output-management hooks: truncation, edit-error recovery, empty-response detection, model-family prompt section injection, and vendor prompt injection (global prompts appended per model family from `content/vendor-prompts/`).
 
 ---
 
@@ -36,6 +36,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `safe-dir-read.md` | Defensive `readdirSync` wrapper returning `undefined` on failure |
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
+| `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
 
 ---
 
@@ -48,13 +49,14 @@ src/
     agents.ts        ← Reads content/agents/*.md, registers via input.agent
     commands.ts      ← Reads content/commands/*.md, registers via input.command
     skills.ts        ← Discovers content/skills/ subdirs, registers paths
+    vendors.ts       ← loadVendorPrompts() — reads content/vendor-prompts/*.md into a Map
   config/
     index.ts         ← resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
     merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
-    index.ts         ← createHooks(ctx, agentSections) — output truncation, edit error hints, empty response detection, model section injection
+    index.ts         ← createHooks(ctx, agentSections, vendorPrompts) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection
   cli/
     index.ts         ← Commander CLI: install / uninstall / doctor
   utils/
@@ -65,9 +67,10 @@ src/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 
 content/
-  agents/            ← Agent .md files (YAML frontmatter + system prompt body + optional ====== FAMILY ====== sections)
+  agents/            ← Agent .md files (YAML frontmatter + system prompt body)
   skills/            ← Skill directories, each with SKILL.md
   commands/          ← Slash command .md files
+  vendor-prompts/    ← Global vendor prompt files (claude.md, gpt.md, gemini.md, grok.md) — appended to all agent system prompts at chat time
 
 bin/
   la-briguade.js     ← CLI shebang entry → dist/cli/index.js

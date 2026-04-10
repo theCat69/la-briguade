@@ -6,6 +6,7 @@ import { resolveUserConfig } from "./config/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerSkills } from "./plugin/skills.js";
 import { registerCommands } from "./plugin/commands.js";
+import { loadVendorPrompts } from "./plugin/vendors.js";
 import { createHooks } from "./hooks/index.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
 
@@ -19,6 +20,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   // agents with identical base prompts never collide. config() is called once before
   // any chat session begins, so the map is fully populated before the hook fires.
   const agentSections: Map<string, AgentSectionsEntry> = new Map();
+  const vendorPrompts = loadVendorPrompts(contentDir);
 
   return {
     config: async (input) => {
@@ -30,7 +32,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       registerCommands(input, contentDir);
       registerSkills(input, contentDir);
     },
-    ...createHooks(ctx, agentSections),
+    ...createHooks(ctx, agentSections, vendorPrompts),
   };
 };
 

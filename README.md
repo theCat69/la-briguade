@@ -72,7 +72,7 @@ npx la-briguade uninstall
 
 ## Hooks
 
-The plugin registers four built-in hooks that run automatically:
+The plugin registers five built-in hooks that run automatically:
 
 1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed.
 
@@ -81,6 +81,8 @@ The plugin registers four built-in hooks that run automatically:
 3. **Empty Response Detector** — Monitors `message.updated` events and warns when the assistant produces zero output tokens, catching silent failures early.
 
 4. **Model Section Injector** — At chat time, inspects the active model ID and appends the matching model-family section from the agent body to its system prompt (see [Model-Specific Prompt Sections](#model-specific-prompt-sections) below).
+
+5. **Vendor Prompt Injector** — After the model section, appends the global vendor prompt for the matched model family (loaded from `content/vendor-prompts/`) to every agent system prompt. Unlike model sections, vendor prompts live in separate files and apply uniformly to all agents — no per-agent markup needed. No fallback is applied; if no family matches the active model, nothing is injected.
 
 ## CLI Commands
 
@@ -229,6 +231,14 @@ Be terse. No filler. Code only.
 **Matching logic** — the active model ID (e.g. `"github-copilot/claude-sonnet-4-6"`) is matched against each family name as a substring. The first match wins. If no family matches, the `claude` section is used as a fallback. If there is no `claude` section either, only the base body is sent.
 
 **Unknown families** produce a `console.warn` and are skipped.
+
+### Vendor Prompts
+
+**Vendor prompts** are global instructions applied to **all agents** when the active model matches a known family. They live in `content/vendor-prompts/` as plain Markdown files named after the family (`claude.md`, `gpt.md`, `gemini.md`, `grok.md`).
+
+At chat time the vendor prompt is appended after any per-agent model section. No per-agent markup is required — the file's existence is enough. If no family matches the active model, nothing is injected (no fallback).
+
+This is the recommended place for cross-cutting, model-specific instructions that should apply uniformly across all agents (e.g. output formatting preferences, safety reminders, tool-use conventions for a specific provider).
 
 ## Requirements
 

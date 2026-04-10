@@ -1,5 +1,5 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
-import { resolveModelSection, type ModelFamily } from "../utils/model-sections.js";
+import { resolveModelSection, KNOWN_FAMILIES, type ModelFamily } from "../utils/model-sections.js";
 
 /**
  * Invariant: HEAD_SIZE + TAIL_SIZE must be ≤ TRUNCATION_THRESHOLD.
@@ -30,10 +30,13 @@ export type AgentSectionsEntry = {
  *   Invariant: config() must fully populate this map before any chat session begins —
  *   the system transform hook reads from it. Both config() and hooks are wired in the
  *   same Plugin call, so population always precedes hook execution.
+ * @param vendorPrompts - Global vendor prompts keyed by model-family name (claude, gpt, etc.).
+ *   Applied to ALL agents after any per-agent model section.
  */
 export function createHooks(
   _ctx: PluginInput,
   agentSections: Map<string, AgentSectionsEntry>,
+  vendorPrompts: Map<string, string>,
 ): Partial<HooksResult> {
   return {
     "tool.execute.after": async (_input, output) => {
@@ -49,6 +52,7 @@ export function createHooks(
       // Safe access: id may be absent on unexpected model shapes
       const modelId = input.model?.id?.toLowerCase() ?? "";
       injectModelSections(agentSections, modelId, output.system);
+      injectVendorPrompts(agentSections, vendorPrompts, modelId, output.system);
     },
   };
 }
@@ -117,6 +121,59 @@ function injectModelSections(
     const current = system[idx];
     if (current !== undefined) {
       system[idx] = current + "\n\n" + match;
+    }
+  }
+}
+
+/**
+ * Resolve the best-matching vendor family key from the vendorPrompts map for a model ID.
+ *
+ * Uses the same matching order as KNOWN_FAMILIES: first family whose name appears in
+ * modelId wins. Returns undefined when no family matches — no fallback is applied,
+ * to avoid injecting family-specific prompts into unrelated model sessions.
+ */
+function resolveVendorFamily(
+  vendorPrompts: Map<string, string>,
+  modelId: string,
+): string | undefined {
+  for (const family of KNOWN_FAMILIES) {
+    if (modelId.includes(family) && vendorPrompts.has(family)) {
+      return family;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Append the global vendor prompt for the resolved model family to every system
+ * prompt string that matches a known agent base prompt.
+ *
+ * The global vendor prompt is appended AFTER any per-agent model section already
+ * injected by injectModelSections. Only applied to system strings that match a
+ * known agent base — non-agent system prompts injected by opencode itself are
+ * intentionally excluded.
+ */
+function injectVendorPrompts(
+  agentSections: Map<string, AgentSectionsEntry>,
+  vendorPrompts: Map<string, string>,
+  modelId: string,
+  system: string[],
+): void {
+  // Fast-path: no vendor prompts registered, skip all iteration
+  if (vendorPrompts.size === 0) return;
+
+  const family = resolveVendorFamily(vendorPrompts, modelId);
+  if (family === undefined) return;
+
+  const vendorPrompt = vendorPrompts.get(family);
+  if (vendorPrompt === undefined || vendorPrompt.length === 0) return;
+
+  const knownBases = new Set([...agentSections.values()].map((e) => e.base.trim()));
+
+  for (let i = 0; i < system.length; i++) {
+    const current = system[i];
+    if (current !== undefined && knownBases.has(current.trim())) {
+      system[i] = current + "\n\n" + vendorPrompt;
     }
   }
 }
