@@ -33,14 +33,3 @@ Preferred workflow:
 2. Call `query-docs` with the resolved ID and a focused query.
 
 When you already know the exact Context7 library ID, use it directly to skip resolution.
-
-## API key
-
-`{env:CONTEXT7_API_KEY}` is resolved at startup from the
-`CONTEXT7_API_KEY` environment variable.
-
-If `CONTEXT7_API_KEY` is not set, la-briguade logs a warning and passes an
-empty value to `--api-key`. Context7 still works with public rate limits.
-
-To configure a key, set it in your shell profile or current shell session, for
-example: `export CONTEXT7_API_KEY=your-key`.
