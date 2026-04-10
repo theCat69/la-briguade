@@ -20,7 +20,7 @@ function makeConfig(): Config {
 
 describe("registerAgents", () => {
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should skip unreadable agent file, warn, and still register other agents", () => {
@@ -113,5 +113,140 @@ describe("registerAgents", () => {
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
     expect(coder?.["model"]).toBe("github-copilot/claude-sonnet-4.6");
+  });
+
+  it("should parse valid frontmatter tools into base agent config", () => {
+    // Arrange
+    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "tools:",
+        "  bash: true",
+        "  read: false",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, "/content");
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder?.["tools"]).toEqual({ bash: true, read: false });
+  });
+
+  it("should leave tools unset when frontmatter tools field is absent", () => {
+    // Arrange
+    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "description: Coder",
+        "model: openai/gpt-4o",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, "/content");
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder).toBeDefined();
+    expect(coder).not.toHaveProperty("tools");
+  });
+
+  it("should let user config tools override frontmatter tools", () => {
+    // Arrange
+    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "tools:",
+        "  bash: true",
+        "  read: false",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const userConfig: LaBriguadeConfig = {
+      agents: {
+        coder: {
+          tools: {
+            bash: false,
+            write: true,
+          },
+        },
+      },
+    };
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, "/content", userConfig);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder?.["tools"]).toEqual({ bash: false, read: false, write: true });
+  });
+
+  it("should warn and skip invalid frontmatter tools keys", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "tools:",
+        "  bad/key: true",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, "/content");
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder).toBeDefined();
+    expect(coder).not.toHaveProperty("tools");
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[la-briguade] agent coder: invalid tools field —"),
+    );
+  });
+
+  it("should accept empty frontmatter tools object as a valid no-op", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "tools: {}",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, "/content");
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder).toBeDefined();
+    expect(coder).not.toHaveProperty("tools");
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });

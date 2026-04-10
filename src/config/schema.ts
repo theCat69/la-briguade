@@ -3,6 +3,15 @@ import { z } from "zod";
 /** Regex that rejects keys matching reserved prototype pollution names. */
 export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
 
+/** Tool enable/disable flags shallow-merged on top of agent defaults. */
+export const AgentToolsSchema = z
+  .record(z.string(), z.boolean())
+  .refine(
+    (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
+    { message: "tools keys must not contain reserved prototype keywords" },
+  )
+  .optional();
+
 /**
  * Zod schema for per-agent override fields in a la-briguade config file.
  *
@@ -40,14 +49,7 @@ export const AgentOverrideSchema = z.object({
       { message: "permission keys must not contain reserved prototype keywords" },
     )
     .optional(),
-  /** Tool enable/disable flags shallow-merged on top of agent defaults. */
-  tools: z
-    .record(z.string(), z.boolean())
-    .refine(
-      (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
-      { message: "tools keys must not contain reserved prototype keywords" },
-    )
-    .optional(),
+  tools: AgentToolsSchema,
 });
 
 /**

@@ -4,6 +4,7 @@ import { resolve, basename } from "node:path";
 import type { AgentConfig } from "@opencode-ai/sdk";
 
 import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
+import { AgentToolsSchema } from "../config/schema.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
@@ -92,6 +93,21 @@ export function registerAgents(
     for (const key of ALLOWED_AGENT_KEYS) {
       if (key in attributes) {
         agentConfig[key] = attributes[key];
+      }
+    }
+
+    if (attributes["tools"] !== undefined) {
+      const parsedTools = AgentToolsSchema.safeParse(attributes["tools"]);
+
+      if (parsedTools.success) {
+        const validatedTools = parsedTools.data;
+        if (validatedTools !== undefined && Object.keys(validatedTools).length > 0) {
+          agentConfig["tools"] = validatedTools;
+        }
+      } else {
+        delete agentConfig["tools"];
+        const reason = parsedTools.error.issues.map((issue) => issue.message).join("; ");
+        console.warn(`[la-briguade] agent ${agentName}: invalid tools field — ${reason}`);
       }
     }
 

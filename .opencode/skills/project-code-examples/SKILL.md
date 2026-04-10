@@ -16,6 +16,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `model-sections.md` — Parsing model-family sections from agent body text and injecting them at runtime via `experimental.chat.system.transform`
 - `global-prompts-loader.md` — Loading shared global prompt content from a directory, keyed by lowercased filename stem, with per-file error resilience
 - `skill-embedded-mcp.md` — Declaring local/remote MCP servers in SKILL.md frontmatter
+- `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
 
 ## Location
 

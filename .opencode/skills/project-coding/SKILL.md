@@ -139,6 +139,7 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `safe-dir-read.md` — Defensive directory reading with warning
 - `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
 - `model-sections.md` — Parsing and injecting model-family prompt sections from agent `.md` files
+- `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
 
 ## Zod v4 Notes
 

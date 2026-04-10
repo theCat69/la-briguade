@@ -38,6 +38,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
 | `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter and registering them into `config.mcp` |
+| `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
 
 ---
 

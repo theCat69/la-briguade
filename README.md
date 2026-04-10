@@ -169,6 +169,9 @@ permission:
   bash:
     "*": "deny"
     "git *": "allow"
+tools:
+  webSearch: true
+  bash: false
 ---
 
 # Identity
