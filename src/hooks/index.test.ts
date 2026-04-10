@@ -21,6 +21,59 @@ function getEventHook() {
   return hooks.event;
 }
 
+function getToolExecuteAfterHook() {
+  const hooks = createHooks(
+    {} as PluginInput,
+    new Map<string, AgentSectionsEntry>(),
+    new Map<string, string>(),
+  );
+  return hooks["tool.execute.after"];
+}
+
+describe("tool.execute.after", () => {
+  it("should truncate output above the max chars threshold", async () => {
+    // Arrange
+    const hook = getToolExecuteAfterHook();
+    const largeOutput = "x".repeat(50_010);
+    const output = { output: largeOutput };
+
+    // Act
+    await hook?.({ tool: "bash" } as never, output as never);
+
+    // Assert
+    expect(output.output).toContain("[truncated 15010 chars]");
+  });
+
+  it("should append edit retry hint when edit error marker is present", async () => {
+    // Arrange
+    const hook = getToolExecuteAfterHook();
+    const output = { output: "Error: oldString not found in target content." };
+
+    // Act
+    await hook?.({ tool: "edit" } as never, output as never);
+
+    // Assert
+    expect(output.output).toContain(
+      "Hint: Re-read the file to get current content before retrying the edit.",
+    );
+  });
+
+  it("should truncate non-edit large output without appending edit hint", async () => {
+    // Arrange
+    const hook = getToolExecuteAfterHook();
+    const output = { output: `oldString not found\n${"x".repeat(50_010)}` };
+
+    // Act
+    await hook?.({ tool: "bash" } as never, output as never);
+
+    // Assert
+    expect(output.output).toContain("[truncated");
+    expect(output.output).not.toContain(
+      "Hint: Re-read the file to get current content before retrying the edit.",
+    );
+  });
+});
+
 describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   afterEach(() => {
     vi.restoreAllMocks();

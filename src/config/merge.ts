@@ -65,9 +65,6 @@ export function applyAgentOverride(base: AgentConfig, override: AgentOverride): 
   // Update prompt (may be undefined if neither base nor override has content)
   if (prompt !== undefined) {
     merged["prompt"] = prompt;
-  } else {
-    // If base had no prompt and no suffix — leave as-is (already copied from spread)
-    delete merged["prompt"];
   }
 
   // Deep-merge permission: base permission spread then override permission spread.

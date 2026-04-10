@@ -177,8 +177,7 @@ function injectVendorPrompts(
   const family = resolveVendorFamily(vendorPrompts, modelId);
   if (family === undefined) return;
 
-  const vendorPrompt = vendorPrompts.get(family);
-  if (vendorPrompt === undefined) return;
+  const vendorPrompt = vendorPrompts.get(family)!;
 
   const seenIndexes = new Set<number>();
   forEachMatchedSystemEntry(agentSections, system, (idx) => {
