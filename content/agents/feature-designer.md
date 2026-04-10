@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gemini-2.5-pro
+model: github-copilot/claude-sonnet-4.6
 description: "product manager and technical lead for production-grade software systems"
 mode: subagent 
 permission:
