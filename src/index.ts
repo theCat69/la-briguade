@@ -7,7 +7,9 @@ import { resolveUserConfig } from "./config/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerCommands } from "./plugin/commands.js";
 import {
+  collectSkillBashPermissions,
   collectSkillMcps,
+  injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
 } from "./plugin/mcp.js";
@@ -40,6 +42,8 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       const { mcpMap, skillMcpIndex } = collectSkillMcps(skillDirs);
       mergeSkillMcps(input, mcpMap);
       injectSkillMcpPermissions(input, skillMcpIndex);
+      const skillBashPermIndex = collectSkillBashPermissions(skillDirs);
+      injectSkillBashPermissions(input, skillBashPermIndex);
     },
     ...createHooks(ctx, agentSections, vendorPrompts),
   };

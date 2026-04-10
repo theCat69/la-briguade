@@ -37,7 +37,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
-| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, and command-injection guard |
+| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations |
 | `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
 
 ---
@@ -51,7 +51,7 @@ src/
     agents.ts        ← Reads content/agents/*.md, registers via input.agent
     commands.ts      ← Reads content/commands/*.md, registers via input.command
     skills.ts        ← Discovers content/skills/ subdirs, registers paths; returns { dirs }
-    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill
+    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill; collectSkillBashPermissions() / injectSkillBashPermissions() — reads permission.bash from SKILL.md and injects bash command permissions into agents that allow the skill
     vendors.ts       ← loadVendorPrompts() — reads content/vendor-prompts/*.md into a Map
   config/
     index.ts         ← resolveUserConfig() — loads + merges global and project configs

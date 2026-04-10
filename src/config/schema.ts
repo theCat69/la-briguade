@@ -12,6 +12,33 @@ export const AgentToolsSchema = z
   )
   .optional();
 
+/** Returns true when a key is safe from prototype pollution (permissive — allows spaces, globs, etc.). */
+export function isSafePermissionSubKey(key: string): boolean {
+  return (
+    key.trim().length > 0 &&
+    key !== "__proto__" &&
+    key !== "constructor" &&
+    key !== "prototype"
+  );
+}
+
+const PermissionLeafSchema = z.union([z.string(), z.boolean(), z.number()]);
+
+/** One-level-deep nested record (e.g. bash: { "playwright-cli *": "allow" }). */
+const PermissionNestedSchema = z
+  .record(z.string(), PermissionLeafSchema)
+  .superRefine((obj, ctx) => {
+    for (const key of Object.keys(obj)) {
+      if (!isSafePermissionSubKey(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: "nested permission key must not be empty or a reserved prototype keyword",
+        });
+      }
+    }
+  });
+
 /**
  * Zod schema for per-agent override fields in a la-briguade config file.
  *
@@ -43,7 +70,7 @@ export const AgentOverrideSchema = z.object({
   maxTokens: z.number().int().min(1).optional(),
   /** Permission overrides shallow-merged on top of the agent's internal permissions. */
   permission: z
-    .record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+    .record(z.string(), z.union([PermissionLeafSchema, PermissionNestedSchema]))
     .refine(
       (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
       { message: "permission keys must not contain reserved prototype keywords" },

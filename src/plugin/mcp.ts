@@ -4,7 +4,7 @@ import { basename, resolve } from "node:path";
 import type { McpLocalConfig, McpRemoteConfig } from "@opencode-ai/sdk";
 import { z } from "zod";
 
-import { SAFE_RECORD_KEY } from "../config/schema.js";
+import { SAFE_RECORD_KEY, isSafePermissionSubKey } from "../config/schema.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 
 import type { Config } from "../types/plugin.js";
@@ -91,10 +91,37 @@ export const SkillMcpMapSchema = z
     }
   });
 
+/** Validates a bash permission record declared in SKILL.md frontmatter. */
+const SkillBashPermissionSchema = z
+  .record(z.string(), z.enum(["allow", "ask", "deny"]))
+  .superRefine((obj, ctx) => {
+    if (Object.keys(obj).length > 50) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "bash permission block must not exceed 50 entries",
+      });
+    }
+    for (const key of Object.keys(obj)) {
+      if (!isSafePermissionSubKey(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: "bash permission key must not be empty or a reserved prototype keyword",
+        });
+      }
+    }
+  });
+
+/** Validates the top-level `permission:` block in SKILL.md frontmatter. */
+const SkillPermissionFrontmatterSchema = z
+  .object({ bash: SkillBashPermissionSchema.optional() });
+
 export type SkillMcpEntry = z.infer<typeof SkillMcpEntrySchema>;
 export type SkillMcpMap = Record<string, McpLocalConfig | McpRemoteConfig>;
 export type SkillMcpBinding = { id: string; permission: Record<string, string> };
 export type SkillMcpIndex = Record<string, SkillMcpBinding[]>;
+/** Maps skill dir basename → bash permission patterns (e.g. `{ "playwright-cli *": "allow" }`). */
+export type SkillBashPermIndex = Record<string, Record<string, string>>;
 
 function buildPrefixedPermissionMap(
   id: string,
@@ -171,6 +198,32 @@ function getErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+interface SkillFileData {
+  attributes: Record<string, unknown>;
+  skillName: string;
+  skillFilePath: string;
+}
+
+/**
+ * Reads a SKILL.md file and returns parsed frontmatter attributes.
+ * Returns null when the file is absent (ENOENT silently skipped) or unreadable (with warning).
+ */
+function readSkillFileData(skillDir: string): SkillFileData | null {
+  const skillFilePath = resolve(skillDir, SKILL_FILE_NAME);
+  let rawSkillContent: string;
+  try {
+    rawSkillContent = readFileSync(skillFilePath, "utf8");
+  } catch (error) {
+    if (getErrorCode(error) === "ENOENT") {
+      return null;
+    }
+    console.warn(`[la-briguade] Could not read skill file: ${skillFilePath}`, error);
+    return null;
+  }
+  const { attributes } = parseFrontmatter(rawSkillContent);
+  return { attributes, skillName: basename(skillDir), skillFilePath };
+}
+
 export function collectSkillMcps(
   skillDirs: string[],
 ): { mcpMap: SkillMcpMap; skillMcpIndex: SkillMcpIndex } {
@@ -179,21 +232,12 @@ export function collectSkillMcps(
   const seenBySkillDir = new Map<string, string>();
 
   for (const skillDir of skillDirs) {
-    const skillFilePath = resolve(skillDir, SKILL_FILE_NAME);
-
-    let rawSkillContent: string;
-    try {
-      rawSkillContent = readFileSync(skillFilePath, "utf8");
-    } catch (error) {
-      if (getErrorCode(error) === "ENOENT") {
-        continue;
-      }
-
-      console.warn(`[la-briguade] Could not read skill file: ${skillFilePath}`, error);
+    const fileData = readSkillFileData(skillDir);
+    if (fileData === null) {
       continue;
     }
 
-    const { attributes } = parseFrontmatter(rawSkillContent);
+    const { attributes, skillName, skillFilePath } = fileData;
     const mcpAttributes = attributes["mcp"];
     if (mcpAttributes === undefined) {
       continue;
@@ -207,8 +251,6 @@ export function collectSkillMcps(
       );
       continue;
     }
-
-    const skillName = basename(skillDir);
 
     for (const [key, entry] of Object.entries(parsedMcpMap.data)) {
       const firstSkillDir = seenBySkillDir.get(key);
@@ -233,6 +275,117 @@ export function collectSkillMcps(
   }
 
   return { mcpMap: collected, skillMcpIndex };
+}
+
+/**
+ * Reads SKILL.md frontmatter from each skill directory and collects
+ * bash permission patterns declared under `permission.bash`.
+ *
+ * Returns a map of skill dir basename → bash permission record
+ * (e.g. `{ "playwright-cli": { "playwright-cli *": "allow" } }`).
+ */
+export function collectSkillBashPermissions(skillDirs: string[]): SkillBashPermIndex {
+  const skillBashPermIndex: SkillBashPermIndex = {};
+
+  for (const skillDir of skillDirs) {
+    const fileData = readSkillFileData(skillDir);
+    if (fileData === null) {
+      continue;
+    }
+
+    const { attributes, skillName, skillFilePath } = fileData;
+    const permissionAttributes = attributes["permission"];
+    if (permissionAttributes === undefined) {
+      continue;
+    }
+
+    const parsedPermission = SkillPermissionFrontmatterSchema.safeParse(permissionAttributes);
+    if (!parsedPermission.success) {
+      console.warn(
+        `[la-briguade] Invalid skill permission frontmatter in: ${skillFilePath}`,
+        parsedPermission.error.issues,
+      );
+      continue;
+    }
+
+    const bashPerms = parsedPermission.data.bash;
+    if (bashPerms !== undefined) {
+      skillBashPermIndex[skillName] = bashPerms;
+    }
+  }
+
+  return skillBashPermIndex;
+}
+
+/**
+ * For each agent that opts into a skill via `permission.skill[name]: "allow"` or
+ * wildcard, injects the skill's bash permission patterns into `agent.permission.bash`.
+ *
+ * - Initialises `permission.bash` as an empty object if absent.
+ * - Skips patterns whose skill permission resolves to `"deny"`.
+ * - Skips patterns with value `"deny"` in the skill bash block.
+ * - Never overwrites an existing pattern (agent-declared permissions win).
+ */
+export function injectSkillBashPermissions(
+  input: Config,
+  skillBashPermIndex: SkillBashPermIndex,
+): void {
+  if (!isRecord(input.agent)) {
+    return;
+  }
+
+  for (const agentConfig of Object.values(input.agent)) {
+    const maybeAgentConfig: unknown = agentConfig;
+    if (!isRecord(maybeAgentConfig)) {
+      continue;
+    }
+
+    const rawPermission = maybeAgentConfig["permission"];
+    if (!isRecord(rawPermission)) {
+      continue;
+    }
+
+    const rawSkillPerms = rawPermission["skill"];
+    if (!isRecord(rawSkillPerms)) {
+      continue;
+    }
+
+    for (const [skillName, bashPerms] of Object.entries(skillBashPermIndex)) {
+      const directPermission = rawSkillPerms[skillName];
+      if (directPermission === "deny") {
+        continue;
+      }
+
+      let resolvedSkillPermission: unknown;
+      if (directPermission === "allow" || directPermission === "ask") {
+        resolvedSkillPermission = directPermission;
+      } else {
+        resolvedSkillPermission = rawSkillPerms["*"];
+      }
+
+      if (resolvedSkillPermission !== "allow" && resolvedSkillPermission !== "ask") {
+        continue;
+      }
+
+      const existingBash = rawPermission["bash"];
+      let bashSection: Record<string, unknown> | undefined = isRecord(existingBash)
+        ? existingBash
+        : undefined;
+
+      for (const [pattern, value] of Object.entries(bashPerms)) {
+        if (value === "deny") {
+          continue;
+        }
+        if (bashSection === undefined) {
+          bashSection = {};
+          rawPermission["bash"] = bashSection;
+        }
+        if (bashSection[pattern] === undefined) {
+          bashSection[pattern] = value;
+        }
+      }
+    }
+  }
 }
 
 export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcpIndex): void {

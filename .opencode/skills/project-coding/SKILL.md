@@ -100,6 +100,14 @@ Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. A
 
 See `.code-examples-for-ai/skill-embedded-mcp.md` for a full annotated example.
 
+### Non-MCP Skill Permissions — `permission.bash`
+
+SKILL.md files can also declare bash command permissions under `permission.bash`. These are independent of MCP servers and do not require an `mcp:` block.
+
+`collectSkillBashPermissions(skillDirs)` reads `permission.bash` from each SKILL.md and returns a `SkillBashPermIndex` (`Record<skillName, Record<string, string>>`). `injectSkillBashPermissions(input, skillBashPermIndex)` injects missing patterns into `agent.permission.bash` for agents that opt into the skill via `permission.skill`. Injection rules mirror MCP: deny in skill permission → skip; deny value in bash block → skip; existing agent pattern → not overwritten; `permission.bash` is lazily initialised (only created when a non-deny pattern is injected).
+
+Keys in `permission.bash` may contain spaces and glob patterns (e.g. `"playwright-cli *": "allow"`). They are validated with `isSafePermissionSubKey` (blocks prototype pollution names, allows all other characters).
+
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.
 

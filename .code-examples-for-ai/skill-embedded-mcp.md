@@ -53,4 +53,46 @@ mcp:
      //     disallowed shell metacharacters (; | & ` < > ! $) the element is
 //     replaced with "" and a warning is emitted. This prevents command injection
 //     via a compromised environment variable.
+
+## Non-MCP skill permissions — `permission.bash`
+
+// SKILL.md can also declare bash command permission patterns.
+// These are injected into agents that opt into the skill via `permission.skill`.
+// No prefix is applied — patterns are injected verbatim into `permission.bash`.
+
+---
+permission:
+  bash:
+    # Allow any playwright-cli subcommand (glob pattern)
+    "playwright-cli *": "allow"
+---
+
+// Agent frontmatter that opts in:
+// permission:
+//   skill:
+//     playwright-cli: "allow"   ← or "*": "allow"
+//
+// Result injected at startup (agent receives):
+// permission:
+//   skill:
+//     playwright-cli: "allow"
+//   bash:
+//     "playwright-cli *": "allow"   ← injected from skill frontmatter
+//
+// Injection rules (same as MCP):
+// - deny in skill permission → no injection for that skill
+// - deny value in bash block → pattern is skipped
+// - existing pattern in agent config → not overwritten (agent wins)
+// - permission.bash initialized as {} if not present on the agent
+//
+// In la-briguade.jsonc (user config), nested permission is valid:
+// {
+//   "agents": {
+//     "coder": {
+//       "permission": {
+//         "bash": { "playwright-cli *": "allow" }
+//       }
+//     }
+//   }
+// }
 ```

@@ -1,6 +1,9 @@
 ---
 name: playwright-cli
 description: Automate browser interactions, test web pages and work with Playwright tests.
+permission:
+  bash:
+    "playwright-cli *": "allow"
 ---
 
 # Browser Automation with playwright-cli
