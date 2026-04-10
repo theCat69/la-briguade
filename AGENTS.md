@@ -37,6 +37,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
+| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter and registering them into `config.mcp` |
 
 ---
 
@@ -48,7 +49,8 @@ src/
   plugin/
     agents.ts        ← Reads content/agents/*.md, registers via input.agent
     commands.ts      ← Reads content/commands/*.md, registers via input.command
-    skills.ts        ← Discovers content/skills/ subdirs, registers paths
+    skills.ts        ← Discovers content/skills/ subdirs, registers paths; returns { dirs }
+    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp
     vendors.ts       ← loadVendorPrompts() — reads content/vendor-prompts/*.md into a Map
   config/
     index.ts         ← resolveUserConfig() — loads + merges global and project configs

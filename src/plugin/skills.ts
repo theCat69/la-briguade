@@ -28,26 +28,29 @@ interface ConfigWithSkills extends Config {
  * Only registers the path if the directory exists and contains at least
  * one skill subdirectory.
  */
-export function registerSkills(config: Config, contentDir: string): void {
+export function registerSkills(config: Config, contentDir: string): { dirs: string[] } {
   const skillsDir = resolve(contentDir, "skills");
 
   const entries = readDirSafe(skillsDir, "skills");
-  if (entries === undefined) return;
+  if (entries === undefined) return { dirs: [] };
 
-  // Verify at least one skill subdirectory exists
-  const hasSkillDirs = entries.some((entry) => {
+  // Resolve valid skill subdirectories
+  const validSkillDirs = entries.flatMap((entry) => {
+    const maybeSkillDir = resolve(skillsDir, entry);
     try {
-      return statSync(resolve(skillsDir, entry)).isDirectory();
+      return statSync(maybeSkillDir).isDirectory() ? [maybeSkillDir] : [];
     } catch {
-      return false;
+      return [];
     }
   });
 
-  if (!hasSkillDirs) return;
+  if (validSkillDirs.length === 0) return { dirs: [] };
 
   const extended = config as ConfigWithSkills;
   extended.skills = {
     ...extended.skills,
     paths: [...(extended.skills?.paths ?? []), skillsDir],
   };
+
+  return { dirs: validSkillDirs };
 }

@@ -183,10 +183,26 @@ Create a directory in `content/skills/{name}/` with a `SKILL.md` file:
 ---
 name: my-skill
 description: Brief description of what guidelines this skill provides
+mcp:
+  my-server:
+    type: local
+    command: ["npx", "-y", "my-mcp-package@latest"]
+    timeout: 5000
+  remote-server:
+    type: remote
+    url: https://mcp.example.com/sse
+    headers:
+      Authorization: Bearer ${MY_TOKEN}
 ---
 
 # Skill content in markdown...
 ```
+
+The optional `mcp:` frontmatter field lets a skill declare MCP server configurations. At plugin startup, la-briguade collects all `mcp:` entries from every `SKILL.md` and registers them into `config.mcp`. User config takes precedence — if the user's config already defines an MCP key with the same name, the user's definition wins. Duplicate keys across multiple skill files are resolved by first-seen order (with a warning).
+
+Each MCP entry must specify a `type`:
+- **`local`** — runs a local process. `command` is required and must be an argv-style array (e.g. `["npx", "-y", "pkg@latest"]`). Optional: `environment` (key-value env vars), `enabled`, `timeout`.
+- **`remote`** — connects to a remote SSE endpoint. `url` is required. Optional: `headers`, `enabled`, `timeout`.
 
 ### Command
 

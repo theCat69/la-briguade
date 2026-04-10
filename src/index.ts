@@ -4,8 +4,9 @@ import { dirname, join } from "node:path";
 
 import { resolveUserConfig } from "./config/index.js";
 import { registerAgents } from "./plugin/agents.js";
-import { registerSkills } from "./plugin/skills.js";
 import { registerCommands } from "./plugin/commands.js";
+import { collectSkillMcps, mergeSkillMcps } from "./plugin/mcp.js";
+import { registerSkills } from "./plugin/skills.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
 import { createHooks } from "./hooks/index.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
@@ -30,7 +31,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         agentSections.set(key, value);
       }
       registerCommands(input, contentDir);
-      registerSkills(input, contentDir);
+      const { dirs: skillDirs } = registerSkills(input, contentDir);
+      const skillMcps = collectSkillMcps(skillDirs);
+      mergeSkillMcps(input, skillMcps);
     },
     ...createHooks(ctx, agentSections, vendorPrompts),
   };

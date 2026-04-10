@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Regex that rejects keys matching reserved prototype pollution names. */
-const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
+export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
 
 /**
  * Zod schema for per-agent override fields in a la-briguade config file.
