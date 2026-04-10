@@ -5,17 +5,18 @@ An [opencode](https://opencode.ai) plugin that provides a production-grade multi
 ## Installation
 
 ```bash
-npm install la-briguade
 npx la-briguade install
 ```
 
-The `install` command adds `"la-briguade"` to the `plugins` array in your opencode config file (`opencode.json` or `opencode.jsonc`). If the file doesn't exist, it creates one.
+The `install` command adds `"la-briguade"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`, respecting `$XDG_CONFIG_HOME` on Linux). If the file or its parent directories don't exist, they are created automatically.
 
 To remove the plugin:
 
 ```bash
 npx la-briguade uninstall
 ```
+
+The `uninstall` command removes `"la-briguade"` from the same global config file.
 
 ## What's Included
 

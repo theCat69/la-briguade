@@ -1,4 +1,12 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+  statSync,
+  mkdirSync,
+} from "node:fs";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
@@ -13,51 +21,48 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-
 
 const PLUGIN_NAME = "la-briguade";
 
-/**
- * Candidate config file paths in priority order.
- * The first existing file wins; if none exist, the last entry is used for creation.
- */
-const CONFIG_CANDIDATES = [
-  join(".opencode", "opencode.jsonc"),
-  join(".opencode", "opencode.json"),
-  "opencode.jsonc",
-  "opencode.json",
-] as const;
-
 interface ConfigFileResult {
   path: string;
   existed: boolean;
 }
 
-/**
- * Find the opencode config file by searching candidates in priority order.
- * Returns the first existing file, or creates `opencode.json` at the project root.
- */
-function findOrCreateConfigFile(): ConfigFileResult {
-  for (const candidate of CONFIG_CANDIDATES) {
-    const resolved = resolve(candidate);
-    if (existsSync(resolved)) {
-      return { path: resolved, existed: true };
-    }
-  }
-
-  const fallback = resolve("opencode.json");
-  writeFileSync(fallback, "{}\n", "utf-8");
-  return { path: fallback, existed: false };
+function resolveGlobalConfigPath(): string {
+  const xdg = process.env["XDG_CONFIG_HOME"];
+  const configBase =
+    typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
+  return join(configBase, "opencode", "opencode.json");
 }
 
 /**
- * Find an existing opencode config file.
- * Returns undefined if no config file exists.
+ * Ensure the global opencode config file exists and return its path.
+ */
+function findOrCreateConfigFile(): ConfigFileResult {
+  const configPath = resolveGlobalConfigPath();
+  const existed = existsSync(configPath);
+
+  try {
+    mkdirSync(dirname(configPath), { recursive: true });
+  } catch {
+    const message =
+      `[la-briguade] Cannot create config directory: ${dirname(configPath)}. ` +
+      "Check permissions.";
+    console.error(message);
+    throw new Error(message);
+  }
+
+  if (!existed) {
+    writeFileSync(configPath, "{}\n", "utf-8");
+  }
+
+  return { path: configPath, existed };
+}
+
+/**
+ * Find an existing global opencode config file.
  */
 function findConfigFile(): string | undefined {
-  for (const candidate of CONFIG_CANDIDATES) {
-    const resolved = resolve(candidate);
-    if (existsSync(resolved)) {
-      return resolved;
-    }
-  }
-  return undefined;
+  const configPath = resolveGlobalConfigPath();
+  return existsSync(configPath) ? configPath : undefined;
 }
 
 /**
@@ -65,8 +70,12 @@ function findConfigFile(): string | undefined {
  */
 function readConfig(configPath: string): { raw: string; parsed: Record<string, unknown> } {
   const raw = readFileSync(configPath, "utf-8");
-  const parsed = parseJsonc(raw) as Record<string, unknown> | null;
-  return { raw, parsed: parsed ?? {} };
+  const value: unknown = parseJsonc(raw);
+  const parsed =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  return { raw, parsed };
 }
 
 // ---------------------------------------------------------------------------
@@ -85,28 +94,43 @@ program
   .command("install")
   .description("Add la-briguade to your opencode.json plugins list")
   .action(() => {
-    const { path: configPath, existed } = findOrCreateConfigFile();
+    let configFileResult: ConfigFileResult;
+
+    try {
+      configFileResult = findOrCreateConfigFile();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown error while creating global opencode config file.";
+      console.error(`[la-briguade] Install failed: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const { path: configPath, existed } = configFileResult;
     const { raw, parsed } = readConfig(configPath);
 
-    const plugins = Array.isArray(parsed["plugins"]) ? parsed["plugins"] as unknown[] : undefined;
+    // Config.plugin per @opencode-ai/plugin Config type
+    const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : undefined;
 
-    if (plugins?.includes(PLUGIN_NAME)) {
-      console.log(`Already installed — "${PLUGIN_NAME}" is already in plugins array.`);
+    if (plugin !== undefined && plugin.includes(PLUGIN_NAME)) {
+      console.log(`Already installed — "${PLUGIN_NAME}" is already in plugin array.`);
       return;
     }
 
     // Use jsonc-parser modify() to safely edit JSONC (preserves comments)
     let updated = raw;
 
-    if (plugins === undefined) {
-      // No plugins array — create it with the plugin entry
-      const edits = modify(updated, ["plugins"], [PLUGIN_NAME], {
+    if (plugin === undefined) {
+      // No plugin array — create it with the plugin entry
+      const edits = modify(updated, ["plugin"], [PLUGIN_NAME], {
         formattingOptions: { tabSize: 2, insertSpaces: true },
       });
       updated = applyEdits(updated, edits);
     } else {
-      // plugins array exists — append to it
-      const edits = modify(updated, ["plugins", plugins.length], PLUGIN_NAME, {
+      // plugin array exists — append to it
+      const edits = modify(updated, ["plugin", plugin.length], PLUGIN_NAME, {
         formattingOptions: { tabSize: 2, insertSpaces: true },
         isArrayInsertion: true,
       });
@@ -116,9 +140,9 @@ program
     writeFileSync(configPath, updated, "utf-8");
 
     if (existed) {
-      console.log(`Installed — added "${PLUGIN_NAME}" to plugins in ${configPath}`);
+      console.log(`Installed — added "${PLUGIN_NAME}" to plugin in ${configPath}`);
     } else {
-      console.log(`Installed — created ${configPath} with "${PLUGIN_NAME}" in plugins`);
+      console.log(`Installed — created ${configPath} with "${PLUGIN_NAME}" in plugin`);
     }
   });
 
@@ -135,26 +159,26 @@ program
     }
 
     const { raw, parsed } = readConfig(configPath);
-    const plugins = Array.isArray(parsed["plugins"]) ? parsed["plugins"] as unknown[] : undefined;
+    const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : undefined;
 
-    if (plugins === undefined) {
-      console.log(`Not installed — no plugins array in ${configPath}`);
+    if (plugin === undefined) {
+      console.log(`Not installed — no plugin array in ${configPath}`);
       return;
     }
 
-    const index = plugins.indexOf(PLUGIN_NAME);
+    const index = plugin.indexOf(PLUGIN_NAME);
     if (index === -1) {
-      console.log(`Not installed — "${PLUGIN_NAME}" not found in plugins array.`);
+      console.log(`Not installed — "${PLUGIN_NAME}" not found in plugin array.`);
       return;
     }
 
-    const edits = modify(raw, ["plugins", index], undefined, {
+    const edits = modify(raw, ["plugin", index], undefined, {
       formattingOptions: { tabSize: 2, insertSpaces: true },
     });
     const updated = applyEdits(raw, edits);
     writeFileSync(configPath, updated, "utf-8");
 
-    console.log(`Uninstalled — removed "${PLUGIN_NAME}" from plugins in ${configPath}`);
+    console.log(`Uninstalled — removed "${PLUGIN_NAME}" from plugin in ${configPath}`);
   });
 
 // ---- doctor ----
@@ -218,29 +242,30 @@ program
       label: "Content directory",
       ok: contentOk,
       detail: contentOk
-        ? `${counts["agents"] ?? 0} agents, ${counts["skills"] ?? 0} skills, ${counts["commands"] ?? 0} commands found`
+        ? `${counts["agents"] ?? 0} agents, ${counts["skills"] ?? 0} skills, ` +
+          `${counts["commands"] ?? 0} commands found`
         : `Missing or incomplete: ${contentDir}`,
     });
 
-    // 3. opencode config has la-briguade in plugins
-    const configPath = findConfigFile();
-    if (configPath !== undefined) {
-      const { parsed } = readConfig(configPath);
-      const plugins = Array.isArray(parsed["plugins"]) ? parsed["plugins"] as unknown[] : [];
-      const hasPlugin = plugins.includes(PLUGIN_NAME);
+    // 3. opencode config has la-briguade in plugin
+    const globalConfigPath = resolveGlobalConfigPath();
+    if (!existsSync(globalConfigPath)) {
+      checks.push({
+        label: "Plugin registered",
+        ok: false,
+        detail: `Global config not found at ${globalConfigPath} — run: la-briguade install`,
+      });
+    } else {
+      const { parsed } = readConfig(globalConfigPath);
+      const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : [];
+      const hasPlugin = plugin.includes(PLUGIN_NAME);
 
       checks.push({
         label: "Plugin registered",
         ok: hasPlugin,
         detail: hasPlugin
-          ? `Found in ${configPath}`
-          : `"${PLUGIN_NAME}" not in plugins array (${configPath})`,
-      });
-    } else {
-      checks.push({
-        label: "Plugin registered",
-        ok: false,
-        detail: "No opencode config file found",
+          ? `Found in ${globalConfigPath}`
+          : `"${PLUGIN_NAME}" not in plugin array in ${globalConfigPath}`,
       });
     }
 
@@ -250,7 +275,11 @@ program
       await import(cacheCtrlModuleName);
       checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
     } catch {
-      checks.push({ label: "cache-ctrl", ok: false, detail: "Cannot import cache-ctrl (optional peer)" });
+      checks.push({
+        label: "cache-ctrl",
+        ok: false,
+        detail: "Cannot import cache-ctrl (optional peer)",
+      });
     }
 
     // Print summary table
