@@ -182,6 +182,18 @@ describe("resolveModelSection", () => {
     expect(result).toBe("GPT section.");
   });
 
+  it("should prefer the first KNOWN_FAMILIES match when model ID matches multiple families", () => {
+    // Arrange — model id contains both 'claude' and 'gpt'; claude comes first in KNOWN_FAMILIES
+    const sections = { claude: "Claude section.", gpt: "GPT section." };
+    const modelId = "vendor/claude-gpt-hybrid";
+
+    // Act
+    const result = resolveModelSection(sections, modelId);
+
+    // Assert
+    expect(result).toBe("Claude section.");
+  });
+
   it("should return undefined when no family matches and no claude fallback exists", () => {
     // Arrange
     const sections = { gpt: "GPT section.", gemini: "Gemini section." };

@@ -120,7 +120,7 @@ export function resolveAgentConfig(
 
   let current: AgentConfig = base;
 
-  if (globalModelApplies && globalModel !== undefined) {
+  if (globalModelApplies) {
     current = { ...current };
     current["model"] = globalModel;
   }

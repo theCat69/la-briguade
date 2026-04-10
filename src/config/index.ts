@@ -38,8 +38,10 @@ export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
   }
 
   // Structured narrowing — each branch returns a fully typed LaBriguadeConfig
-  if (globalConfig === undefined && projectConfig === undefined) return {};
-  if (globalConfig === undefined) return projectConfig ?? {};
+  if (globalConfig === undefined) {
+    if (projectConfig === undefined) return {};
+    return projectConfig;
+  }
   if (projectConfig === undefined) return globalConfig;
   return mergeConfigs(globalConfig, projectConfig);
 }

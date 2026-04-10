@@ -4,6 +4,14 @@ import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { readDirSafe } from "../utils/read-dir.js";
 
+interface CommandConfig {
+  template: string;
+  description?: string;
+  agent?: string;
+  model?: string;
+  subtask?: boolean;
+}
+
 /**
  * Derive the command registration key from a filename.
  *
@@ -31,10 +39,7 @@ export function registerCommands(config: Config, contentDir: string): void {
   const mdFiles = entries.filter((f) => f.endsWith(".md"));
   if (mdFiles.length === 0) return;
 
-  const parsedCommands: Record<
-    string,
-    { template: string; description?: string; agent?: string; model?: string; subtask?: boolean }
-  > = {};
+  const parsedCommands: Record<string, CommandConfig> = {};
 
   for (const file of mdFiles) {
     const filePath = resolve(commandsDir, file);
@@ -50,13 +55,7 @@ export function registerCommands(config: Config, contentDir: string): void {
     const { attributes, body } = parseFrontmatter(raw);
     const commandName = commandNameFromFilename(file);
 
-    const commandConfig: {
-      template: string;
-      description?: string;
-      agent?: string;
-      model?: string;
-      subtask?: boolean;
-    } = {
+    const commandConfig: CommandConfig = {
       template: body,
     };
 

@@ -43,14 +43,16 @@ export function loadVendorPrompts(contentDir: string): Map<string, string> {
       continue;
     }
 
-    if (body.trim().length > MAX_VENDOR_PROMPT_LENGTH) {
+    const trimmed = body.trim();
+
+    if (trimmed.length > MAX_VENDOR_PROMPT_LENGTH) {
       console.warn(
         `[la-briguade] Vendor prompt '${entry.name}' exceeds max length (${MAX_VENDOR_PROMPT_LENGTH} chars), skipping.`,
       );
       continue;
     }
 
-    result.set(key, body.trim());
+    result.set(key, trimmed);
   }
 
   return result;

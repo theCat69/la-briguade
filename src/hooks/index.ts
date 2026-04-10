@@ -112,17 +112,19 @@ function injectModelSections(
   if (agentSections.size === 0) return;
 
   for (const [_agentName, entry] of agentSections) {
-    const idx = system.findIndex((s) => s.trim() === entry.base.trim());
+    const idx = findSystemIndexForAgent(system, entry.base);
     if (idx === -1) continue;
 
     const match = resolveModelSection(entry.sections, modelId);
     if (match === undefined) continue;
 
-    const current = system[idx];
-    if (current !== undefined) {
-      system[idx] = current + "\n\n" + match;
-    }
+    system[idx] = `${system[idx]!}\n\n${match}`;
   }
+}
+
+function findSystemIndexForAgent(system: string[], base: string): number {
+  const trimmedBase = base.trim();
+  return system.findIndex((s) => s.trim() === trimmedBase);
 }
 
 /**
@@ -168,13 +170,13 @@ function injectVendorPrompts(
   const vendorPrompt = vendorPrompts.get(family);
   if (vendorPrompt === undefined || vendorPrompt.length === 0) return;
 
-  const knownBases = new Set([...agentSections.values()].map((e) => e.base.trim()));
+  const seenIndexes = new Set<number>();
+  for (const entry of agentSections.values()) {
+    const idx = findSystemIndexForAgent(system, entry.base);
+    if (idx === -1 || seenIndexes.has(idx)) continue;
 
-  for (let i = 0; i < system.length; i++) {
-    const current = system[i];
-    if (current !== undefined && knownBases.has(current.trim())) {
-      system[i] = current + "\n\n" + vendorPrompt;
-    }
+    system[idx] = `${system[idx]!}\n\n${vendorPrompt}`;
+    seenIndexes.add(idx);
   }
 }
 

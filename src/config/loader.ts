@@ -45,8 +45,6 @@ export function loadConfig(filePath: string): ConfigLoadResult {
     }
   }
 
-  const fileName = basename(resolvedPath);
-
   // jsonc-parser does NOT throw on parse errors — it returns partial results
   // and populates the errors array. Check it explicitly.
   const parseErrors: ParseError[] = [];
@@ -70,7 +68,7 @@ export function loadConfig(filePath: string): ConfigLoadResult {
   if (!result.success) {
     // Log issue count only — avoids leaking full schema/path details to console
     console.warn(
-      `[la-briguade] Config validation failed (${fileName}): ` +
+      `[la-briguade] Config validation failed (${basename(resolvedPath)}): ` +
         `${result.error.issues.length} issue(s) found`,
     );
     return {
