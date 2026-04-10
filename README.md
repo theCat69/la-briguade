@@ -75,7 +75,7 @@ npx la-briguade uninstall
 
 The plugin registers five built-in hooks that run automatically:
 
-1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed.
+1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed. Tool outputs with non-string content (e.g. structured MCP responses) are passed through unchanged.
 
 2. **Edit Error Recovery** — When an `edit` tool call fails with "oldString not found" or "Found multiple matches", appends a hint telling the agent to re-read the file before retrying.
 

@@ -31,6 +31,20 @@ function getToolExecuteAfterHook() {
 }
 
 describe("tool.execute.after", () => {
+  it("should not throw when output.output is undefined", async () => {
+    // Arrange
+    const hook = getToolExecuteAfterHook();
+    const output = {};
+    const initialOutput = { ...output };
+
+    // Act
+    const execute = async () => hook?.({ tool: "bash" } as never, output as never);
+
+    // Assert
+    await expect(execute()).resolves.not.toThrow();
+    expect(output).toEqual(initialOutput);
+  });
+
   it("should truncate output above the max chars threshold", async () => {
     // Arrange
     const hook = getToolExecuteAfterHook();

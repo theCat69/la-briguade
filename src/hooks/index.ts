@@ -62,16 +62,19 @@ export function createHooks(
  * Keeps the first HEAD_SIZE characters and last TAIL_SIZE characters
  * with a marker showing how many characters were removed.
  */
-function truncateLargeOutput(output: { output: string }): void {
-  if (output.output.length <= TRUNCATION_THRESHOLD) return;
+function truncateLargeOutput(output: { output?: unknown }): void {
+  if (typeof output.output !== "string") return;
+  const current = output as { output: string };
 
-  const originalLength = output.output.length;
+  if (current.output.length <= TRUNCATION_THRESHOLD) return;
+
+  const originalLength = current.output.length;
   const removedChars = originalLength - HEAD_SIZE - TAIL_SIZE;
 
-  output.output =
-    output.output.slice(0, HEAD_SIZE) +
+  current.output =
+    current.output.slice(0, HEAD_SIZE) +
     `\n\n[truncated ${removedChars} chars]\n\n` +
-    output.output.slice(originalLength - TAIL_SIZE);
+    current.output.slice(originalLength - TAIL_SIZE);
 }
 
 /**
@@ -80,16 +83,19 @@ function truncateLargeOutput(output: { output: string }): void {
  */
 function appendEditErrorHint(
   toolName: string,
-  output: { output: string },
+  output: { output?: unknown },
 ): void {
   if (toolName !== "edit") return;
+  if (typeof output.output !== "string") return;
+  const current = output as { output: string };
 
   const hasEditError = EDIT_ERROR_PATTERNS.some((pattern) =>
-    output.output.includes(pattern),
+    current.output.includes(pattern),
   );
 
   if (hasEditError) {
-    output.output +=
+    current.output =
+      current.output +
       "\nHint: Re-read the file to get current content before retrying the edit.";
   }
 }
