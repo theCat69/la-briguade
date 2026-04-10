@@ -12,6 +12,15 @@ function getSystemTransformHook(
   return hooks["experimental.chat.system.transform"];
 }
 
+function getEventHook() {
+  const hooks = createHooks(
+    {} as PluginInput,
+    new Map<string, AgentSectionsEntry>(),
+    new Map<string, string>(),
+  );
+  return hooks.event;
+}
+
 describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -79,5 +88,59 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
 
     // Assert
     expect(output.system).toEqual(["Agent base prompt"]);
+  });
+
+  it("should append per-agent claude model section for claude model IDs", async () => {
+    // Arrange
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: "Base system prompt",
+          sections: { claude: "Claude section content" },
+        },
+      ],
+    ]);
+    const transform = getSystemTransformHook(agentSections, new Map<string, string>());
+
+    const input = { model: { id: "claude-3-opus" } };
+    const output = { system: ["Base system prompt"] };
+
+    // Act
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual(["Base system prompt\n\nClaude section content"]);
+  });
+});
+
+describe("detectEmptyResponse via event hook", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should warn when assistant message completes with zero output tokens", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            role: "assistant",
+            time: { completed: "2026-01-01T00:00:00.000Z" },
+            tokens: { output: 0 },
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[la-briguade] Empty assistant response detected — the model produced no output tokens.",
+    );
   });
 });

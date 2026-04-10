@@ -84,4 +84,20 @@ describe("loadVendorPrompts", () => {
     expect(result.size).toBe(1);
     expect(result.get("claude")).toBe("Use Claude policy.");
   });
+
+  it("should warn and skip file when readFileSync throws", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mockReaddirSync.mockReturnValue([createFileEntry("gpt.md")] as never);
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error("EACCES");
+    });
+
+    // Act
+    const result = loadVendorPrompts("/content");
+
+    // Assert
+    expect(result.has("gpt")).toBe(false);
+    expect(warnSpy).toHaveBeenCalledOnce();
+  });
 });

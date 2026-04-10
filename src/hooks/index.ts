@@ -111,14 +111,24 @@ function injectModelSections(
   // Fast-path: nothing registered, skip all iteration
   if (agentSections.size === 0) return;
 
-  for (const [_agentName, entry] of agentSections) {
-    const idx = findSystemIndexForAgent(system, entry.base);
-    if (idx === -1) continue;
-
+  forEachMatchedSystemEntry(agentSections, system, (idx, entry) => {
     const match = resolveModelSection(entry.sections, modelId);
-    if (match === undefined) continue;
+    if (match === undefined) return;
 
     system[idx] = `${system[idx]!}\n\n${match}`;
+  });
+}
+
+function forEachMatchedSystemEntry(
+  agentSections: Map<string, AgentSectionsEntry>,
+  system: string[],
+  callback: (index: number, entry: AgentSectionsEntry) => void,
+): void {
+  for (const [, entry] of agentSections) {
+    const index = findSystemIndexForAgent(system, entry.base);
+    if (index === -1) continue;
+
+    callback(index, entry);
   }
 }
 
@@ -168,16 +178,15 @@ function injectVendorPrompts(
   if (family === undefined) return;
 
   const vendorPrompt = vendorPrompts.get(family);
-  if (vendorPrompt === undefined || vendorPrompt.length === 0) return;
+  if (vendorPrompt === undefined) return;
 
   const seenIndexes = new Set<number>();
-  for (const entry of agentSections.values()) {
-    const idx = findSystemIndexForAgent(system, entry.base);
-    if (idx === -1 || seenIndexes.has(idx)) continue;
+  forEachMatchedSystemEntry(agentSections, system, (idx) => {
+    if (seenIndexes.has(idx)) return;
 
     system[idx] = `${system[idx]!}\n\n${vendorPrompt}`;
     seenIndexes.add(idx);
-  }
+  });
 }
 
 /**

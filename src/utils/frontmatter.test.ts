@@ -85,4 +85,16 @@ describe("parseFrontmatter", () => {
     });
     expect(result.body).toBe("You are the coding agent.");
   });
+
+  it("should parse frontmatter when leading whitespace precedes opening fence", () => {
+    // Arrange
+    const input = "\n  ---\nkey: val\n---\nbody";
+
+    // Act
+    const result = parseFrontmatter(input);
+
+    // Assert
+    expect(result.attributes).toEqual({ key: "val" });
+    expect(result.body).toBe("body");
+  });
 });
