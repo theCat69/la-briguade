@@ -18,6 +18,7 @@ function createConfig(): Config {
 
 describe("collectSkillMcps", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
@@ -87,6 +88,250 @@ describe("collectSkillMcps", () => {
         timeout: 4000,
       },
     });
+  });
+
+  it("should resolve {env:VAR} tokens in local MCP command elements", () => {
+    // Arrange
+    vi.stubEnv("TEST_CONTEXT7_API_KEY", "secret-123");
+    const skillDir = "/skills/local-env-command";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "--api-key", "{env:TEST_CONTEXT7_API_KEY}"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", "--api-key", "secret-123"],
+      },
+    });
+  });
+
+  it("should resolve missing {env:VAR} token to empty string and warn", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/local-missing-env-command";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "--api-key", "{env:LA_BRIGUADE_TEST_MISSING_ENV}"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", "--api-key", ""],
+      },
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[la-briguade] MCP server 'context7': env var " +
+        "'LA_BRIGUADE_TEST_MISSING_ENV' referenced in command is not set",
+    );
+  });
+
+  it("should resolve {env:VAR} tokens in local MCP environment values", () => {
+    // Arrange
+    vi.stubEnv("TEST_PLAYWRIGHT_BROWSERS_PATH", "0");
+    const skillDir = "/skills/local-env-map";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  playwright:",
+        "    type: local",
+        '    command: ["npx", "-y", "playwright-mcp-latest"]',
+        "    environment:",
+        '      PLAYWRIGHT_BROWSERS_PATH: "{env:TEST_PLAYWRIGHT_BROWSERS_PATH}"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      playwright: {
+        type: "local",
+        command: ["npx", "-y", "playwright-mcp-latest"],
+        environment: {
+          PLAYWRIGHT_BROWSERS_PATH: "0",
+        },
+      },
+    });
+  });
+
+  it("should resolve {env:VAR} tokens in remote MCP header values", () => {
+    // Arrange
+    vi.stubEnv("TEST_MCP_AUTH_TOKEN", "abc123");
+    const skillDir = "/skills/remote-env-headers";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  docs:",
+        "    type: remote",
+        "    url: https://mcp.example.com/sse",
+        "    headers:",
+        '      Authorization: "Bearer {env:TEST_MCP_AUTH_TOKEN}"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      docs: {
+        type: "remote",
+        url: "https://mcp.example.com/sse",
+        headers: {
+          Authorization: "Bearer abc123",
+        },
+      },
+    });
+  });
+
+  it("should keep non-{env:...} command elements unchanged", () => {
+    // Arrange
+    const skillDir = "/skills/local-no-env-tokens";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "-y", "context7-mcp-2.1.7"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", "-y", "context7-mcp-2.1.7"],
+      },
+    });
+  });
+
+  it("should resolve multiple {env:VAR} tokens in a single string", () => {
+    // Arrange
+    vi.stubEnv("TEST_TOKEN_PREFIX", "Bearer");
+    vi.stubEnv("TEST_TOKEN_VALUE", "abc123");
+    const skillDir = "/skills/local-multiple-env-tokens";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "{env:TEST_TOKEN_PREFIX} {env:TEST_TOKEN_VALUE}"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    // This remains one argv element; no shell splitting is performed.
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", "Bearer abc123"],
+      },
+    });
+  });
+
+  it("should trim env var names inside {env:...} tokens", () => {
+    // Arrange
+    vi.stubEnv("TEST_TRIMMED_ENV", "trimmed-value");
+    const skillDir = "/skills/local-trimmed-env-token";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "{env: TEST_TRIMMED_ENV }"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", "trimmed-value"],
+      },
+    });
+  });
+
+  it("should skip resolved command element with disallowed characters and warn", () => {
+    // Arrange
+    vi.stubEnv("TEST_BAD_ARG", "abc$def");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/local-disallowed-resolved-command";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "{env:TEST_BAD_ARG}"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const result = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(result).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", ""],
+      },
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[la-briguade] MCP server 'context7': resolved command element contains disallowed " +
+        "characters after env substitution — element skipped",
+    );
   });
 
   it("should skip invalid MCP frontmatter entries and warn", () => {

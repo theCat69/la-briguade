@@ -40,6 +40,15 @@ All YAML frontmatter from `.md` files is **untrusted input**:
   ```
 - Never join user-supplied strings to sensitive base paths without `basename()` sanitization
 
+### MCP Env Token Resolution (`{env:VAR_NAME}`)
+
+Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `environment` values, and `headers` values. The `resolveEnvTokens()` helper in `src/plugin/mcp.ts` enforces the following security constraints:
+
+- **Unset variable** → resolves to `""` and emits `console.warn`. Never throws — avoids startup failures from missing optional keys.
+- **Post-substitution command validation** — after substituting the env value into a command element, the resolved string is checked against `DISALLOWED_COMMAND_CHARS` (`/[\\/;|&$\`<>!]/`). If it matches, the element is replaced with `""` and a warning is logged. This prevents command injection via a compromised or maliciously-set environment variable.
+- **Never put secrets in `.md` content files** — always use `{env:VAR}` references. Content files in `content/skills/` are committed to source control.
+- **Var name trimming** — the var name is `.trim()`-ed before lookup (e.g. `{env: FOO }` looks up `process.env["FOO"]`). Do not rely on whitespace tolerance in names.
+
 ### JSONC Editing
 - Use `jsonc-parser` — `modify()` + `applyEdits()` — for all config file mutations
 - **Never use `JSON.parse` + string replacement** on config files (destroys comments, fragile)
@@ -81,5 +90,6 @@ All YAML frontmatter from `.md` files is **untrusted input**:
 | Prototype pollution | ✅ Safe | Explicit property extraction in all `register*.ts` |
 | Code injection | ✅ Safe | No `eval`, `Function()`, or dynamic `require()` |
 | JSONC injection | ✅ Safe | `jsonc-parser` modify/applyEdits only |
+| MCP command injection | ✅ Safe | `resolveEnvTokens()` validates post-substitution values against `DISALLOWED_COMMAND_CHARS` |
 | Dependency confusion | ⚠️ Pre-release | Ensure `la-briguade` is published to npm before public release |
-| Secret leakage | ✅ Safe | No credentials in codebase; `.ai/` gitignored |
+| Secret leakage | ✅ Safe | No credentials in codebase; `.ai/` gitignored; `{env:VAR}` pattern keeps secrets out of `.md` files |

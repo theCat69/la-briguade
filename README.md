@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 13 agents, 16 skills, 7 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 13 agents, 17 skills, 7 slash commands, and smart hooks.
 
 ## Installation
 
@@ -57,6 +57,7 @@ npx la-briguade uninstall
 | unslop | Clean AI-generated code slop in sequential bounded passes scoped to changed files only |
 | unslop-coder | Apply a pre-computed unslop findings list — targeted edits only, no scanning |
 | unslop-reviewer | Read-only AI slop scanner — emits a structured findings list, never edits files |
+| context7 | Fetch up-to-date, version-specific library/framework docs and code examples via the Context7 MCP server |
 
 ### Commands
 
@@ -195,7 +196,7 @@ mcp:
     type: remote
     url: https://mcp.example.com/sse
     headers:
-      Authorization: Bearer ${MY_TOKEN}
+      Authorization: "Bearer {env:MY_TOKEN}"
 ---
 
 # Skill content in markdown...
@@ -206,6 +207,10 @@ The optional `mcp:` frontmatter field lets a skill declare MCP server configurat
 Each MCP entry must specify a `type`:
 - **`local`** — runs a local process. `command` is required and must be an argv-style array (e.g. `["npx", "-y", "pkg@latest"]`). Optional: `environment` (key-value env vars), `enabled`, `timeout`.
 - **`remote`** — connects to a remote SSE endpoint. `url` is required. Optional: `headers`, `enabled`, `timeout`.
+
+#### Environment variable tokens
+
+Use `{env:VAR_NAME}` in `command` elements, `environment` values, and `headers` values to inject environment variables at plugin startup. If a variable is not set, la-briguade logs a warning and substitutes an empty string. For `command` elements, if the resolved value contains shell metacharacters (`/ \ ; | & $ \` < > !`), the element is replaced with an empty string and a warning is logged — this prevents command injection via compromised env vars.
 
 ### Command
 

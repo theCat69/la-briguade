@@ -12,6 +12,32 @@ import type { Config } from "../types/plugin.js";
 const SKILL_FILE_NAME = "SKILL.md";
 const DISALLOWED_COMMAND_CHARS = /[\\/;|&$`<>!]/;
 
+function resolveEnvTokens(value: string, key: string, field: string): string {
+  const resolvedValue = value.replace(/\{env:([^}]+)\}/g, (_, varName: string) => {
+    const normalizedVarName = varName.trim();
+    const envValue = process.env[normalizedVarName];
+    if (envValue === undefined) {
+      console.warn(
+        `[la-briguade] MCP server '${key}': env var '${normalizedVarName}' referenced in ` +
+          `${field} is not set`,
+      );
+      return "";
+    }
+
+    return envValue;
+  });
+
+  if (field === "command" && DISALLOWED_COMMAND_CHARS.test(resolvedValue)) {
+    console.warn(
+      `[la-briguade] MCP server '${key}': resolved command element contains disallowed ` +
+        "characters after env substitution — element skipped",
+    );
+    return "";
+  }
+
+  return resolvedValue;
+}
+
 const SkillMcpCommandElementSchema = z
   .string()
   .refine((value) => value.trim().length > 0, {
@@ -59,15 +85,20 @@ export const SkillMcpMapSchema = z
 export type SkillMcpEntry = z.infer<typeof SkillMcpEntrySchema>;
 export type SkillMcpMap = Record<string, McpLocalConfig | McpRemoteConfig>;
 
-function toSdkMcpEntry(entry: SkillMcpEntry): McpLocalConfig | McpRemoteConfig {
+function toSdkMcpEntry(key: string, entry: SkillMcpEntry): McpLocalConfig | McpRemoteConfig {
   if (entry.type === "local") {
     const normalized: McpLocalConfig = {
       type: "local",
-      command: entry.command,
+      command: entry.command.map((element) => resolveEnvTokens(element, key, "command")),
     };
 
     if (entry.environment !== undefined) {
-      normalized.environment = entry.environment;
+      normalized.environment = Object.fromEntries(
+        Object.entries(entry.environment).map(([envKey, envValue]) => [
+          envKey,
+          resolveEnvTokens(envValue, key, "environment"),
+        ]),
+      );
     }
     if (entry.enabled !== undefined) {
       normalized.enabled = entry.enabled;
@@ -88,7 +119,12 @@ function toSdkMcpEntry(entry: SkillMcpEntry): McpLocalConfig | McpRemoteConfig {
     normalized.enabled = entry.enabled;
   }
   if (entry.headers !== undefined) {
-    normalized.headers = entry.headers;
+    normalized.headers = Object.fromEntries(
+      Object.entries(entry.headers).map(([headerKey, headerValue]) => [
+        headerKey,
+        resolveEnvTokens(headerValue, key, "headers"),
+      ]),
+    );
   }
   if (entry.timeout !== undefined) {
     normalized.timeout = entry.timeout;
@@ -150,7 +186,7 @@ export function collectSkillMcps(skillDirs: string[]): SkillMcpMap {
       }
 
       seenBySkillDir.set(key, skillDir);
-      collected[key] = toSdkMcpEntry(entry);
+      collected[key] = toSdkMcpEntry(key, entry);
     }
   }
 

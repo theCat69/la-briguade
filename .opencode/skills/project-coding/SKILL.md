@@ -88,6 +88,16 @@ Use `jsonc-parser`'s `modify()` + `applyEdits()` — **never** raw string replac
 ### Hooks
 Hooks are registered via `createHooks(ctx)` returning `Partial<HooksResult>`. They are pure transform functions — mutate the `output` object in-place, no return value. Keep hook logic in small, named helper functions (`truncateLargeOutput`, `appendEditErrorHint`, `detectEmptyResponse`).
 
+### Skill-Embedded MCP Servers
+
+Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. At startup, `collectSkillMcps()` reads all skill dirs, validates the frontmatter with `SkillMcpMapSchema`, and converts each entry via `toSdkMcpEntry()`.
+
+**`{env:VAR_NAME}` tokens** are supported in `command` elements, `environment` values, and `headers` values. They are resolved via `resolveEnvTokens()` at startup:
+- Unset var → `""` + `console.warn`
+- Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`/ \ ; | & $ \` < > !`) → `""` + `console.warn` (injection guard)
+
+See `.code-examples-for-ai/skill-embedded-mcp.md` for a full annotated example.
+
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.
 
