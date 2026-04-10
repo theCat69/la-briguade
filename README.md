@@ -155,7 +155,17 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 
 ## Adding Custom Content
 
-All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own by placing files in the `content/` directory of the package (or by forking).
+All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own without modifying the package by placing files in user content directories. The plugin resolves three layers of content in priority order (lowest to highest):
+
+1. **Built-in** — bundled inside the npm package (`content/` directory)
+2. **Global user** — `~/la_briguade/content/{agents,commands,skills,vendor-prompts}/`
+3. **Project user** — `<project_root>/content/{agents,commands,skills,vendor-prompts}/`
+
+Files in higher-priority layers override built-in files with the same stem name. All layers are optional — missing directories are silently skipped.
+
+**Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/content/agents/coder.md` (applies globally) or `<project_root>/content/agents/coder.md` (applies to that project only).
+
+Content files have a maximum size of 50,000 characters — files exceeding this limit are skipped with a warning.
 
 ### Agent
 
@@ -277,7 +287,7 @@ This is the recommended place for cross-cutting, model-specific instructions tha
 
 ## Architecture
 
-The plugin reads `.md` files from its own `content/` directory at initialization, parses YAML frontmatter, and registers everything programmatically via the opencode plugin config hook. No files are copied to your system — agents, skills, and commands all live inside the npm package and are resolved at runtime.
+The plugin resolves content from three ordered layers (built-in package, global user `~/la_briguade/`, project `<root>/`) using a last-wins merge by filename stem. All content loaders use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts`. No files are copied to your system — agents, skills, and commands are registered in-memory at runtime.
 
 ## License
 

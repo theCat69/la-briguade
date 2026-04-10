@@ -1,7 +1,5 @@
-import { statSync } from "node:fs";
-import { resolve } from "node:path";
 import type { Config } from "../types/plugin.js";
-import { readDirSafe } from "../utils/read-dir.js";
+import { collectDirs } from "../utils/content-merge.js";
 
 /**
  * Extended config shape that includes the `skills` field available in the
@@ -28,28 +26,16 @@ interface ConfigWithSkills extends Config {
  * Only registers the path if the directory exists and contains at least
  * one skill subdirectory.
  */
-export function registerSkills(config: Config, contentDir: string): { dirs: string[] } {
-  const skillsDir = resolve(contentDir, "skills");
-
-  const entries = readDirSafe(skillsDir, "skills");
-  if (entries === undefined) return { dirs: [] };
-
-  // Resolve valid skill subdirectories
-  const validSkillDirs = entries.flatMap((entry) => {
-    const maybeSkillDir = resolve(skillsDir, entry);
-    try {
-      return statSync(maybeSkillDir).isDirectory() ? [maybeSkillDir] : [];
-    } catch {
-      return [];
-    }
-  });
+export function registerSkills(config: Config, skillRoots: string[]): { dirs: string[] } {
+  const mergedSkillDirs = collectDirs(skillRoots);
+  const validSkillDirs = [...mergedSkillDirs.values()];
 
   if (validSkillDirs.length === 0) return { dirs: [] };
 
   const extended = config as ConfigWithSkills;
   extended.skills = {
     ...extended.skills,
-    paths: [...(extended.skills?.paths ?? []), skillsDir],
+    paths: [...(extended.skills?.paths ?? []), ...validSkillDirs],
   };
 
   return { dirs: validSkillDirs };

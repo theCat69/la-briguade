@@ -17,6 +17,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `global-prompts-loader.md` — Loading shared global prompt content from a directory, keyed by lowercased filename stem, with per-file error resilience
 - `skill-embedded-mcp.md` — Declaring local/remote MCP servers in SKILL.md frontmatter, including `{env:VAR_NAME}` token resolution and command-injection guard, and non-MCP `permission.bash` declarations
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
+- `content-override-merge.md` — Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()`
 
 ## Location
 

@@ -368,6 +368,13 @@ export function injectSkillBashPermissions(
       }
 
       const existingBash = rawPermission["bash"];
+
+      // Scalar bash permission (for example "allow"/"ask"/"deny") takes precedence.
+      // Only inject into a record-shaped bash section; never replace a scalar.
+      if (existingBash !== undefined && existingBash !== null && !isRecord(existingBash)) {
+        continue;
+      }
+
       let bashSection: Record<string, unknown> | undefined = isRecord(existingBash)
         ? existingBash
         : undefined;

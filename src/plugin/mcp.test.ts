@@ -1092,6 +1092,46 @@ describe("injectSkillBashPermissions", () => {
       },
     });
   });
+
+  it("should preserve scalar bash permission and skip skill injection", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: "allow",
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: "allow",
+    });
+  });
+
+  it("should treat null bash permission as absent and inject patterns", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      bash: null,
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      bash: { "playwright-cli *": "allow" },
+    });
+  });
 });
 
 describe("mergeSkillMcps", () => {

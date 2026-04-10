@@ -5,7 +5,7 @@ vi.mock("./loader.js");
 
 import { homedir } from "node:os";
 import { loadConfig } from "./loader.js";
-import { resolveUserConfig } from "./index.js";
+import { resolveConfigBaseDirs, resolveUserConfig } from "./index.js";
 import type { LaBriguadeConfig } from "./schema.js";
 import type { ConfigLoadResult } from "./loader.js";
 
@@ -245,5 +245,25 @@ describe("resolveUserConfig", () => {
     expect(result.opus_enabled).toBe(true);
     expect(result.model).toBe("global-model");
     expect(result.agents?.["coder"]?.temperature).toBe(0.5);
+  });
+});
+
+describe("resolveConfigBaseDirs", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should resolve global and project base directories", () => {
+    // Arrange
+    mockHomedir.mockReturnValue("/home/user");
+
+    // Act
+    const result = resolveConfigBaseDirs("/project");
+
+    // Assert
+    expect(result).toEqual({
+      globalDir: "/home/user/la_briguade",
+      projectDir: "/project",
+    });
   });
 });

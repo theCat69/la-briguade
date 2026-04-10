@@ -6,13 +6,13 @@ import { registerAgents } from "./agents.js";
 
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
-import { readDirSafe } from "../utils/read-dir.js";
+import { collectFiles } from "../utils/content-merge.js";
 
 vi.mock("node:fs");
-vi.mock("../utils/read-dir.js");
+vi.mock("../utils/content-merge.js");
 
 const mockReadFileSync = vi.mocked(readFileSync);
-const mockReadDirSafe = vi.mocked(readDirSafe);
+const mockCollectFiles = vi.mocked(collectFiles);
 
 function makeConfig(): Config {
   return { agent: {} } as Config;
@@ -26,7 +26,12 @@ describe("registerAgents", () => {
   it("should skip unreadable agent file, warn, and still register other agents", () => {
     // Arrange
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockReadDirSafe.mockReturnValue(["good.md", "bad.md"]);
+    mockCollectFiles.mockReturnValue(
+      new Map([
+        ["good", "/builtin/agents/good.md"],
+        ["bad", "/builtin/agents/bad.md"],
+      ]),
+    );
     mockReadFileSync.mockImplementation((filePath) => {
       if (String(filePath).endsWith("bad.md")) {
         throw new Error("EACCES");
@@ -43,7 +48,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content");
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
@@ -56,7 +61,12 @@ describe("registerAgents", () => {
   it("should warn on duplicate derived agent names and keep collision handling behavior", () => {
     // Arrange
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockReadDirSafe.mockReturnValue(["Coder.md", "coder.md"]);
+    mockCollectFiles.mockReturnValue(
+      new Map([
+        ["Coder", "/builtin/agents/Coder.md"],
+        ["coder", "/builtin/agents/coder.md"],
+      ]),
+    );
     mockReadFileSync.mockImplementation((filePath) => {
       if (String(filePath).endsWith("Coder.md")) {
         return [
@@ -81,7 +91,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    const result = registerAgents(config, "/content");
+    const result = registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
@@ -94,7 +104,7 @@ describe("registerAgents", () => {
 
   it("should swap opus model to sonnet when opus_enabled is false", () => {
     // Arrange
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -108,7 +118,7 @@ describe("registerAgents", () => {
     const userConfig: LaBriguadeConfig = { opus_enabled: false };
 
     // Act
-    registerAgents(config, "/content", userConfig);
+    registerAgents(config, ["/builtin/agents"], userConfig);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
@@ -117,7 +127,7 @@ describe("registerAgents", () => {
 
   it("should parse valid frontmatter tools into base agent config", () => {
     // Arrange
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -132,7 +142,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content");
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
@@ -141,7 +151,7 @@ describe("registerAgents", () => {
 
   it("should leave tools unset when frontmatter tools field is absent", () => {
     // Arrange
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -155,7 +165,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content");
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
@@ -165,7 +175,7 @@ describe("registerAgents", () => {
 
   it("should let user config tools override frontmatter tools", () => {
     // Arrange
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -190,7 +200,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content", userConfig);
+    registerAgents(config, ["/builtin/agents"], userConfig);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
@@ -200,7 +210,7 @@ describe("registerAgents", () => {
   it("should warn and skip invalid frontmatter tools keys", () => {
     // Arrange
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -214,7 +224,7 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content");
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
@@ -228,7 +238,7 @@ describe("registerAgents", () => {
   it("should accept empty frontmatter tools object as a valid no-op", () => {
     // Arrange
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockReadDirSafe.mockReturnValue(["Coder.md"]);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
     mockReadFileSync.mockReturnValue(
       [
         "---",
@@ -241,12 +251,34 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    registerAgents(config, "/content");
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
     expect(coder).toBeDefined();
     expect(coder).not.toHaveProperty("tools");
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("should register overridden agent from later directory", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map([["coder", "/project/content/agents/coder.md"]]));
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "model: openai/gpt-4o-mini",
+        "---",
+        "Project override prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, ["/builtin/agents", "/project/content/agents"]);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder?.["prompt"]).toBe("Project override prompt");
   });
 });

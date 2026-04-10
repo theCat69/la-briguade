@@ -1,0 +1,70 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { registerSkills } from "./skills.js";
+
+import type { Config } from "../types/plugin.js";
+import { collectDirs } from "../utils/content-merge.js";
+
+vi.mock("../utils/content-merge.js");
+
+const mockCollectDirs = vi.mocked(collectDirs);
+
+function makeConfig(): Config {
+  return {} as Config;
+}
+
+describe("registerSkills", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should register discovered skill directories into config.skills.paths", () => {
+    mockCollectDirs.mockReturnValue(new Map([["frontend", "/builtin/skills/frontend"]]));
+
+    const config = makeConfig();
+
+    const result = registerSkills(config, ["/builtin/skills"]);
+
+    expect(result.dirs).toEqual(["/builtin/skills/frontend"]);
+    expect((config as Record<string, unknown>)["skills"]).toEqual({
+      paths: ["/builtin/skills/frontend"],
+    });
+  });
+
+  it("should keep overridden skill directory from later root", () => {
+    mockCollectDirs.mockReturnValue(new Map([["frontend", "/project/content/skills/frontend"]]));
+
+    const config = makeConfig();
+
+    const result = registerSkills(config, ["/builtin/skills", "/project/content/skills"]);
+
+    expect(result.dirs).toEqual(["/project/content/skills/frontend"]);
+    expect((config as Record<string, unknown>)["skills"]).toEqual({
+      paths: ["/project/content/skills/frontend"],
+    });
+  });
+
+  it("should register additive skill directories from multiple roots", () => {
+    mockCollectDirs.mockReturnValue(
+      new Map([
+        ["frontend", "/builtin/skills/frontend"],
+        ["typescript", "/project/content/skills/typescript"],
+      ]),
+    );
+
+    const config = makeConfig();
+
+    const result = registerSkills(config, ["/builtin/skills", "/project/content/skills"]);
+
+    expect(result.dirs).toEqual([
+      "/builtin/skills/frontend",
+      "/project/content/skills/typescript",
+    ]);
+    expect((config as Record<string, unknown>)["skills"]).toEqual({
+      paths: [
+        "/builtin/skills/frontend",
+        "/project/content/skills/typescript",
+      ],
+    });
+  });
+});

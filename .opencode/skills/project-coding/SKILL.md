@@ -57,6 +57,8 @@ import type { HooksResult } from "../types/plugin.js";
 ### Plugin Registration
 The `Plugin` export (`src/index.ts`) is an async function that returns `{ config, ...hooks }`. The `config` callback receives the mutable `input` config object and calls `register*` helpers to merge into it. **Never mutate globals** — only mutate the `input` passed to the `config` callback.
 
+`resolveConfigBaseDirs(projectDir)` (from `src/config/index.ts`) returns `{ globalDir, projectDir }` — the two user content roots (`~/la_briguade/` and the project root). All content loaders receive ordered arrays of dirs (`[builtin, globalUser, projectUser]`) and use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts` for priority-based last-wins merging.
+
 ```typescript
 const LaBriguadePlugin: Plugin = async (ctx) => ({
   config: async (input) => {
@@ -69,7 +71,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => ({
 ```
 
 ### Content-Driven Registration
-Agents, skills, and commands are loaded from `.md` files in `content/{agents,skills,commands}/` at init time. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+Agents, skills, and commands are loaded from `.md` files resolved across three ordered layers: built-in `content/`, global user `~/la_briguade/content/`, and project-level `<root>/content/`. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
 
 ### Frontmatter Parsing
 Use the `yaml` library's `parse()` with default `schema: "core"` behavior to avoid YAML 1.1 quirks (`on`/`off` → boolean). Always validate the parsed value before casting:
@@ -160,6 +162,7 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
 - `model-sections.md` — Parsing and injecting model-family prompt sections from agent `.md` files
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
+- `content-override-merge.md` — Priority-based merge of layered content dirs using `collectFiles()` / `collectDirs()`
 
 ## Zod v4 Notes
 
