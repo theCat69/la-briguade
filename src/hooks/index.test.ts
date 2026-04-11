@@ -220,7 +220,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     await transform?.(input as never, output as never);
 
     // Assert
-    expect(output.system).toEqual(["Base system prompt\n\nClaude section content"]);
+    expect(output.system).toEqual(["Base system prompt\n\nClaude section content\n\nGlobal Claude prompt"]);
   });
 });
 
