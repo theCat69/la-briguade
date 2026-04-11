@@ -42,4 +42,15 @@ describe("loadContentFiles", () => {
     expect(loaded.size).toBe(0);
     expect(mockLoggerWarn).toHaveBeenCalledWith("skipping /tmp/bad.md: boom");
   });
+
+  it("should sanitize non-printable characters in thrown error messages", () => {
+    mockCollectFiles.mockReturnValue(new Map([["bad", "/tmp/bad.md"]]));
+
+    const loaded = loadContentFiles(["/tmp"], ".md", () => {
+      throw new Error("bad\u0007line\u0000");
+    });
+
+    expect(loaded.size).toBe(0);
+    expect(mockLoggerWarn).toHaveBeenCalledWith("skipping /tmp/bad.md: bad?line?");
+  });
 });

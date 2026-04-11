@@ -158,6 +158,24 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     expect(output.system).toEqual(["Agent base prompt"]);
   });
 
+  it("should not inject vendor prompt when model family is unknown", async () => {
+    // Arrange
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      ["coder", { base: "Agent base prompt", sections: {} }],
+    ]);
+    const vendorPrompts = new Map<string, string>([["claude", "Global Claude prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+
+    const input = { model: { id: "mistral/large" } };
+    const output = { system: ["Agent base prompt"] };
+
+    // Act
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual(["Agent base prompt"]);
+  });
+
   it("should append per-agent claude model section for claude model IDs", async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
