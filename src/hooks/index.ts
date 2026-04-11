@@ -144,7 +144,11 @@ function forEachMatchedSystemEntry(
 
 function findSystemIndexForAgent(system: string[], base: string): number {
   const trimmedBase = base.trim();
-  return system.findIndex((s) => s.trim() === trimmedBase);
+  // Match both the original base string and strings already augmented by
+  // a prior injectModelSections pass (which appends "\n\n<section>").
+  return system.findIndex(
+    (s) => s.trim() === trimmedBase || s.startsWith(trimmedBase + "\n"),
+  );
 }
 
 /**
