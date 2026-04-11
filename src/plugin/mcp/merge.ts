@@ -3,9 +3,11 @@ import type { McpLocalConfig, McpRemoteConfig } from "@opencode-ai/sdk";
 import type { Config } from "../../types/plugin.js";
 import { logger } from "../../utils/logger.js";
 
-import type { SkillMcpEntry, SkillMcpMap } from "./types.js";
-
-const DISALLOWED_COMMAND_CHARS = /[;|&$`<>!]/;
+import {
+  DISALLOWED_COMMAND_CHARS,
+  type SkillMcpEntry,
+  type SkillMcpMap,
+} from "./types.js";
 
 type EnvResolutionIssue = {
   key: string;

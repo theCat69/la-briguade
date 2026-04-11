@@ -62,7 +62,7 @@ export function parseFrontmatter(content: string): ParsedFrontmatter {
     parsed = parseYaml(yamlBlock);
   } catch (err) {
     logger.warn(`Failed to parse YAML frontmatter: ${String(err)}`);
-    return { attributes: {}, body: "" };
+    return { attributes: {}, body };
   }
 
   const attributes = isRecord(parsed) ? parsed : {};

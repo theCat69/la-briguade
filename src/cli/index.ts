@@ -48,7 +48,6 @@ function findOrCreateConfigFile(): ConfigFileResult {
     const message =
       `[la-briguade] Cannot create config directory: ${dirname(configPath)}. ` +
       "Check permissions.";
-    console.error(message);
     throw new Error(message);
   }
 

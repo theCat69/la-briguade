@@ -9,6 +9,7 @@ import { toSdkMcpEntry } from "./merge.js";
 import {
   SkillMcpMapSchema,
   SkillPermissionFrontmatterSchema,
+  buildPrefixedPermissionMap,
   type SkillBashPermIndex,
   type SkillMcpIndex,
   type SkillMcpMap,
@@ -26,21 +27,6 @@ type ReadSkillFileError =
   | { kind: "not-found" }
   | { kind: "read-error"; skillFilePath: string; error: unknown }
   | { kind: "invalid-frontmatter"; skillFilePath: string };
-
-function buildPrefixedPermissionMap(
-  id: string,
-  permissionBlock: Record<string, string> | undefined,
-): Record<string, string> {
-  if (permissionBlock === undefined) {
-    return { [`${id}_*`]: "allow" };
-  }
-
-  const prefixedPermissions: Record<string, string> = {};
-  for (const [toolName, value] of Object.entries(permissionBlock)) {
-    prefixedPermissions[`${id}_${toolName}`] = value;
-  }
-  return prefixedPermissions;
-}
 
 function readSkillFileData(skillDir: string): Result<SkillFileData, ReadSkillFileError> {
   const skillFilePath = resolve(skillDir, SKILL_FILE_NAME);

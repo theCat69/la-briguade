@@ -28,7 +28,7 @@ describe("parseFrontmatter", () => {
     expect(result.body).toBe(input);
   });
 
-  it("should return empty attributes and empty body when YAML parsing fails", () => {
+  it("should return empty attributes and preserve original body when YAML parsing fails", () => {
     // Arrange
     const input = [
       "---",
@@ -43,7 +43,26 @@ describe("parseFrontmatter", () => {
     // Assert
     expect(mockLoggerWarn).toHaveBeenCalledOnce();
     expect(result.attributes).toEqual({});
-    expect(result.body).toBe("");
+    expect(result.body).toBe("Body should be dropped on parse failure");
+  });
+
+  it("should gracefully fall back on malformed YAML without throwing", () => {
+    // Arrange
+    const input = ["---", "title: [broken", "---", "Original agent prompt body"].join("\n");
+    let result: ReturnType<typeof parseFrontmatter> | undefined;
+
+    // Act
+    const act = () => {
+      result = parseFrontmatter(input);
+    };
+
+    // Assert
+    expect(act).not.toThrow();
+    expect(result).toEqual({
+      attributes: {},
+      body: "Original agent prompt body",
+    });
+    expect(mockLoggerWarn).toHaveBeenCalledOnce();
   });
 
   it("should return empty attributes for valid non-object YAML scalar", () => {

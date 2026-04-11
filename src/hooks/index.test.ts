@@ -180,6 +180,39 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     // Assert
     expect(output.system).toEqual(["Base system prompt\n\nClaude section content"]);
   });
+
+  it("should apply model section before vendor prompt in one transform call", async () => {
+    // Arrange
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: "Base system prompt",
+          sections: { claude: "Claude section content" },
+        },
+      ],
+      [
+        "coder-vendor-match",
+        {
+          base: "Base system prompt\n\nClaude section content",
+          sections: {},
+        },
+      ],
+    ]);
+    const vendorPrompts = new Map<string, string>([["claude", "Global Claude prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+
+    const input = { model: { id: "anthropic/claude-3-7-sonnet" } };
+    const output = { system: ["Base system prompt"] };
+
+    // Act
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual([
+      "Base system prompt\n\nClaude section content\n\nGlobal Claude prompt",
+    ]);
+  });
 });
 
 describe("detectEmptyResponse via event hook", () => {
@@ -210,5 +243,28 @@ describe("detectEmptyResponse via event hook", () => {
     expect(warnSpy).toHaveBeenCalledWith(
       "Empty assistant response detected — the model produced no output tokens.",
     );
+  });
+
+  it("should not warn when assistant output tokens are non-zero", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            role: "assistant",
+            time: { completed: "2026-01-01T00:00:00.000Z" },
+            tokens: { output: 5 },
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
