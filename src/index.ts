@@ -12,7 +12,7 @@ import {
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
-} from "./plugin/mcp.js";
+} from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
 import { createHooks } from "./hooks/index.js";
@@ -27,11 +27,6 @@ const builtinSkillsDir = join(contentDir, "skills");
 const builtinVendorDir = join(contentDir, "vendor-prompts");
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
-  // Shared mutable map populated in config() and read by the system transform hook.
-  // Keyed by agent name (e.g. "coder", "reviewer") — not by base prompt text — so
-  // agents with identical base prompts never collide. config() is called once before
-  // any chat session begins, so the map is fully populated before the hook fires.
-  const agentSections: Map<string, AgentSectionsEntry> = new Map();
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
   const userAgentsDirs = [
     join(globalDir, "content", "agents"),
@@ -50,6 +45,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(projectDir, "content", "vendor-prompts"),
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
+  const agentSections = new Map<string, AgentSectionsEntry>();
+
+  const hooks = createHooks(ctx, agentSections, vendorPrompts);
 
   return {
     config: async (input) => {
@@ -59,9 +57,6 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
       );
-      for (const [key, value] of sections) {
-        agentSections.set(key, value);
-      }
       registerCommands(input, [builtinCommandsDir, ...userCommandsDirs]);
       const { dirs: skillDirs } = registerSkills(
         input,
@@ -72,8 +67,11 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       injectSkillMcpPermissions(input, skillMcpIndex);
       const skillBashPermIndex = collectSkillBashPermissions(skillDirs);
       injectSkillBashPermissions(input, skillBashPermIndex);
+      for (const [agentName, entry] of sections) {
+        agentSections.set(agentName, entry);
+      }
     },
-    ...createHooks(ctx, agentSections, vendorPrompts),
+    ...hooks,
   };
 };
 

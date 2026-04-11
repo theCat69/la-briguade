@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 import type { Config } from "../types/plugin.js";
-import { collectFiles } from "../utils/content-merge.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { loadContentFiles } from "../utils/load-content.js";
+import { isRecord } from "../utils/type-guards.js";
 
 interface CommandConfig {
   template: string;
@@ -34,23 +35,16 @@ function commandNameFromFilename(filename: string): string {
  * and merges them into `config.command`.
  */
 export function registerCommands(config: Config, commandDirs: string[]): void {
-  const mergedCommandFiles = collectFiles(commandDirs, ".md");
-  if (mergedCommandFiles.size === 0) return;
-
-  const parsedCommands: Record<string, CommandConfig> = {};
-
-  for (const [stem, filePath] of mergedCommandFiles) {
+  const parsedCommands = loadContentFiles(commandDirs, ".md", (filePath, stem) => {
     let raw: string;
     try {
       raw = readFileSync(filePath, "utf-8");
     } catch {
-      console.warn(`[la-briguade] Could not read command file: ${filePath}`);
-      continue;
+      throw new Error(`Could not read command file: ${filePath}`);
     }
 
     if (raw.length > MAX_COMMAND_FILE_LENGTH) {
-      console.warn(`[la-briguade] Command file exceeds size limit, skipping: ${filePath}`);
-      continue;
+      throw new Error(`Command file exceeds size limit, skipping: ${filePath}`);
     }
 
     const { attributes, body } = parseFrontmatter(raw);
@@ -80,8 +74,19 @@ export function registerCommands(config: Config, commandDirs: string[]): void {
       commandConfig.subtask = subtask;
     }
 
-    parsedCommands[commandName] = commandConfig;
+    return {
+      commandName,
+      commandConfig,
+    };
+  });
+
+  if (parsedCommands.size === 0) return;
+
+  const nextCommands: Record<string, CommandConfig> = {};
+  for (const parsed of parsedCommands.values()) {
+    nextCommands[parsed.commandName] = parsed.commandConfig;
   }
 
-  config.command = { ...config.command, ...parsedCommands };
+  const existingCommands = isRecord(config.command) ? config.command : {};
+  config.command = { ...existingCommands, ...nextCommands };
 }

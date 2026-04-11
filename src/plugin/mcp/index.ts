@@ -1,22 +1,22 @@
 export {
   collectSkillBashPermissions,
   collectSkillMcps,
-} from "./mcp/collect.js";
-export { mergeSkillMcps } from "./mcp/merge.js";
+} from "./collect.js";
+export { mergeSkillMcps } from "./merge.js";
 export {
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
-} from "./mcp/permissions.js";
+} from "./permissions.js";
 export {
   SkillMcpEntrySchema,
   SkillMcpLocalConfigSchema,
   SkillMcpMapSchema,
   SkillMcpRemoteConfigSchema,
-} from "./mcp/types.js";
+} from "./types.js";
 export type {
   SkillBashPermIndex,
   SkillMcpBinding,
   SkillMcpEntry,
   SkillMcpIndex,
   SkillMcpMap,
-} from "./mcp/types.js";
+} from "./types.js";

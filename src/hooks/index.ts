@@ -35,8 +35,8 @@ export type AgentSectionsEntry = {
  */
 export function createHooks(
   _ctx: PluginInput,
-  agentSections: Map<string, AgentSectionsEntry>,
-  vendorPrompts: Map<string, string>,
+  agentSections: ReadonlyMap<string, AgentSectionsEntry>,
+  vendorPrompts: ReadonlyMap<string, string>,
 ): Partial<HooksResult> {
   return {
     "tool.execute.after": async (_input, output) => {
@@ -64,17 +64,17 @@ export function createHooks(
  */
 function truncateLargeOutput(output: { output?: unknown }): void {
   if (typeof output.output !== "string") return;
-  const current = output as { output: string };
+  const current = output.output;
 
-  if (current.output.length <= TRUNCATION_THRESHOLD) return;
+  if (current.length <= TRUNCATION_THRESHOLD) return;
 
-  const originalLength = current.output.length;
+  const originalLength = current.length;
   const removedChars = originalLength - HEAD_SIZE - TAIL_SIZE;
 
-  current.output =
-    current.output.slice(0, HEAD_SIZE) +
+  output.output =
+    current.slice(0, HEAD_SIZE) +
     `\n\n[truncated ${removedChars} chars]\n\n` +
-    current.output.slice(originalLength - TAIL_SIZE);
+    current.slice(originalLength - TAIL_SIZE);
 }
 
 /**
@@ -87,15 +87,15 @@ function appendEditErrorHint(
 ): void {
   if (toolName !== "edit") return;
   if (typeof output.output !== "string") return;
-  const current = output as { output: string };
+  const current = output.output;
 
   const hasEditError = EDIT_ERROR_PATTERNS.some((pattern) =>
-    current.output.includes(pattern),
+    current.includes(pattern),
   );
 
   if (hasEditError) {
-    current.output =
-      current.output +
+    output.output =
+      current +
       "\nHint: Re-read the file to get current content before retrying the edit.";
   }
 }
@@ -110,7 +110,7 @@ function appendEditErrorHint(
  * 3. If neither, leave the system string unchanged
  */
 function injectModelSections(
-  agentSections: Map<string, AgentSectionsEntry>,
+  agentSections: ReadonlyMap<string, AgentSectionsEntry>,
   modelId: string,
   system: string[],
 ): void {
@@ -126,7 +126,7 @@ function injectModelSections(
 }
 
 function forEachMatchedSystemEntry(
-  agentSections: Map<string, AgentSectionsEntry>,
+  agentSections: ReadonlyMap<string, AgentSectionsEntry>,
   system: string[],
   callback: (index: number, entry: AgentSectionsEntry) => void,
 ): void {
@@ -151,7 +151,7 @@ function findSystemIndexForAgent(system: string[], base: string): number {
  * to avoid injecting family-specific prompts into unrelated model sessions.
  */
 function resolveVendorFamily(
-  vendorPrompts: Map<string, string>,
+  vendorPrompts: ReadonlyMap<string, string>,
   modelId: string,
 ): string | undefined {
   for (const family of KNOWN_FAMILIES) {
@@ -172,8 +172,8 @@ function resolveVendorFamily(
  * intentionally excluded.
  */
 function injectVendorPrompts(
-  agentSections: Map<string, AgentSectionsEntry>,
-  vendorPrompts: Map<string, string>,
+  agentSections: ReadonlyMap<string, AgentSectionsEntry>,
+  vendorPrompts: ReadonlyMap<string, string>,
   modelId: string,
   system: string[],
 ): void {

@@ -1,6 +1,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
+import { isRecord } from "../utils/type-guards.js";
 
 /**
  * Swap a `claude-opus-*` model string to the equivalent `claude-sonnet-*`.
@@ -74,13 +75,12 @@ export function applyAgentOverride(base: AgentConfig, override: AgentOverride): 
   // We use the index signature path (string key) to bypass exactOptionalPropertyTypes
   // strictness when assigning back the merged permission object.
   if (override.permission !== undefined) {
+    const basePermission = isRecord(base.permission) ? base.permission : {};
     const mergedPermission = {
-      ...(base.permission as Record<string, unknown> | undefined),
+      ...basePermission,
       ...override.permission,
     };
-    // Using the index signature to assign avoids exactOptionalPropertyTypes conflict:
-    // AgentConfig has [key: string]: unknown which accepts any value.
-    (merged as Record<string, unknown>)["permission"] = mergedPermission;
+    merged["permission"] = mergedPermission;
   }
 
   // Merge tools: base tools spread then override tools spread

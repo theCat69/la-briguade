@@ -52,7 +52,7 @@ describe("registerAgents", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Could not read agent file:"),
+      expect.stringContaining("[la-briguade] skipping /builtin/agents/bad.md:"),
     );
     expect(config.agent?.["good"]).toBeDefined();
     expect(config.agent?.["bad"]).toBeUndefined();

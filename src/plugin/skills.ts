@@ -1,20 +1,6 @@
 import type { Config } from "../types/plugin.js";
 import { collectDirs } from "../utils/content-merge.js";
-
-/**
- * Extended config shape that includes the `skills` field available in the
- * opencode v2 runtime but not yet typed in the v1 SDK's Config definition.
- *
- * Cast required because @opencode-ai/sdk ^1.4.0 does not expose the
- * `skills` property on Config — the runtime accepts it, but the type
- * lags behind. Remove this cast once the SDK ships the updated type.
- */
-interface ConfigWithSkills extends Config {
-  skills?: {
-    paths?: string[];
-    urls?: string[];
-  };
-}
+import { isRecord } from "../utils/type-guards.js";
 
 /**
  * Register the plugin's bundled skills directory into the config.
@@ -32,10 +18,18 @@ export function registerSkills(config: Config, skillRoots: string[]): { dirs: st
 
   if (validSkillDirs.length === 0) return { dirs: [] };
 
-  const extended = config as ConfigWithSkills;
-  extended.skills = {
-    ...extended.skills,
-    paths: [...(extended.skills?.paths ?? []), ...validSkillDirs],
+  if (!isRecord(config)) return { dirs: validSkillDirs };
+
+  const configRecord: Record<string, unknown> = config;
+  const rawSkills = configRecord["skills"];
+  const skillsRecord = isRecord(rawSkills) ? rawSkills : {};
+  const existingPaths = Array.isArray(skillsRecord["paths"])
+    ? skillsRecord["paths"].filter((value): value is string => typeof value === "string")
+    : [];
+
+  configRecord["skills"] = {
+    ...skillsRecord,
+    paths: [...existingPaths, ...validSkillDirs],
   };
 
   return { dirs: validSkillDirs };

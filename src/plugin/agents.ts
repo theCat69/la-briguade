@@ -7,22 +7,12 @@ import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
 import { AgentToolsSchema } from "../config/schema.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
-import { collectFiles } from "../utils/content-merge.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { loadContentFiles } from "../utils/load-content.js";
 import { parseModelSections } from "../utils/model-sections.js";
+import { isRecord } from "../utils/type-guards.js";
 import type { AgentSectionsEntry } from "../hooks/index.js";
 
-const ALLOWED_AGENT_KEYS = [
-  "description",
-  "mode",
-  "color",
-  "model",
-  "temperature",
-  "top_p",
-  "maxSteps",
-  "permission",
-  "disable",
-] as const;
 const MAX_AGENT_FILE_LENGTH = 50_000;
 
 /**
@@ -59,40 +49,60 @@ export function registerAgents(
   userConfig?: LaBriguadeConfig,
 ): RegisterAgentsResult {
   const agentSections: Map<string, AgentSectionsEntry> = new Map();
-  const mergedAgentFiles = collectFiles(agentDirs, ".md");
-  if (mergedAgentFiles.size === 0) return { agentSections };
-
-  // Compute once outside the per-agent loop — the flag is the same for all agents.
   const opusEnabled = userConfig?.opus_enabled ?? false;
 
-  const parsedAgents: Record<string, Record<string, unknown>> = {};
-
-  for (const [stem, filePath] of mergedAgentFiles) {
+  const loadedAgents = loadContentFiles(agentDirs, ".md", (filePath, stem) => {
     let raw: string;
     try {
       raw = readFileSync(filePath, "utf-8");
     } catch {
-      console.warn(`[la-briguade] Could not read agent file: ${filePath}`);
-      continue;
+      throw new Error(`Could not read agent file: ${filePath}`);
     }
 
     if (raw.length > MAX_AGENT_FILE_LENGTH) {
-      console.warn(`[la-briguade] Agent file exceeds size limit, skipping: ${filePath}`);
-      continue;
+      throw new Error(`Agent file exceeds size limit, skipping: ${filePath}`);
     }
 
     const { attributes, body } = parseFrontmatter(raw);
     const { base, sections } = parseModelSections(body);
     const agentName = agentNameFromFilename(`${stem}.md`);
 
-    const agentConfig: Record<string, unknown> = {
+    const agentConfig: AgentConfig = {
       prompt: base,
     };
 
-    for (const key of ALLOWED_AGENT_KEYS) {
-      if (key in attributes) {
-        agentConfig[key] = attributes[key];
-      }
+    if (typeof attributes["description"] === "string") {
+      agentConfig.description = attributes["description"];
+    }
+    if (
+      attributes["mode"] === "primary" ||
+      attributes["mode"] === "subagent" ||
+      attributes["mode"] === "all"
+    ) {
+      agentConfig.mode = attributes["mode"];
+    }
+    if (typeof attributes["color"] === "string") {
+      agentConfig.color = attributes["color"];
+    }
+    if (typeof attributes["model"] === "string") {
+      agentConfig.model = attributes["model"];
+    }
+    if (typeof attributes["temperature"] === "number") {
+      agentConfig.temperature = attributes["temperature"];
+    }
+    if (typeof attributes["top_p"] === "number") {
+      agentConfig.top_p = attributes["top_p"];
+    }
+    if (typeof attributes["maxSteps"] === "number") {
+      agentConfig.maxSteps = attributes["maxSteps"];
+    }
+    if (typeof attributes["disable"] === "boolean") {
+      agentConfig.disable = attributes["disable"];
+    }
+
+    const permission = attributes["permission"];
+    if (isRecord(permission)) {
+      agentConfig.permission = permission;
     }
 
     if (attributes["tools"] !== undefined) {
@@ -110,32 +120,43 @@ export function registerAgents(
       }
     }
 
-    // AgentConfig has an index signature [key: string]: unknown, so the
-    // Record<string, unknown> built from frontmatter is structurally compatible.
-    // The cast is safe: we only add known AgentConfig fields above.
-    const resolved: AgentConfig =
+    const resolved =
       userConfig !== undefined
-        ? resolveAgentConfig(agentName, agentConfig as AgentConfig, userConfig)
-        : (agentConfig as AgentConfig);
+        ? resolveAgentConfig(agentName, agentConfig, userConfig)
+        : agentConfig;
 
-    // When opus_enabled is false (default), swap any claude-opus-* model to
-    // the equivalent claude-sonnet-* — produces a new object, never mutates.
-    // This applies regardless of whether a user config was found.
     const final =
-      !opusEnabled && resolved.model != null
+      !opusEnabled && typeof resolved.model === "string"
         ? { ...resolved, model: swapOpusModel(resolved.model) }
         : resolved;
-    parsedAgents[agentName] = final as Record<string, unknown>;
 
-    if (Object.keys(sections).length > 0) {
-      if (agentSections.has(agentName)) {
-        console.warn(`[la-briguade] duplicate agent name in sections map: '${agentName}'`);
+    return {
+      agentName,
+      final,
+      base,
+      sections,
+    };
+  });
+
+  if (loadedAgents.size === 0) return { agentSections };
+
+  const parsedAgents: Record<string, AgentConfig> = {};
+
+  for (const parsed of loadedAgents.values()) {
+    parsedAgents[parsed.agentName] = parsed.final;
+
+    if (Object.keys(parsed.sections).length > 0) {
+      if (agentSections.has(parsed.agentName)) {
+        console.warn(
+          `[la-briguade] duplicate agent name in sections map: '${parsed.agentName}'`,
+        );
       }
-      agentSections.set(agentName, { base, sections });
+      agentSections.set(parsed.agentName, { base: parsed.base, sections: parsed.sections });
     }
   }
 
-  config.agent = { ...config.agent, ...parsedAgents };
+  const existingAgents = isRecord(config.agent) ? config.agent : {};
+  config.agent = { ...existingAgents, ...parsedAgents };
 
   return { agentSections };
 }
