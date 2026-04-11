@@ -65,7 +65,7 @@ export function registerAgents(
     }
 
     const { attributes, body } = parseFrontmatter(raw);
-    const { base, sections } = parseModelSections(body);
+    const { base, segments } = parseModelSections(body);
     const agentName = agentNameFromFilename(`${stem}.md`);
 
     const agentConfig: AgentConfig = {
@@ -135,7 +135,7 @@ export function registerAgents(
       agentName,
       final,
       base,
-      sections,
+      segments,
     };
   });
 
@@ -146,11 +146,11 @@ export function registerAgents(
   for (const parsed of loadedAgents.values()) {
     parsedAgents[parsed.agentName] = parsed.final;
 
-    if (Object.keys(parsed.sections).length > 0) {
+    if (parsed.segments.length > 0) {
       if (agentSections.has(parsed.agentName)) {
         logger.warn(`duplicate agent name in sections map: '${parsed.agentName}'`);
       }
-      agentSections.set(parsed.agentName, { base: parsed.base, sections: parsed.sections });
+      agentSections.set(parsed.agentName, { base: parsed.base, segments: parsed.segments });
     }
   }
 

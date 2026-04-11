@@ -273,11 +273,28 @@ Use markdown headers for all responses.
 Be terse. No filler. Code only.
 ```
 
-**Supported families** (case-insensitive): `claude`, `gpt`, `gemini`, `grok`.
+**Supported families** (case-insensitive): `claude`, `gpt`, `gemini`, `grok`. A special `ALL` target is also supported — sections tagged `====== ALL ======` are included for every model regardless of family.
 
-**Matching logic** — the active model ID (e.g. `"github-copilot/claude-sonnet-4-6"`) is matched against each family name as a substring. The first match wins. If no family matches, the `claude` section is used as a fallback. If there is no `claude` section either, only the base body is sent.
+**Matching logic** — the active model ID (e.g. `"github-copilot/claude-sonnet-4-6"`) is matched against each family name as a substring. All segments in document order whose target is `all` or the matched family are joined and appended. Multiple sections with the same target are allowed and concatenated in order.
 
-**Unknown families** produce a logger warning and are skipped.
+**Claude fallback** — only used when no family matched **and** the body contains no `ALL` segment. If the model family was recognised but produced no text, or if any `ALL` segment exists, the fallback is suppressed and only the base body is sent.
+
+**`====== ALL ======` example** — to share a section across all models, place it anywhere after the base:
+
+```markdown
+====== CLAUDE ======
+Reason step-by-step before writing any code.
+
+====== ALL ======
+Always include a brief summary of your changes.
+
+====== GPT ======
+Use structured output format. Show a plan before code.
+```
+
+In this example, a Claude model receives the `CLAUDE` and `ALL` sections; a GPT model receives `GPT` and `ALL`; a Gemini model receives only `ALL`.
+
+**Unknown families** produce a logger warning and are skipped. A maximum of 50 segments per agent body is enforced; excess segments are skipped with a warning.
 
 ### Vendor Prompts
 

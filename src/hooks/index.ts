@@ -1,6 +1,6 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
 import { resolveModelSection, KNOWN_FAMILIES } from "../utils/model-sections.js";
-import type { ModelFamily } from "../utils/model-sections.js";
+import type { ModelSegment } from "../utils/model-sections.js";
 import { initNotifier, notifier } from "../utils/notifier.js";
 
 /**
@@ -17,10 +17,10 @@ const EDIT_ERROR_PATTERNS = [
   "Found multiple matches for oldString",
 ] as const;
 
-/** Per-agent entry holding both the base prompt text and per-family sections. */
+/** Per-agent entry holding base prompt text and ordered model segments. */
 export type AgentSectionsEntry = {
   base: string;
-  sections: Partial<Record<ModelFamily, string>>;
+  segments: ModelSegment[];
 };
 
 /**
@@ -28,7 +28,7 @@ export type AgentSectionsEntry = {
  * Returns a partial Hooks object to be spread into the plugin return value.
  *
  * @param ctx - Plugin context used to initialize the notifier
- * @param agentSections - Per-agent model-specific sections keyed by agent name.
+ * @param agentSections - Per-agent model-specific segments keyed by agent name.
  *   Invariant: config() must fully populate this map before any chat session begins —
  *   the system transform hook reads from it. Both config() and hooks are wired in the
  *   same Plugin call, so population always precedes hook execution.
@@ -106,12 +106,12 @@ function appendEditErrorHint(
 
 /**
  * For each system prompt string, check if it matches a known agent base prompt.
- * If a match is found, append the best-matching model-family section to that string.
+ * If a match is found, append ordered matching segments to that string.
  *
- * Matching strategy (KNOWN_FAMILIES order, then claude fallback):
- * 1. Iterate families in order — first family whose name appears in `modelId` wins
- * 2. Fall back to the `claude` section if no direct match
- * 3. If neither, leave the system string unchanged
+ * Resolution strategy:
+ * 1. Match model family using KNOWN_FAMILIES scan order
+ * 2. Include each segment in document order when target is `all` or matched family
+ * 3. Legacy fallback to first `claude` segment only when no `all` segment exists
  */
 function injectModelSections(
   agentSections: ReadonlyMap<string, AgentSectionsEntry>,
@@ -122,7 +122,7 @@ function injectModelSections(
   if (agentSections.size === 0) return;
 
   forEachMatchedSystemEntry(agentSections, system, (idx, entry) => {
-    const match = resolveModelSection(entry.sections, modelId);
+    const match = resolveModelSection(entry.segments, modelId);
     if (match === undefined) return;
 
     system[idx] = `${system[idx]!}\n\n${match}`;
@@ -147,7 +147,7 @@ function findSystemIndexForAgent(system: string[], base: string): number {
   // Match both the original base string and strings already augmented by
   // a prior injectModelSections pass (which appends "\n\n<section>").
   return system.findIndex(
-    (s) => s.trim() === trimmedBase || s.startsWith(trimmedBase + "\n"),
+    (s) => s.trim() === trimmedBase || s.startsWith(trimmedBase + "\n\n"),
   );
 }
 
