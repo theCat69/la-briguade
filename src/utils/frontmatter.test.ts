@@ -28,6 +28,17 @@ describe("parseFrontmatter", () => {
     expect(result.body).toBe(input);
   });
 
+  it("should return original content when opening fence has no trailing newline", () => {
+    // Arrange
+    const input = "---";
+
+    // Act
+    const result = parseFrontmatter(input);
+
+    // Assert
+    expect(result).toEqual({ attributes: {}, body: "---" });
+  });
+
   it("should return empty attributes and preserve original body when YAML parsing fails", () => {
     // Arrange
     const input = [

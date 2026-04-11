@@ -107,16 +107,16 @@ program
     }
 
     const { path: configPath, existed } = configFileResult;
-    let configData: ReturnType<typeof readConfig>;
+    let raw: string;
+    let parsed: Record<string, unknown>;
     try {
-      configData = readConfig(configPath);
+      ({ raw, parsed } = readConfig(configPath));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[la-briguade] Could not read config file: ${message}`);
       process.exitCode = 1;
       return;
     }
-    const { raw, parsed } = configData;
 
     // Config.plugin per @opencode-ai/plugin Config type
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;

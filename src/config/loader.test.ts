@@ -118,6 +118,7 @@ describe("loadConfig", () => {
     if (!result.ok) {
       expect(result.error.kind).toBe("not-found");
     }
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
   });
 
   it("should return not-found when .jsonc read throws EACCES", () => {
@@ -141,6 +142,7 @@ describe("loadConfig", () => {
     if (!result.ok) {
       expect(result.error.kind).toBe("not-found");
     }
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
   });
 
   it("should return validation-error when JSON is valid but fails Zod schema", () => {
