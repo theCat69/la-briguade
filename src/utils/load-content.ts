@@ -1,4 +1,5 @@
 import { collectFiles } from "./content-merge.js";
+import { logger } from "./logger.js";
 
 export function loadContentFiles<T>(
   dirs: string[],
@@ -12,7 +13,7 @@ export function loadContentFiles<T>(
     try {
       const parsed = parse(filePath, stem);
       if (parsed === undefined) {
-        console.warn(`[la-briguade] skipping ${filePath}: parse returned undefined`);
+        logger.warn(`skipping ${filePath}: parse returned undefined`);
         continue;
       }
       loaded.set(stem, parsed);
@@ -21,7 +22,7 @@ export function loadContentFiles<T>(
       const sanitizedReason = String(reason)
         .replace(/[^\x20-\x7E]/g, "?")
         .slice(0, 200);
-      console.warn(`[la-briguade] skipping ${filePath}: ${sanitizedReason}`);
+      logger.warn(`skipping ${filePath}: ${sanitizedReason}`);
     }
   }
 

@@ -5,6 +5,7 @@ import { parse as parseJsonc, type ParseError } from "jsonc-parser";
 
 import { LaBriguadeConfigSchema } from "./schema.js";
 import type { LaBriguadeConfig } from "./schema.js";
+import { logger } from "../utils/logger.js";
 
 /** Discriminated union describing why a config file could not be loaded. */
 export type ConfigLoadError =
@@ -67,8 +68,8 @@ export function loadConfig(filePath: string): ConfigLoadResult {
   const result = LaBriguadeConfigSchema.safeParse(parsed);
   if (!result.success) {
     // Log issue count only — avoids leaking full schema/path details to console
-    console.warn(
-      `[la-briguade] Config validation failed (${basename(resolvedPath)}): ` +
+    logger.warn(
+      `Config validation failed (${basename(resolvedPath)}): ` +
         `${result.error.issues.length} issue(s) found`,
     );
     return {

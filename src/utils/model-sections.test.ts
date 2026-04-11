@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 import { parseModelSections, resolveModelSection } from "./model-sections.js";
+import { logger } from "./logger.js";
+
+vi.mock("./logger.js", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
+
+const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("parseModelSections", () => {
   afterEach(() => {
@@ -76,7 +85,6 @@ describe("parseModelSections", () => {
 
   it("should warn and skip a section with an unknown family name", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const body = [
       "Base.",
       "====== UNKNOWN ======",
@@ -87,9 +95,9 @@ describe("parseModelSections", () => {
     const result = parseModelSections(body);
 
     // Assert
-    expect(warnSpy).toHaveBeenCalledOnce();
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] unknown model section family: 'unknown' in agent body — skipped",
+    expect(mockLoggerWarn).toHaveBeenCalledOnce();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "unknown model section family: 'unknown' in agent body — skipped",
     );
     expect(result.sections).toEqual({});
   });

@@ -1,5 +1,7 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
-import { resolveModelSection, KNOWN_FAMILIES, type ModelFamily } from "../utils/model-sections.js";
+import { resolveModelSection, KNOWN_FAMILIES } from "../utils/model-sections.js";
+import type { ModelFamily } from "../utils/model-sections.js";
+import { initNotifier, notifier } from "../utils/notifier.js";
 
 /**
  * Invariant: HEAD_SIZE + TAIL_SIZE must be ≤ TRUNCATION_THRESHOLD.
@@ -25,7 +27,7 @@ export type AgentSectionsEntry = {
  * Build the plugin hooks object (event, tool.execute.after, etc.).
  * Returns a partial Hooks object to be spread into the plugin return value.
  *
- * @param _ctx - Plugin context (reserved for future use)
+ * @param ctx - Plugin context used to initialize the notifier
  * @param agentSections - Per-agent model-specific sections keyed by agent name.
  *   Invariant: config() must fully populate this map before any chat session begins —
  *   the system transform hook reads from it. Both config() and hooks are wired in the
@@ -34,10 +36,12 @@ export type AgentSectionsEntry = {
  *   Applied to ALL agents after any per-agent model section.
  */
 export function createHooks(
-  _ctx: PluginInput,
+  ctx: PluginInput,
   agentSections: ReadonlyMap<string, AgentSectionsEntry>,
   vendorPrompts: ReadonlyMap<string, string>,
 ): Partial<HooksResult> {
+  initNotifier(ctx);
+
   return {
     "tool.execute.after": async (_input, output) => {
       truncateLargeOutput(output);
@@ -219,8 +223,6 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
 
   const output = "output" in tokens ? tokens.output : undefined;
   if (output === 0) {
-    console.warn(
-      "[la-briguade] Empty assistant response detected — the model produced no output tokens.",
-    );
+    notifier.warn("Empty assistant response detected — the model produced no output tokens.");
   }
 }

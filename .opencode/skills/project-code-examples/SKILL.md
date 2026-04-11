@@ -19,6 +19,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
 - `content-override-merge.md` — Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()`
 - `load-content-helper.md` — Shared `loadContentFiles()` wrapper that centralizes collectFiles + warn-and-skip parsing
+- `logger-notifier.md` — Logger singleton with two-phase init and notifier toast fallback integration
 
 ## Location
 

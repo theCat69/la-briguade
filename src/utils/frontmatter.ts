@@ -1,6 +1,7 @@
 import { parse as parseYaml } from "yaml";
 
 import { isRecord } from "./type-guards.js";
+import { logger } from "./logger.js";
 
 const FRONTMATTER_FENCE = "---";
 
@@ -28,9 +29,7 @@ interface ParsedFrontmatter {
  * @param content - Raw markdown file content (string)
  * @returns Parsed frontmatter attributes and the remaining body
  */
-export function parseFrontmatter(
-  content: string,
-): ParsedFrontmatter {
+export function parseFrontmatter(content: string): ParsedFrontmatter {
   const trimmed = content.trimStart();
 
   if (!trimmed.startsWith(FRONTMATTER_FENCE)) {
@@ -55,15 +54,14 @@ export function parseFrontmatter(
   const bodyStart = closingIndex + 1 + FRONTMATTER_FENCE.length;
 
   // Skip optional newline after closing fence
-  const body = trimmed[bodyStart] === "\n"
-    ? trimmed.slice(bodyStart + 1)
-    : trimmed.slice(bodyStart);
+  const body =
+    trimmed[bodyStart] === "\n" ? trimmed.slice(bodyStart + 1) : trimmed.slice(bodyStart);
 
   let parsed: unknown;
   try {
     parsed = parseYaml(yamlBlock);
   } catch (err) {
-    console.warn("[la-briguade] Failed to parse YAML frontmatter:", err);
+    logger.warn(`Failed to parse YAML frontmatter: ${String(err)}`);
     return { attributes: {}, body: "" };
   }
 

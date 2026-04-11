@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createHooks, type AgentSectionsEntry } from "./index.js";
+import { notifier } from "../utils/notifier.js";
 
 import type { PluginInput } from "../types/plugin.js";
 
@@ -188,7 +189,7 @@ describe("detectEmptyResponse via event hook", () => {
 
   it("should warn when assistant message completes with zero output tokens", async () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
     const eventHook = getEventHook();
 
     // Act
@@ -207,7 +208,7 @@ describe("detectEmptyResponse via event hook", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] Empty assistant response detected — the model produced no output tokens.",
+      "Empty assistant response detected — the model produced no output tokens.",
     );
   });
 });

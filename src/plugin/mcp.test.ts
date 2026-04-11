@@ -401,7 +401,6 @@ describe("collectSkillMcps", () => {
     expect(skillMcpIndex).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] Invalid skill MCP frontmatter in:"),
-      expect.any(Array),
     );
   });
 
@@ -519,7 +518,6 @@ describe("collectSkillMcps", () => {
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] Could not read skill file:"),
-      expect.any(Error),
     );
     expect(mcpMap).toEqual({
       docs: {
@@ -857,7 +855,6 @@ describe("collectSkillBashPermissions", () => {
     expect(skillBashPermIndex).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("[la-briguade] Invalid skill permission frontmatter in:"),
-      expect.any(Array),
     );
   });
 
