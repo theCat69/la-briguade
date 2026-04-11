@@ -13,6 +13,8 @@ import { dirname, join, resolve } from "node:path";
 import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
+import { resolveUserConfig } from "../config/index.js";
+import { logger } from "../utils/logger.js";
 import { isRecord } from "../utils/type-guards.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -307,7 +309,23 @@ program
       });
     }
 
-    // 4. cache-ctrl peer dependency
+    // 4. effective logger configuration
+    const userConfig = resolveUserConfig(process.cwd());
+    const logLevel = userConfig.log_level ?? "warn";
+    const logFilePath = logger.getLogFilePath() ?? "not initialized";
+
+    checks.push({
+      label: "Log level",
+      ok: true,
+      detail: logLevel,
+    });
+    checks.push({
+      label: "Log file",
+      ok: true,
+      detail: logFilePath,
+    });
+
+    // 5. cache-ctrl peer dependency
     const cacheCtrlModuleName = "cache-ctrl";
     try {
       await import(cacheCtrlModuleName);

@@ -1,6 +1,7 @@
 import type { McpLocalConfig, McpRemoteConfig } from "@opencode-ai/sdk";
 
 import type { Config } from "../../types/plugin.js";
+import { logger } from "../../utils/logger.js";
 
 import type { SkillMcpEntry, SkillMcpMap } from "./types.js";
 
@@ -37,7 +38,7 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
         key,
         field,
         message:
-          `[la-briguade] MCP server '${key}': env var '${missingVarName}' referenced in ` +
+          `MCP server '${key}': env var '${missingVarName}' referenced in ` +
           `${field} is not set`,
       },
     };
@@ -50,7 +51,7 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
         key,
         field,
         message:
-          `[la-briguade] MCP server '${key}': resolved command element contains disallowed ` +
+          `MCP server '${key}': resolved command element contains disallowed ` +
           "characters after env substitution — element skipped",
       },
     };
@@ -62,7 +63,7 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
 function resolveEnvValue(value: string, key: string, field: string): string {
   const resolved = resolveEnvTokens(value, key, field);
   if (resolved.issue !== undefined) {
-    console.warn(resolved.issue.message);
+    logger.warn(resolved.issue.message);
   }
   return resolved.value;
 }

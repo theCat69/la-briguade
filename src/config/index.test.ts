@@ -2,15 +2,22 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("node:os");
 vi.mock("./loader.js");
+vi.mock("../utils/logger.js", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
 
 import { homedir } from "node:os";
 import { loadConfig } from "./loader.js";
 import { resolveConfigBaseDirs, resolveUserConfig } from "./index.js";
 import type { LaBriguadeConfig } from "./schema.js";
 import type { ConfigLoadResult } from "./loader.js";
+import { logger } from "../utils/logger.js";
 
 const mockHomedir = vi.mocked(homedir);
 const mockLoadConfig = vi.mocked(loadConfig);
+const mockLoggerWarn = vi.mocked(logger.warn);
 
 function okResult(value: LaBriguadeConfig): ConfigLoadResult {
   return { ok: true, value };
@@ -123,7 +130,6 @@ describe("resolveUserConfig", () => {
 
   it("should warn and skip global config on parse error", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockHomedir.mockReturnValue("/home/user");
     mockLoadConfig.mockImplementation((filePath) => {
       if (filePath.includes("la_briguade")) {
@@ -137,14 +143,11 @@ describe("resolveUserConfig", () => {
 
     // Assert
     expect(result).toEqual({});
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Global config error:"),
-    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.stringContaining("Global config error:"));
   });
 
   it("should warn and skip project config on parse error", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockHomedir.mockReturnValue("/home/user");
     mockLoadConfig.mockImplementation((filePath) => {
       if (filePath.includes("la_briguade")) {
@@ -158,8 +161,8 @@ describe("resolveUserConfig", () => {
 
     // Assert
     expect(result).toEqual({});
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Project config error:"),
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.stringContaining("Project config error:"),
     );
   });
 

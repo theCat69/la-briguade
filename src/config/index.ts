@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { loadConfig } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
+import { logger } from "../utils/logger.js";
 
 export function resolveConfigBaseDirs(projectDir: string): {
   globalDir: string;
@@ -38,14 +39,14 @@ export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
   if (globalResult.ok) {
     globalConfig = globalResult.value;
   } else if (globalResult.error.kind !== "not-found") {
-    console.warn(`[la-briguade] Global config error: ${globalResult.error.message}`);
+    logger.warn(`Global config error: ${globalResult.error.message}`);
   }
 
   let projectConfig: LaBriguadeConfig | undefined;
   if (projectResult.ok) {
     projectConfig = projectResult.value;
   } else if (projectResult.error.kind !== "not-found") {
-    console.warn(`[la-briguade] Project config error: ${projectResult.error.message}`);
+    logger.warn(`Project config error: ${projectResult.error.message}`);
   }
 
   // Structured narrowing — each branch returns a fully typed LaBriguadeConfig

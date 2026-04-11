@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { collectFiles } from "./content-merge.js";
+import { logger } from "./logger.js";
 import { loadContentFiles } from "./load-content.js";
 
 vi.mock("./content-merge.js");
+vi.mock("./logger.js", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
 
 const mockCollectFiles = vi.mocked(collectFiles);
+const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("loadContentFiles", () => {
   it("should load parsed values keyed by stem", () => {
@@ -17,19 +24,15 @@ describe("loadContentFiles", () => {
   });
 
   it("should warn and skip parse undefined results", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["bad", "/tmp/bad.md"]]));
 
     const loaded = loadContentFiles(["/tmp"], ".md", () => undefined);
 
     expect(loaded.size).toBe(0);
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] skipping /tmp/bad.md: parse returned undefined",
-    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith("skipping /tmp/bad.md: parse returned undefined");
   });
 
   it("should warn and skip thrown parser errors", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["bad", "/tmp/bad.md"]]));
 
     const loaded = loadContentFiles(["/tmp"], ".md", () => {
@@ -37,6 +40,6 @@ describe("loadContentFiles", () => {
     });
 
     expect(loaded.size).toBe(0);
-    expect(warnSpy).toHaveBeenCalledWith("[la-briguade] skipping /tmp/bad.md: boom");
+    expect(mockLoggerWarn).toHaveBeenCalledWith("skipping /tmp/bad.md: boom");
   });
 });

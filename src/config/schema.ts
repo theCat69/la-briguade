@@ -104,6 +104,8 @@ export const LaBriguadeConfigSchema = z.object({
   opus_enabled: z.boolean().optional(),
   /** Per-agent override map keyed by agent identifier (e.g. `"coder"`). */
   agents: z.record(z.string(), AgentOverrideSchema).optional(),
+  /** Logger verbosity for file + console output. Default is resolved at runtime. */
+  log_level: z.enum(["off", "error", "warn", "info", "debug"]).optional(),
 });
 
 /** TypeScript type inferred from {@link AgentOverrideSchema}. */

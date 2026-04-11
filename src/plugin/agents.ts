@@ -8,6 +8,7 @@ import { AgentToolsSchema } from "../config/schema.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
+import { logger } from "../utils/logger.js";
 import { loadContentFiles } from "../utils/load-content.js";
 import { parseModelSections } from "../utils/model-sections.js";
 import { isRecord } from "../utils/type-guards.js";
@@ -116,7 +117,7 @@ export function registerAgents(
       } else {
         delete agentConfig["tools"];
         const reason = parsedTools.error.issues.map((issue) => issue.message).join("; ");
-        console.warn(`[la-briguade] agent ${agentName}: invalid tools field — ${reason}`);
+        logger.warn(`agent ${agentName}: invalid tools field — ${reason}`);
       }
     }
 
@@ -147,9 +148,7 @@ export function registerAgents(
 
     if (Object.keys(parsed.sections).length > 0) {
       if (agentSections.has(parsed.agentName)) {
-        console.warn(
-          `[la-briguade] duplicate agent name in sections map: '${parsed.agentName}'`,
-        );
+        logger.warn(`duplicate agent name in sections map: '${parsed.agentName}'`);
       }
       agentSections.set(parsed.agentName, { base: parsed.base, sections: parsed.sections });
     }

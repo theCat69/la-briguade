@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { parseFrontmatter } from "./frontmatter.js";
+import { logger } from "./logger.js";
+
+vi.mock("./logger.js", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
+
+const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("parseFrontmatter", () => {
   afterEach(() => {
@@ -21,7 +30,6 @@ describe("parseFrontmatter", () => {
 
   it("should return empty attributes and empty body when YAML parsing fails", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const input = [
       "---",
       "title: [broken",
@@ -33,7 +41,7 @@ describe("parseFrontmatter", () => {
     const result = parseFrontmatter(input);
 
     // Assert
-    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(mockLoggerWarn).toHaveBeenCalledOnce();
     expect(result.attributes).toEqual({});
     expect(result.body).toBe("");
   });

@@ -43,7 +43,7 @@ import type { HooksResult } from "../types/plugin.js";
 
 ## Error Handling
 
-- Use try-catch with `console.warn("[la-briguade] ...")` for non-fatal failures (e.g. missing content dirs, YAML parse errors)
+- Use try-catch with `logger.warn(message)` (from `src/utils/logger.ts`) for non-fatal failures (e.g. missing content dirs, YAML parse errors)
 - Never silently swallow errors — always log with context identifying the source
 - Use `Result<T, E>` discriminated union pattern for recoverable errors in library/utility code:
   ```typescript
@@ -96,8 +96,8 @@ Hooks are registered via `createHooks(ctx)` returning `Partial<HooksResult>`. Th
 Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. At startup, `collectSkillMcps()` reads all skill dirs, validates the frontmatter with `SkillMcpMapSchema`, and converts each entry via `toSdkMcpEntry()`.
 
 **`{env:VAR_NAME}` tokens** are supported in `command` elements, `environment` values, and `headers` values. They are resolved via `resolveEnvTokens()` at startup:
-- Unset var → `""` + `console.warn`
-- Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$`) → `""` + `console.warn` (injection guard). `/` and `\` are **allowed** (needed for scoped packages like `@scope/pkg`).
+- Unset var → `""` + `logger.warn`
+- Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$`) → `""` + `logger.warn` (injection guard). `/` and `\` are **allowed** (needed for scoped packages like `@scope/pkg`).
 
 `collectSkillMcps()` returns `{ mcpMap, skillMcpIndex }`. The `skillMcpIndex` maps each skill dir basename to its prefixed tool permission map. A skill entry with no `permission:` block defaults to `{ "<id>_*": "allow" }`; a custom `permission:` block pre-prefixes each key (e.g. `"resolve-library-id"` → `"<id>_resolve-library-id"`). `injectSkillMcpPermissions(input, skillMcpIndex)` is called from the `config()` callback and adds missing prefixed entries to agents that opt in to a skill — without overwriting any key the agent already declares.
 
@@ -166,6 +166,7 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `global-prompts-loader.md` — Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
 - `content-override-merge.md` — Priority-based merge of layered content dirs using `collectFiles()` / `collectDirs()`
+- `logger-notifier.md` — File logger singleton with two-phase init and toast notifier fallback
 
 ## Zod v4 Notes
 

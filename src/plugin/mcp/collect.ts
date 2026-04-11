@@ -3,6 +3,7 @@ import { basename, resolve } from "node:path";
 
 import { parseFrontmatter } from "../../utils/frontmatter.js";
 import { isNodeError, type Result } from "../../utils/type-guards.js";
+import { logger } from "../../utils/logger.js";
 
 import { toSdkMcpEntry } from "./merge.js";
 import {
@@ -78,11 +79,11 @@ function warnReadSkillFileError(error: ReadSkillFileError): void {
   }
 
   if (error.kind === "read-error") {
-    console.warn(`[la-briguade] Could not read skill file: ${error.skillFilePath}`, error.error);
+    logger.warn(`Could not read skill file: ${error.skillFilePath} (${String(error.error)})`);
     return;
   }
 
-  console.warn(`[la-briguade] Invalid frontmatter in: ${error.skillFilePath}`);
+  logger.warn(`Invalid frontmatter in: ${error.skillFilePath}`);
 }
 
 export function collectSkillMcps(
@@ -107,18 +108,15 @@ export function collectSkillMcps(
 
     const parsedMcpMap = SkillMcpMapSchema.safeParse(mcpAttributes);
     if (!parsedMcpMap.success) {
-      console.warn(
-        `[la-briguade] Invalid skill MCP frontmatter in: ${skillFilePath}`,
-        parsedMcpMap.error.issues,
-      );
+      logger.warn(`Invalid skill MCP frontmatter in: ${skillFilePath}`);
       continue;
     }
 
     for (const [key, entry] of Object.entries(parsedMcpMap.data)) {
       const firstSkillDir = seenBySkillDir.get(key);
       if (firstSkillDir !== undefined) {
-        console.warn(
-          `[la-briguade] skill MCP conflict: key "${key}" declared by both ` +
+        logger.warn(
+          `skill MCP conflict: key "${key}" declared by both ` +
             `"${firstSkillDir}" and "${skillDir}" — "${firstSkillDir}" wins`,
         );
         continue;
@@ -157,10 +155,7 @@ export function collectSkillBashPermissions(skillDirs: string[]): SkillBashPermI
 
     const parsedPermission = SkillPermissionFrontmatterSchema.safeParse(permissionAttributes);
     if (!parsedPermission.success) {
-      console.warn(
-        `[la-briguade] Invalid skill permission frontmatter in: ${skillFilePath}`,
-        parsedPermission.error.issues,
-      );
+      logger.warn(`Invalid skill permission frontmatter in: ${skillFilePath}`);
       continue;
     }
 

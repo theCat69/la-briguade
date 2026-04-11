@@ -1,3 +1,5 @@
+import { logger } from "./logger.js";
+
 /** Ordered list of recognised model-family identifiers used to match section headers. */
 export const KNOWN_FAMILIES = ["claude", "gpt", "gemini", "grok"] as const;
 
@@ -43,7 +45,7 @@ const SECTION_HEADER_RE = /^={4,}\s*(\w+)\s*={4,}\s*$/im;
  * - Each section runs from its header line to the next header (exclusive) or end of body
  * - The header line itself is not included in the section text
  * - Both base and section texts are trimmed
- * - Unknown family names produce a console.warn and are skipped
+ * - Unknown family names produce a logger warning and are skipped
  *
  * @param body - The raw agent body text (after frontmatter has been stripped)
  * @returns Parsed base prompt and per-family section map
@@ -72,9 +74,7 @@ export function parseModelSections(body: string): ModelSections {
     const family = rawFamily.toLowerCase();
 
     if (!(KNOWN_FAMILIES as readonly string[]).includes(family)) {
-      console.warn(
-        `[la-briguade] unknown model section family: '${family}' in agent body — skipped`,
-      );
+      logger.warn(`unknown model section family: '${family}' in agent body — skipped`);
       continue;
     }
 

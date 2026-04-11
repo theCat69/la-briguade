@@ -40,6 +40,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations |
 | `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
 | `content-override-merge.md` | Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()` |
+| `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 
 ---
 
@@ -74,6 +75,8 @@ src/
     content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
     model-sections.ts ← parseModelSections(), resolveModelSection() — model-family prompt section support
     type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
+    logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
+    notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
     load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API

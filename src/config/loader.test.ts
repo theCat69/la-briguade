@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("node:fs");
+vi.mock("../utils/logger.js", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
 
 import { readFileSync } from "node:fs";
 import { loadConfig } from "./loader.js";
+import { logger } from "../utils/logger.js";
 
 const mockReadFileSync = vi.mocked(readFileSync);
+const mockLoggerWarn = vi.mocked(logger.warn);
 
 const VALID_CONFIG_JSON = JSON.stringify({
   agents: {

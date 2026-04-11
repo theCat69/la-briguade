@@ -95,7 +95,7 @@ describe("registerAgents", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] duplicate agent name in sections map: 'coder'",
+      expect.stringContaining("[la-briguade] duplicate agent name in sections map: 'coder'"),
     );
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
     expect(coder?.["prompt"]).toBe("Base two");
