@@ -33,6 +33,7 @@ function parseErrorResult(message: string): ConfigLoadResult {
 
 describe("resolveUserConfig", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -253,6 +254,7 @@ describe("resolveUserConfig", () => {
 
 describe("resolveConfigBaseDirs", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

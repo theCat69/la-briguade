@@ -13,6 +13,7 @@ const mockCollectFiles = vi.mocked(collectFiles);
 
 describe("loadVendorPrompts", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

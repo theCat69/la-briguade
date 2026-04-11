@@ -16,7 +16,7 @@ Detailed, stack-specific guidelines are in `.opencode/skills/`. Load the relevan
 |---|---|
 | `.opencode/skills/project-coding/SKILL.md` | TypeScript strict ESM conventions, naming, import order, error handling, architecture patterns (plugin registration, frontmatter, JSONC, hooks) |
 | `.opencode/skills/project-build/SKILL.md` | Build commands (`npm run build/dev/clean`), prerequisites (Node ≥22), release workflow, output structure |
-| `.opencode/skills/project-test/SKILL.md` | Vitest v3 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
+| `.opencode/skills/project-test/SKILL.md` | Vitest v4 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
 | `.opencode/skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
 | `.opencode/skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
 | `.opencode/skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
@@ -98,6 +98,6 @@ bin/
 - **Language**: TypeScript 5.8, strict mode, `NodeNext` modules, ES2024 target
 - **Runtime**: Node.js ≥ 22
 - **Build**: `tsc` → `dist/`
-- **Test**: Vitest v3
+- **Test**: Vitest v4
 - **Key deps**: `commander`, `yaml`, `jsonc-parser`, `zod`
 - **Peer dep**: `@opencode-ai/plugin ^1.4.0`

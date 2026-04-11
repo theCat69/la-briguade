@@ -91,6 +91,7 @@ describe("tool.execute.after", () => {
 
 describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -262,6 +263,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
 
 describe("detectEmptyResponse via event hook", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

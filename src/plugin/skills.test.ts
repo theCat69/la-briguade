@@ -15,6 +15,7 @@ function makeConfig(): Config {
 
 describe("registerSkills", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

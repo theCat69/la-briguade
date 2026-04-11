@@ -13,6 +13,7 @@ const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("parseFrontmatter", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
