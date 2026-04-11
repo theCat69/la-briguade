@@ -1,5 +1,5 @@
 ---
-model: github-copilot/claude-sonnet-4.6
+model: github-copilot/gemini-3.1-pro-preview
 description: "Security-focused code reviewer for production systems"
 mode: subagent 
 permission:
@@ -53,13 +53,6 @@ Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REV
   fields upstream.
 - Report only supported findings; if evidence is insufficient, say so.
 - Include severity and mitigation for every confirmed finding.
-
-# Output (≤ 300 tokens)
-- Vulnerabilities found in code
-- CVEs from GitHub Advisory Database (all projects; "none found" or "manifest not present" if applicable)
-- Dependabot alerts (if project is on GitHub)
-- Severity: Critical / High / Medium / Low
-- Mitigations
 
 ====== CLAUDE ======
 # Context Gathering
@@ -150,3 +143,11 @@ Use this sequence:
 
 Prioritize high-severity, high-confidence findings first. If no supported finding exists,
 say none found rather than filling space with generic security advice.
+
+====== ALL ======
+# Output (≤ 300 tokens)
+- Vulnerabilities found in code
+- CVEs from GitHub Advisory Database (all projects; "none found" or "manifest not present" if applicable)
+- Dependabot alerts (if project is on GitHub)
+- Severity: Critical / High / Medium / Low
+- Mitigations
