@@ -21,6 +21,7 @@ describe("logger", () => {
   afterEach(() => {
     resetLogger();
     vi.unstubAllEnvs();
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

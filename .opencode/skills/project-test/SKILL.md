@@ -5,7 +5,7 @@ description: Testing guidelines, Vitest conventions, patterns, and coverage requ
 
 ## Test Framework
 
-- **Vitest v3** — `vitest run` for CI (single pass), `vitest` for watch mode
+- **Vitest v4** — `vitest run` for CI (single pass), `vitest` for watch mode
 - **Environment**: `node` — this is a CLI/plugin project, not a browser app; never use `jsdom`
 - **Coverage provider**: `v8`
 - **Globals**: `true` recommended in `vitest.config.ts` (or use explicit imports from `vitest`)
@@ -67,6 +67,7 @@ const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 // Always restore after each test
 afterEach(() => {
+  vi.clearAllMocks();
   vi.restoreAllMocks();
 });
 ```

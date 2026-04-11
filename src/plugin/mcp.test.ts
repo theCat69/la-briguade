@@ -24,6 +24,7 @@ function createConfig(): Config {
 describe("collectSkillMcps", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -785,6 +786,7 @@ describe("injectSkillMcpPermissions", () => {
 
 describe("collectSkillBashPermissions", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

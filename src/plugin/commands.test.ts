@@ -19,6 +19,7 @@ function makeConfig(): Config {
 
 describe("registerCommands", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

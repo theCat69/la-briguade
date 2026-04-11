@@ -132,7 +132,7 @@ Declare all runtime libraries in `dependencies`; keep `devDependencies` build/te
 | Package | Pinned range | Status | Notes |
 |---|---|---|---|
 | `typescript` | `^5.8.0` | Current (5.x) | TypeScript 6.0 not yet confirmed stable; wait for ecosystem validation |
-| `vitest` | `^3.1.1` | Current | Stay at `^3.1.1` |
+| `vitest` | `^4.1.4` | Current | Stay at `^4.1.4` |
 | `@types/node` | `^22.0.0` | Current (22 LTS) | Keep pinned to Node 22 LTS line — do not follow Node version bumps unless `engines.node` is updated first |
 | `@opencode-ai/plugin` | `^1.4.0` | 1.4.x | Track `^1.4.0` — update when new patch verified stable |
 | `@opencode-ai/sdk` | `^1.4.0` | 1.4.x | Track `^1.4.0` |

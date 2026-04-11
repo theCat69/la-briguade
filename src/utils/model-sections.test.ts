@@ -14,6 +14,7 @@ const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("parseModelSections", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

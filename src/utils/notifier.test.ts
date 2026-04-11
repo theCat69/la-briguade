@@ -16,6 +16,7 @@ import { initNotifier, notifier, resetNotifier } from "./notifier.js";
 describe("notifier", () => {
   afterEach(() => {
     resetNotifier();
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

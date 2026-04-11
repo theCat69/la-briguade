@@ -43,6 +43,7 @@ const JSONC_WITH_COMMENTS = `{
 
 describe("loadConfig", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
