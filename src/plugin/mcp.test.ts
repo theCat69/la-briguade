@@ -8,10 +8,10 @@ import {
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
-} from "./mcp.js";
+} from "./mcp/index.js";
 
 import type { Config } from "../types/plugin.js";
-import type { SkillBashPermIndex, SkillMcpIndex, SkillMcpMap } from "./mcp.js";
+import type { SkillBashPermIndex, SkillMcpIndex, SkillMcpMap } from "./mcp/index.js";
 
 vi.mock("node:fs");
 

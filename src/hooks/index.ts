@@ -43,9 +43,9 @@ export function createHooks(
   initNotifier(ctx);
 
   return {
-    "tool.execute.after": async (_input, output) => {
+    "tool.execute.after": async (input, output) => {
       truncateLargeOutput(output);
-      appendEditErrorHint(_input.tool, output);
+      appendEditErrorHint(input.tool, output);
     },
 
     event: async ({ event }) => {

@@ -62,10 +62,12 @@ function logError(message: string): void {
 }
 
 function logInfo(message: string): void {
+  if (!isEnabledFor("info")) return;
   writeLogLine("info", message);
 }
 
 function logDebug(message: string): void {
+  if (!isEnabledFor("debug")) return;
   writeLogLine("debug", message);
 }
 

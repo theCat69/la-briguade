@@ -7,6 +7,27 @@ import {
   type SkillMcpIndex,
 } from "./types.js";
 
+function resolveSkillPermission(
+  rawSkillPerms: Record<string, unknown>,
+  skillName: string,
+): "allow" | "ask" | undefined {
+  const directPermission = rawSkillPerms[skillName];
+  if (directPermission === "deny") {
+    return undefined;
+  }
+
+  if (directPermission === "allow" || directPermission === "ask") {
+    return directPermission;
+  }
+
+  const wildcardPermission = rawSkillPerms["*"];
+  if (wildcardPermission === "allow" || wildcardPermission === "ask") {
+    return wildcardPermission;
+  }
+
+  return undefined;
+}
+
 export function injectSkillBashPermissions(
   input: Config,
   skillBashPermIndex: SkillBashPermIndex,
@@ -32,19 +53,7 @@ export function injectSkillBashPermissions(
     }
 
     for (const [skillName, bashPerms] of Object.entries(skillBashPermIndex)) {
-      const directPermission = rawSkillPerms[skillName];
-      if (directPermission === "deny") {
-        continue;
-      }
-
-      let resolvedSkillPermission: unknown;
-      if (directPermission === "allow" || directPermission === "ask") {
-        resolvedSkillPermission = directPermission;
-      } else {
-        resolvedSkillPermission = rawSkillPerms["*"];
-      }
-
-      if (resolvedSkillPermission !== "allow" && resolvedSkillPermission !== "ask") {
+      if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
         continue;
       }
 
@@ -95,19 +104,7 @@ export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcp
     }
 
     for (const [skillName, bindings] of Object.entries(skillMcpIndex)) {
-      const directPermission = rawSkillPerms[skillName];
-      if (directPermission === "deny") {
-        continue;
-      }
-
-      let resolvedSkillPermission: unknown;
-      if (directPermission === "allow" || directPermission === "ask") {
-        resolvedSkillPermission = directPermission;
-      } else {
-        resolvedSkillPermission = rawSkillPerms["*"];
-      }
-
-      if (resolvedSkillPermission !== "allow" && resolvedSkillPermission !== "ask") {
+      if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
         continue;
       }
 

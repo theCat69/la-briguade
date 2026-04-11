@@ -21,12 +21,12 @@ type SkillFileData = {
   attributes: Record<string, unknown>;
   skillName: string;
   skillFilePath: string;
+  skillDir: string;
 };
 
 type ReadSkillFileError =
   | { kind: "not-found" }
-  | { kind: "read-error"; skillFilePath: string; error: unknown }
-  | { kind: "invalid-frontmatter"; skillFilePath: string };
+  | { kind: "read-error"; skillFilePath: string; error: unknown };
 
 function readSkillFileData(skillDir: string): Result<SkillFileData, ReadSkillFileError> {
   const skillFilePath = resolve(skillDir, SKILL_FILE_NAME);
@@ -55,6 +55,7 @@ function readSkillFileData(skillDir: string): Result<SkillFileData, ReadSkillFil
       attributes: parsed.attributes,
       skillName: basename(skillDir),
       skillFilePath,
+      skillDir,
     },
   };
 }
@@ -66,10 +67,22 @@ function warnReadSkillFileError(error: ReadSkillFileError): void {
 
   if (error.kind === "read-error") {
     logger.warn(`Could not read skill file: ${error.skillFilePath} (${String(error.error)})`);
-    return;
   }
+}
 
-  logger.warn(`Invalid frontmatter in: ${error.skillFilePath}`);
+function forEachSkillDir(
+  skillDirs: string[],
+  callback: (fileData: SkillFileData) => void,
+): void {
+  for (const skillDir of skillDirs) {
+    const fileDataResult = readSkillFileData(skillDir);
+    if (!fileDataResult.ok) {
+      warnReadSkillFileError(fileDataResult.error);
+      continue;
+    }
+
+    callback(fileDataResult.value);
+  }
 }
 
 export function collectSkillMcps(
@@ -79,23 +92,16 @@ export function collectSkillMcps(
   const skillMcpIndex: SkillMcpIndex = {};
   const seenBySkillDir = new Map<string, string>();
 
-  for (const skillDir of skillDirs) {
-    const fileDataResult = readSkillFileData(skillDir);
-    if (!fileDataResult.ok) {
-      warnReadSkillFileError(fileDataResult.error);
-      continue;
-    }
-
-    const { attributes, skillName, skillFilePath } = fileDataResult.value;
+  forEachSkillDir(skillDirs, ({ attributes, skillName, skillFilePath, skillDir }) => {
     const mcpAttributes = attributes["mcp"];
     if (mcpAttributes === undefined) {
-      continue;
+      return;
     }
 
     const parsedMcpMap = SkillMcpMapSchema.safeParse(mcpAttributes);
     if (!parsedMcpMap.success) {
       logger.warn(`Invalid skill MCP frontmatter in: ${skillFilePath}`);
-      continue;
+      return;
     }
 
     for (const [key, entry] of Object.entries(parsedMcpMap.data)) {
@@ -118,7 +124,7 @@ export function collectSkillMcps(
       });
       skillMcpIndex[skillName] = skillBindings;
     }
-  }
+  });
 
   return { mcpMap: collected, skillMcpIndex };
 }
@@ -126,30 +132,23 @@ export function collectSkillMcps(
 export function collectSkillBashPermissions(skillDirs: string[]): SkillBashPermIndex {
   const skillBashPermIndex: SkillBashPermIndex = {};
 
-  for (const skillDir of skillDirs) {
-    const fileDataResult = readSkillFileData(skillDir);
-    if (!fileDataResult.ok) {
-      warnReadSkillFileError(fileDataResult.error);
-      continue;
-    }
-
-    const { attributes, skillName, skillFilePath } = fileDataResult.value;
+  forEachSkillDir(skillDirs, ({ attributes, skillName, skillFilePath }) => {
     const permissionAttributes = attributes["permission"];
     if (permissionAttributes === undefined) {
-      continue;
+      return;
     }
 
     const parsedPermission = SkillPermissionFrontmatterSchema.safeParse(permissionAttributes);
     if (!parsedPermission.success) {
       logger.warn(`Invalid skill permission frontmatter in: ${skillFilePath}`);
-      continue;
+      return;
     }
 
     const bashPerms = parsedPermission.data.bash;
     if (bashPerms !== undefined) {
       skillBashPermIndex[skillName] = bashPerms;
     }
-  }
+  });
 
   return skillBashPermIndex;
 }
