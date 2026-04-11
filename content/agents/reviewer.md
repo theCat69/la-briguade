@@ -61,9 +61,12 @@ After determining scope, gather context using the following rules:
 - **At any time**: If you need external knowledge (library docs, framework best practices, unfamiliar APIs, non-trivial design patterns), follow the **Before Calling external-context-gatherer** protocol in skill `cache-ctrl-caller`.
 
 # Critical Rules
+- Never write code.
+- Flag findings even if the caller disagrees.
+- Return ≤ 300 tokens.
+- Always read the actual files before forming opinions.
 
 # Output (≤ 300 tokens)
 - Issues
 - Improvements
 - Style violations
-

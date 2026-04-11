@@ -4,6 +4,7 @@ import { isRecord } from "./type-guards.js";
 import { logger } from "./logger.js";
 
 const FRONTMATTER_FENCE = "---";
+const POISON_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 interface ParsedFrontmatter {
   /** Parsed YAML attributes (empty object if no frontmatter found) */
@@ -65,7 +66,17 @@ export function parseFrontmatter(content: string): ParsedFrontmatter {
     return { attributes: {}, body };
   }
 
-  const attributes = isRecord(parsed) ? parsed : {};
+  const attributes: Record<string, unknown> = {};
+  if (isRecord(parsed)) {
+    for (const [key, value] of Object.entries(parsed)) {
+      if (POISON_KEYS.has(key)) {
+        logger.warn(`Blocked prototype-poisoning frontmatter key: ${key}`);
+        continue;
+      }
+
+      attributes[key] = value;
+    }
+  }
 
   return { attributes, body };
 }

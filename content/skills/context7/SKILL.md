@@ -6,10 +6,10 @@ mcp:
     type: local
     command:
       - npx
-      - -y
+      - --prefer-offline
       - "@upstash/context7-mcp@2.1.7"
-      - --api-key
-      - "{env:CONTEXT7_API_KEY}"
+    environment:
+      CONTEXT7_API_KEY: "{env:CONTEXT7_API_KEY}"
 ---
 
 # Context7 MCP Skill
