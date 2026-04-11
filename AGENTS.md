@@ -73,7 +73,7 @@ src/
     frontmatter.ts   ← YAML frontmatter parser
     read-dir.ts      ← Safe directory reader
     content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
-    model-sections.ts ← parseModelSections(), resolveModelSection() — model-family prompt section support
+    model-sections.ts ← parseModelSections(), resolveModelSection() — model-family + ALL-target prompt section support (SectionTarget, ModelSegment, ModelSections)
     type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
     logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
     notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback

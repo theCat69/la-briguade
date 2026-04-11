@@ -94,10 +94,12 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     vi.restoreAllMocks();
   });
 
-  it("should append vendor prompt to matched agent system string using lowercased family key", async () => {
+  it(
+    "should append vendor prompt to matched agent system string using lowercased family key",
+    async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
-      ["coder", { base: "Base system prompt", sections: {} }],
+      ["coder", { base: "Base system prompt", segments: [] }],
     ]);
     const vendorPrompts = new Map<string, string>([["claude", "Global Claude prompt"]]);
     const transform = getSystemTransformHook(agentSections, vendorPrompts);
@@ -115,7 +117,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   it("should skip system entries that do not match known agent base prompts", async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
-      ["coder", { base: "Agent base prompt", sections: {} }],
+      ["coder", { base: "Agent base prompt", segments: [] }],
     ]);
     const vendorPrompts = new Map<string, string>([["gpt", "Global GPT prompt"]]);
     const transform = getSystemTransformHook(agentSections, vendorPrompts);
@@ -143,7 +145,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   it("should not inject vendor prompts when vendor prompt map is empty", async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
-      ["coder", { base: "Agent base prompt", sections: {} }],
+      ["coder", { base: "Agent base prompt", segments: [] }],
     ]);
     const vendorPrompts = new Map<string, string>();
     const transform = getSystemTransformHook(agentSections, vendorPrompts);
@@ -161,7 +163,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
   it("should not inject vendor prompt when model family is unknown", async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
-      ["coder", { base: "Agent base prompt", sections: {} }],
+      ["coder", { base: "Agent base prompt", segments: [] }],
     ]);
     const vendorPrompts = new Map<string, string>([["claude", "Global Claude prompt"]]);
     const transform = getSystemTransformHook(agentSections, vendorPrompts);
@@ -183,7 +185,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
         "coder",
         {
           base: "Base system prompt",
-          sections: { claude: "Claude section content" },
+          segments: [{ target: "claude", text: "Claude section content" }],
         },
       ],
     ]);
@@ -206,7 +208,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
         "coder",
         {
           base: "Base system prompt",
-          sections: { claude: "Claude section content" },
+          segments: [{ target: "claude", text: "Claude section content" }],
         },
       ],
     ]);
@@ -220,7 +222,41 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     await transform?.(input as never, output as never);
 
     // Assert
-    expect(output.system).toEqual(["Base system prompt\n\nClaude section content\n\nGlobal Claude prompt"]);
+    expect(output.system).toEqual([
+      "Base system prompt\n\nClaude section content\n\nGlobal Claude prompt",
+    ]);
+  });
+
+  it("should inject only the exact agent when one base is a prefix of another", async () => {
+    // Arrange
+    const shortBase = "You are helpful.";
+    const longBase = "You are helpful.\nUse JSON output.";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "short-agent",
+        {
+          base: shortBase,
+          segments: [{ target: "gpt", text: "Short agent section" }],
+        },
+      ],
+      [
+        "long-agent",
+        {
+          base: longBase,
+          segments: [{ target: "gpt", text: "Long agent section" }],
+        },
+      ],
+    ]);
+    const transform = getSystemTransformHook(agentSections, new Map<string, string>());
+
+    const input = { model: { id: "openai/gpt-4o" } };
+    const output = { system: [longBase] };
+
+    // Act
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual([`${longBase}\n\nLong agent section`]);
   });
 });
 
