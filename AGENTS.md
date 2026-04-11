@@ -52,7 +52,12 @@ src/
     agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides
     commands.ts      ← registerCommands(config, commandDirs[]) — merges .md files across builtin + user dirs via collectFiles()
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
-    mcp.ts           ← collectSkillMcps() / mergeSkillMcps() — reads mcp: frontmatter from SKILL.md files, merges into config.mcp; injectSkillMcpPermissions() uses the skillMcpIndex to inject prefixed tool permissions into agents that allow a skill; collectSkillBashPermissions() / injectSkillBashPermissions() — reads permission.bash from SKILL.md and injects bash command permissions into agents that allow the skill
+    mcp/
+      index.ts       ← barrel re-export
+      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() — reads mcp: and permission.bash from SKILL.md files
+      merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
+      permissions.ts ← injectSkillMcpPermissions() / injectSkillBashPermissions() — injects prefixed MCP and bash permissions into agents
+      types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveUserConfig() — loads + merges global and project configs
@@ -68,6 +73,8 @@ src/
     read-dir.ts      ← Safe directory reader
     content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
     model-sections.ts ← parseModelSections(), resolveModelSection() — model-family prompt section support
+    type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
+    load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 

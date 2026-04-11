@@ -13,11 +13,11 @@ import { dirname, join, resolve } from "node:path";
 import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
+import { isRecord } from "../utils/type-guards.js";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-8")) as Record<
-  string,
-  unknown
->;
+const rawPkg: unknown = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-8"));
+const pkg = isRecord(rawPkg) ? rawPkg : {};
 
 const PLUGIN_NAME = "la-briguade";
 
@@ -71,10 +71,7 @@ function findConfigFile(): string | undefined {
 function readConfig(configPath: string): { raw: string; parsed: Record<string, unknown> } {
   const raw = readFileSync(configPath, "utf-8");
   const value: unknown = parseJsonc(raw);
-  const parsed =
-    value != null && typeof value === "object" && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
+  const parsed = isRecord(value) ? value : {};
   return { raw, parsed };
 }
 
@@ -112,7 +109,7 @@ program
     const { raw, parsed } = readConfig(configPath);
 
     // Config.plugin per @opencode-ai/plugin Config type
-    const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : undefined;
+    const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
     if (plugin !== undefined && plugin.includes(PLUGIN_NAME)) {
       console.log(`Already installed — "${PLUGIN_NAME}" is already in plugin array.`);
@@ -159,7 +156,7 @@ program
     }
 
     const { raw, parsed } = readConfig(configPath);
-    const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : undefined;
+    const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
     if (plugin === undefined) {
       console.log(`Not installed — no plugin array in ${configPath}`);
@@ -257,7 +254,7 @@ program
       });
     } else {
       const { parsed } = readConfig(globalConfigPath);
-      const plugin = Array.isArray(parsed["plugin"]) ? (parsed["plugin"] as unknown[]) : [];
+      const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : [];
       const hasPlugin = plugin.includes(PLUGIN_NAME);
 
       checks.push({

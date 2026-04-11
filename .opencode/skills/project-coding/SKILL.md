@@ -72,6 +72,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => ({
 
 ### Content-Driven Registration
 Agents, skills, and commands are loaded from `.md` files resolved across three ordered layers: built-in `content/`, global user `~/la_briguade/content/`, and project-level `<root>/content/`. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+Agents, commands, and vendor prompts are loaded via `loadContentFiles(dirs, '.md', parseFn)` from `src/utils/load-content.ts` — this centralizes the `collectFiles` → warn-and-skip → parse cycle. Each loader provides its own `parseFn` callback.
 
 ### Frontmatter Parsing
 Use the `yaml` library's `parse()` with default `schema: "core"` behavior to avoid YAML 1.1 quirks (`on`/`off` → boolean). Always validate the parsed value before casting:
@@ -161,6 +162,8 @@ See `.code-examples-for-ai/` for concrete, copy-paste-ready patterns:
 - `safe-dir-read.md` — Defensive directory reading with warning
 - `zod-config-schema.md` — Zod v4 config schema with security constraints and JSON Schema export
 - `model-sections.md` — Parsing and injecting model-family prompt sections from agent `.md` files
+- `load-content-helper.md` — Shared `loadContentFiles()` wrapper that centralizes collectFiles + warn-and-skip parsing
+- `global-prompts-loader.md` — Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience
 - `agent-permissions.md` — Agent frontmatter `tools` defaults merged with per-agent user config overrides
 - `content-override-merge.md` — Priority-based merge of layered content dirs using `collectFiles()` / `collectDirs()`
 

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { collectFiles } from "../utils/content-merge.js";
+import { loadContentFiles } from "../utils/load-content.js";
 
 const MAX_VENDOR_PROMPT_LENGTH = 4_000; // chars
 
@@ -19,31 +19,29 @@ const MAX_VENDOR_PROMPT_LENGTH = 4_000; // chars
  * @returns Map of model-family name → vendor prompt text
  */
 export function loadVendorPrompts(vendorDirs: string[]): Map<string, string> {
-  const result: Map<string, string> = new Map();
-
-  const mergedVendorFiles = collectFiles(vendorDirs, ".md");
-  for (const [stem, filePath] of mergedVendorFiles) {
-    const key = stem.toLowerCase();
-
+  const loaded = loadContentFiles(vendorDirs, ".md", (filePath, stem) => {
     let body: string;
     try {
       body = readFileSync(filePath, "utf-8");
     } catch {
-      console.warn(`[la-briguade] Could not read vendor prompt file: ${filePath}`);
-      continue;
+      throw new Error(`Could not read vendor prompt file: ${filePath}`);
     }
 
     const trimmed = body.trim();
 
     if (trimmed.length > MAX_VENDOR_PROMPT_LENGTH) {
-      console.warn(
-        `[la-briguade] Vendor prompt '${stem}.md' exceeds max length (${MAX_VENDOR_PROMPT_LENGTH} chars), skipping.`,
+      throw new Error(
+        `Vendor prompt '${stem}.md' exceeds max length (` +
+          `${MAX_VENDOR_PROMPT_LENGTH} chars), skipping.`,
       );
-      continue;
     }
 
-    result.set(key, trimmed);
-  }
+    return trimmed;
+  });
 
+  const result = new Map<string, string>();
+  for (const [stem, body] of loaded) {
+    result.set(stem.toLowerCase(), body);
+  }
   return result;
 }

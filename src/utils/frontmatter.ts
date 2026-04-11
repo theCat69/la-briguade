@@ -1,5 +1,7 @@
 import { parse as parseYaml } from "yaml";
 
+import { isRecord } from "./type-guards.js";
+
 const FRONTMATTER_FENCE = "---";
 
 interface ParsedFrontmatter {
@@ -65,10 +67,7 @@ export function parseFrontmatter(
     return { attributes: {}, body: "" };
   }
 
-  const attributes =
-    parsed != null && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {};
+  const attributes = isRecord(parsed) ? parsed : {};
 
   return { attributes, body };
 }
