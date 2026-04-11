@@ -189,6 +189,9 @@ function injectVendorPrompts(
 
   const vendorPrompt = vendorPrompts.get(family)!;
 
+  // injectModelSections intentionally allows repeated matches because each matched
+  // entry may contribute a distinct section. Here we dedupe by index because the
+  // vendor prompt is global per family and must be appended at most once per system entry.
   const seenIndexes = new Set<number>();
   forEachMatchedSystemEntry(agentSections, system, (idx) => {
     if (seenIndexes.has(idx)) return;

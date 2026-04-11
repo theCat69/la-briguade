@@ -29,6 +29,19 @@ describe("loadVendorPrompts", () => {
     expect(result.has("gpt")).toBe(false);
   });
 
+  it("should accept file whose trimmed content equals max length", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map([["gpt", "/content/vendor-prompts/gpt.md"]]));
+    mockReadFileSync.mockReturnValue("x".repeat(4_000) as never);
+
+    // Act
+    const result = loadVendorPrompts(["/content/vendor-prompts"]);
+
+    // Assert
+    expect(result.size).toBe(1);
+    expect(result.get("gpt")).toBe("x".repeat(4_000));
+  });
+
   it("should return an empty map when vendor-prompts directory is missing", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map());
