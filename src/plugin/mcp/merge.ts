@@ -9,13 +9,9 @@ import {
   type SkillMcpMap,
 } from "./types.js";
 
-type EnvResolutionIssue = {
-  message: string;
-};
-
 type EnvResolutionResult = {
   value: string;
-  issue?: EnvResolutionIssue;
+  issue?: string;
 };
 
 function resolveEnvTokens(value: string, key: string, field: string): EnvResolutionResult {
@@ -34,22 +30,18 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
   if (missingVarName !== undefined) {
     return {
       value: resolvedValue,
-      issue: {
-        message:
-          `MCP server '${key}': env var '${missingVarName}' referenced in ` +
-          `${field} is not set`,
-      },
+      issue:
+        `MCP server '${key}': env var '${missingVarName}' referenced in ` +
+        `${field} is not set`,
     };
   }
 
   if (field === "command" && DISALLOWED_COMMAND_CHARS.test(resolvedValue)) {
     return {
       value: "",
-      issue: {
-        message:
-          `MCP server '${key}': resolved command element contains disallowed ` +
-          "characters after env substitution — element skipped",
-      },
+      issue:
+        `MCP server '${key}': resolved command element contains disallowed ` +
+        "characters after env substitution — element skipped",
     };
   }
 
@@ -59,7 +51,7 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
 function resolveEnvValue(value: string, key: string, field: string): string {
   const resolved = resolveEnvTokens(value, key, field);
   if (resolved.issue !== undefined) {
-    logger.warn(resolved.issue.message);
+    logger.warn(resolved.issue);
   }
   return resolved.value;
 }
