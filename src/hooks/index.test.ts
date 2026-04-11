@@ -267,4 +267,89 @@ describe("detectEmptyResponse via event hook", () => {
     // Assert
     expect(warnSpy).not.toHaveBeenCalled();
   });
+
+  it("should not warn for non-message.updated event types", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.created",
+        properties: {
+          info: {
+            role: "assistant",
+            time: { completed: "2026-01-01T00:00:00.000Z" },
+            tokens: { output: 0 },
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("should not warn when event properties are missing", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("should not warn when role is not assistant", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            role: "user",
+            time: { completed: "2026-01-01T00:00:00.000Z" },
+            tokens: { output: 0 },
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("should not warn when completed time is missing", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            role: "assistant",
+            time: {},
+            tokens: { output: 0 },
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });

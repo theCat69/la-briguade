@@ -100,6 +100,49 @@ describe("loadConfig", () => {
     }
   });
 
+  it("should return not-found when .json read throws EACCES", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) {
+        throw Object.assign(new Error("EACCES"), { code: "EACCES" });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert — current implementation treats all read failures as not-found
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("not-found");
+    }
+  });
+
+  it("should return not-found when .jsonc read throws EACCES", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) {
+        throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+      }
+      if (p.endsWith(".jsonc")) {
+        throw Object.assign(new Error("EACCES"), { code: "EACCES" });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert — current implementation treats all read failures as not-found
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("not-found");
+    }
+  });
+
   it("should return validation-error when JSON is valid but fails Zod schema", () => {
     // Arrange — temperature must be a number, not a string
     const invalidConfig = JSON.stringify({
