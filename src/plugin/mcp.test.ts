@@ -643,6 +643,24 @@ describe("injectSkillMcpPermissions", () => {
     });
   });
 
+  it("should skip injection when resolved skill permission is neither allow nor ask", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "unknown", "*": "unknown" },
+    });
+    const skillBashPermIndex: SkillBashPermIndex = {
+      "playwright-cli": { "playwright-cli *": "allow" },
+    };
+
+    // Act
+    injectSkillBashPermissions(config, skillBashPermIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "unknown", "*": "unknown" },
+    });
+  });
+
   it("should NOT overwrite existing agent permission key", () => {
     // Arrange
     const config = createInjectConfig({
