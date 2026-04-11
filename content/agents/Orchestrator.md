@@ -110,6 +110,7 @@ The `read`, `glob`, and `grep` tools exist for these narrow purposes ONLY:
 1. **Manifest detection** during Startup Sequence: reading `package.json`, `pom.xml`, `build.gradle` for stack detection.
 2. **Context Snapshot** access: reading/verifying `.ai/context-snapshots/current.json`.
 3. **Subagent output verification**: when a subagent returns an ambiguous or suspect result, reading the specific file it references to verify — not to perform the subagent's task yourself.
+4. **Full file content needed**: when you are already aware of what files are about you can read it fully if you need it for context. 
 
 Any other use of `read`/`glob`/`grep` is a protocol violation.
 
@@ -171,6 +172,7 @@ Before starting any workflow step, unconditionally run all of the following step
    Load the corresponding stack skills (e.g. `Load skill \`angular\``, `Load skill \`typescript\``).
    Record the detected stack as `"stack": ["angular", "typescript"]` in the Context Snapshot.
 2c. **Optional design challenge**: For architecturally significant requests (new service, major refactor, new public API, new agent/skill), optionally call `critic` on the user's stated intent and requirements (not an implementation plan — none exists yet at this stage). Present the challenge list to the user and ask whether to proceed or adjust scope.
+2d. **Optional deep-interview**: If scope and intent is not clear. Load `deep-interview` skill and perform the interview.
 3. **Gather external context — follow Cache-First Protocol (External Context).** Run `cache_ctrl_list` + `cache_ctrl_search` first. Only call `external-context-gatherer` if the protocol decision table requires it.
 4. Filter into Context Snapshot (≤ 1,000 tokens) and write to `.ai/context-snapshots/current.json`.
 5. Call coder with snapshot path + summary only.
