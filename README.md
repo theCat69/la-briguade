@@ -39,6 +39,7 @@ The `uninstall` command removes `"la-briguade"` from the same global config file
 | external-context-gatherer | subagent | External docs/API fetcher with caching |
 | feature-designer | subagent | Feature specification writer |
 | feature-reviewer | subagent | Feature spec quality gate |
+| architect | subagent | Code structure analyst — maps module boundaries, dependency graphs, and produces architecture blueprints |
 
 ### Skills
 
@@ -72,6 +73,7 @@ The `uninstall` command removes `"la-briguade"` from the same global config file
 | `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
 | `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, and commits after each cycle |
+| `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
 
 ## Hooks
