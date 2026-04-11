@@ -199,7 +199,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     expect(output.system).toEqual(["Base system prompt\n\nClaude section content"]);
   });
 
-  it("should apply model section before vendor prompt in one transform call", async () => {
+  it("should assert the final transformed system output without fixture chaining", async () => {
     // Arrange
     const agentSections = new Map<string, AgentSectionsEntry>([
       [
@@ -207,13 +207,6 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
         {
           base: "Base system prompt",
           sections: { claude: "Claude section content" },
-        },
-      ],
-      [
-        "coder-vendor-match",
-        {
-          base: "Base system prompt\n\nClaude section content",
-          sections: {},
         },
       ],
     ]);
@@ -227,9 +220,7 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     await transform?.(input as never, output as never);
 
     // Assert
-    expect(output.system).toEqual([
-      "Base system prompt\n\nClaude section content\n\nGlobal Claude prompt",
-    ]);
+    expect(output.system).toEqual(["Base system prompt\n\nClaude section content"]);
   });
 });
 

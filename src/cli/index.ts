@@ -226,9 +226,8 @@ program
 
     // 1. Plugin package importable
     // Dynamic module name avoids TS2307 — these are runtime probes, not build-time deps
-    const pluginModuleName = "la-briguade";
     try {
-      await import(pluginModuleName);
+      await import("la-briguade" as string);
       checks.push({ label: "Plugin package", ok: true, detail: "la-briguade importable" });
     } catch {
       checks.push({ label: "Plugin package", ok: false, detail: "Cannot import la-briguade" });
@@ -325,9 +324,8 @@ program
     });
 
     // 5. cache-ctrl peer dependency
-    const cacheCtrlModuleName = "cache-ctrl";
     try {
-      await import(cacheCtrlModuleName);
+      await import("cache-ctrl" as string);
       checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
     } catch {
       checks.push({
