@@ -32,6 +32,10 @@ permission:
     "*": "deny"
     "curl *": "allow"
     "mkdir -p .ai/*": "allow"
+    "git log *": "allow" 
+    "git status *": "allow" 
+    "git diff *": "allow"
+    "git ls-files *": "allow"
   task: 
     "*": "deny"
     "local-context-gatherer": "allow"

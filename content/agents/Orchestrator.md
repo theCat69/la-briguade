@@ -12,6 +12,8 @@ permission:
     "git log *": "allow" 
     "git status *": "allow" 
     "git diff *": "allow"
+    "git ls-files *": "allow"
+    "wc *": "allow"
     "mkdir -p .ai/context-snapshots": "allow"
     "mkdir -p .ai/context-snapshots/*": "allow"
   edit: 
