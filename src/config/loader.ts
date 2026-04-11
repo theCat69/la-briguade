@@ -6,6 +6,7 @@ import { parse as parseJsonc, type ParseError } from "jsonc-parser";
 import { LaBriguadeConfigSchema } from "./schema.js";
 import type { LaBriguadeConfig } from "./schema.js";
 import { logger } from "../utils/logger.js";
+import { isNodeError } from "../utils/type-guards.js";
 
 /** Discriminated union describing why a config file could not be loaded. */
 export type ConfigLoadError =
@@ -37,11 +38,18 @@ export function loadConfig(filePath: string): ConfigLoadResult {
     raw = jsonExists.content;
     resolvedPath = jsonPath;
   } else {
+    if (jsonExists.code === "read-error") {
+      logger.warn(`Could not read config file '${jsonPath}': ${jsonExists.message}`);
+    }
+
     const jsoncExists = tryReadFile(jsoncPath);
     if (jsoncExists.ok) {
       raw = jsoncExists.content;
       resolvedPath = jsoncPath;
     } else {
+      if (jsoncExists.code === "read-error") {
+        logger.warn(`Could not read config file '${jsoncPath}': ${jsoncExists.message}`);
+      }
       return { ok: false, error: { kind: "not-found" } };
     }
   }
@@ -83,13 +91,19 @@ export function loadConfig(filePath: string): ConfigLoadResult {
 
 type ReadResult =
   | { ok: true; content: string }
-  | { ok: false };
+  | { ok: false; code: "not-found" }
+  | { ok: false; code: "read-error"; message: string };
 
 function tryReadFile(filePath: string): ReadResult {
   try {
     const content = readFileSync(filePath, "utf-8");
     return { ok: true, content };
-  } catch {
-    return { ok: false };
+  } catch (error) {
+    if (isNodeError(error) && (error.code === "ENOENT" || error.code === "ENOTDIR")) {
+      return { ok: false, code: "not-found" };
+    }
+
+    const reason = error instanceof Error ? error.message : String(error);
+    return { ok: false, code: "read-error", message: reason };
   }
 }

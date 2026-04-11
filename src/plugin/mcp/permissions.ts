@@ -28,9 +28,12 @@ function resolveSkillPermission(
   return undefined;
 }
 
-export function injectSkillBashPermissions(
+function forEachAgentWithSkillPermission(
   input: Config,
-  skillBashPermIndex: SkillBashPermIndex,
+  callback: (
+    rawPermission: Record<string, unknown>,
+    rawSkillPerms: Record<string, unknown>,
+  ) => void,
 ): void {
   if (!isRecord(input.agent)) {
     return;
@@ -52,6 +55,15 @@ export function injectSkillBashPermissions(
       continue;
     }
 
+    callback(rawPermission, rawSkillPerms);
+  }
+}
+
+export function injectSkillBashPermissions(
+  input: Config,
+  skillBashPermIndex: SkillBashPermIndex,
+): void {
+  forEachAgentWithSkillPermission(input, (rawPermission, rawSkillPerms) => {
     for (const [skillName, bashPerms] of Object.entries(skillBashPermIndex)) {
       if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
         continue;
@@ -79,30 +91,11 @@ export function injectSkillBashPermissions(
         }
       }
     }
-  }
+  });
 }
 
 export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcpIndex): void {
-  if (!isRecord(input.agent)) {
-    return;
-  }
-
-  for (const agentConfig of Object.values(input.agent)) {
-    if (!isRecord(agentConfig)) {
-      continue;
-    }
-    const agentRecord: Record<string, unknown> = agentConfig;
-
-    const rawPermission = agentRecord["permission"];
-    if (!isRecord(rawPermission)) {
-      continue;
-    }
-
-    const rawSkillPerms = rawPermission["skill"];
-    if (!isRecord(rawSkillPerms)) {
-      continue;
-    }
-
+  forEachAgentWithSkillPermission(input, (rawPermission, rawSkillPerms) => {
     for (const [skillName, bindings] of Object.entries(skillMcpIndex)) {
       if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
         continue;
@@ -124,5 +117,5 @@ export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcp
         }
       }
     }
-  }
+  });
 }

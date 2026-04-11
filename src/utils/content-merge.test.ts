@@ -136,4 +136,14 @@ describe("collectDirs", () => {
 
     expect(result).toEqual(new Map([["frontend", join(root, "frontend")]]));
   });
+
+  it("should skip plain files and collect only subdirectories", () => {
+    const root = makeTempDir();
+    writeFileSync(join(root, "foo.md"), "# file");
+    mkdirSync(join(root, "bar"));
+
+    const result = collectDirs([root]);
+
+    expect(result).toEqual(new Map([["bar", join(root, "bar")]]));
+  });
 });

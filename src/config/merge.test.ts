@@ -35,6 +35,18 @@ describe("applyAgentOverride", () => {
     expect(result.prompt).toBe("Always use PNPM.");
   });
 
+  it("should set suffix as prompt when base prompt is empty string", () => {
+    // Arrange
+    const base = makeBase({ prompt: "" });
+    const override: AgentOverride = { systemPromptSuffix: "Extra." };
+
+    // Act
+    const result = applyAgentOverride(base, override);
+
+    // Assert
+    expect(result.prompt).toBe("Extra.");
+  });
+
   it("should apply model override over base model", () => {
     // Arrange
     const base = makeBase({ model: "openai/gpt-4o" });

@@ -10,8 +10,6 @@ import {
 } from "./types.js";
 
 type EnvResolutionIssue = {
-  key: string;
-  field: string;
   message: string;
 };
 
@@ -37,8 +35,6 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
     return {
       value: resolvedValue,
       issue: {
-        key,
-        field,
         message:
           `MCP server '${key}': env var '${missingVarName}' referenced in ` +
           `${field} is not set`,
@@ -50,8 +46,6 @@ function resolveEnvTokens(value: string, key: string, field: string): EnvResolut
     return {
       value: "",
       issue: {
-        key,
-        field,
         message:
           `MCP server '${key}': resolved command element contains disallowed ` +
           "characters after env substitution — element skipped",

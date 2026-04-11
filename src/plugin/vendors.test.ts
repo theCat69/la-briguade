@@ -29,18 +29,6 @@ describe("loadVendorPrompts", () => {
     expect(result.has("gpt")).toBe(false);
   });
 
-  it("should return an empty map when no markdown files are resolved", () => {
-    // Arrange
-    mockCollectFiles.mockReturnValue(new Map());
-
-    // Act
-    const result = loadVendorPrompts(["/content/vendor-prompts"]);
-
-    // Assert
-    expect(result.size).toBe(0);
-    expect(mockReadFileSync).not.toHaveBeenCalled();
-  });
-
   it("should return an empty map when vendor-prompts directory is missing", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map());
@@ -51,6 +39,7 @@ describe("loadVendorPrompts", () => {
     // Assert
     expect(result).toBeInstanceOf(Map);
     expect(result.size).toBe(0);
+    expect(mockReadFileSync).not.toHaveBeenCalled();
   });
 
   it("should lowercase markdown filename stem for map key", () => {
