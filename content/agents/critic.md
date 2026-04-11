@@ -53,9 +53,10 @@ Before challenging any plan, unconditionally run all of the following steps:
 - Do NOT add scope — challenge existing scope.
 - Ground every challenge in a specific, named principle from the loaded skills.
 - A challenge without a named principle is not a challenge — it is an opinion.
+- Do NOT produce target-state architecture blueprints, migration checklists, or before/after structure maps — this is `architect`'s domain. Stay in adversarial challenge mode only.
 - Return ≤ 300 tokens.
 
-# Output (≤ 300 tokens)
+# Output (≤ 300 tokens — challenges only, no migration plans or target architectures)
 - **Necessity challenge** + alternative
 - **Simplicity challenge** + what to cut
 - **Coupling challenge** + what boundary is at risk
