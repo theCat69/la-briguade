@@ -42,7 +42,7 @@ All YAML frontmatter from `.md` files is **untrusted input**:
 
 ### MCP Env Token Resolution (`{env:VAR_NAME}`)
 
-Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `environment` values, and `headers` values. The `resolveEnvTokens()` helper in `src/plugin/mcp.ts` enforces the following security constraints:
+Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `environment` values, and `headers` values. The `resolveEnvTokens()` helper in `src/plugin/mcp/collect.ts` enforces the following security constraints:
 
 - **Unset variable** → resolves to `""` and emits `console.warn`. Never throws — avoids startup failures from missing optional keys.
 - **Post-substitution command validation** — after substituting the env value into a command element, the resolved string is checked against `DISALLOWED_COMMAND_CHARS` (`/[;|&$\`<>!]/`). Note: `/` and `\` are **not** disallowed (needed for npm scoped packages like `@scope/pkg`). If it matches, the element is replaced with `""` and a warning is logged. This prevents command injection via a compromised or maliciously-set environment variable.
@@ -82,6 +82,7 @@ Skill frontmatter MCP entries may include a `permission:` block declaring tool-l
   Object.assign(config.agent[name], attributes);
   ```
 - Never use `__proto__`, `constructor`, or `prototype` as dynamic property keys
+- `parseFrontmatter()` enforces a `POISON_KEYS` deny-list (`__proto__`, `constructor`, `prototype`) at parse time — silently drops matching keys and logs a warning. All callers benefit automatically.
 
 ## Authentication & Authorization
 

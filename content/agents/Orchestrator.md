@@ -42,6 +42,9 @@ permission:
     "external-context-gatherer": "allow"
     "librarian": "allow"
     "local-context-gatherer": "allow"
+    "planner": "allow"
+    "feature-designer": "allow"
+    "feature-reviewer": "allow"
     "reviewer": "allow"
     "security-reviewer": "allow"
     "critic": "allow"
@@ -97,6 +100,9 @@ Every task type below MUST be delegated to its designated subagent. The Orchestr
 | Local context gathering | cache → `local-context-gatherer` | Read source files to understand code structure or logic |
 | External documentation | cache → `external-context-gatherer` | Fetch, read, or summarize external library/API documentation |
 | Documentation updates | `librarian` | Assess whether docs need updating or write documentation |
+| Feature planning / roadmap | `planner` | Plan features inline or design user flows |
+| Feature design (spec, API, schema) | `feature-designer` | Design features or write specs |
+| Feature spec review | `feature-reviewer` | Review feature specs or acceptance criteria |
 | Design challenge | `critic` | Challenge architectural decisions (when applicable) |
 | Architecture analysis | `architect` | Produce structure maps, migration checklists, or before/after blueprints |
 

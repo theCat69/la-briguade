@@ -1,4 +1,4 @@
-<!-- Pattern: frontmatter-parsing — Safe YAML frontmatter extraction from .md files with error handling -->
+<!-- Pattern: frontmatter-parsing — Safe YAML frontmatter extraction from .md files with error handling and prototype pollution guard -->
 
 ```typescript
 // src/utils/frontmatter.ts — Parse YAML frontmatter delimited by --- fences.
@@ -7,8 +7,12 @@
 //   2. Always validate parsed value before casting to Record<string, unknown>
 //   3. Warn on YAML parse errors and return safe defaults (never throw to caller)
 //   4. Return both attributes and body so callers can use the markdown body too
+//   5. Block prototype-poisoning keys (__proto__, constructor, prototype) explicitly
 
 import { parse as parseYaml } from "yaml";
+
+import { isRecord } from "./type-guards.js";
+import { logger } from "./logger.js";
 
 const FRONTMATTER_FENCE = "---";
 
@@ -48,15 +52,23 @@ export function parseFrontmatter(content: string): ParsedFrontmatter {
   try {
     parsed = parseYaml(yamlBlock);
   } catch (err) {
-    console.warn("[la-briguade] Failed to parse YAML frontmatter:", err);
-    return { attributes: {}, body: "" };
+    logger.warn(`Failed to parse YAML frontmatter: ${String(err)}`);
+    return { attributes: {}, body };
   }
 
-  // Always validate before casting — parseYaml can return arrays, strings, null
-  const attributes =
-    parsed != null && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {};
+  // Guard against prototype-poisoning keys before building the attributes map
+  const POISON_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+  const attributes: Record<string, unknown> = {};
+  if (isRecord(parsed)) {
+    for (const [key, value] of Object.entries(parsed)) {
+      if (POISON_KEYS.has(key)) {
+        logger.warn(`Blocked prototype-poisoning frontmatter key: ${key}`);
+        continue;
+      }
+      attributes[key] = value;
+    }
+  }
 
   return { attributes, body };
 }

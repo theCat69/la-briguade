@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 13 agents, 17 skills, 7 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 17 skills, 8 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -165,6 +165,10 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 3. **Project user** — `<project_root>/content/{agents,commands,skills,vendor-prompts}/`
 
 Files in higher-priority layers override built-in files with the same stem name. All layers are optional — missing directories are silently skipped.
+
+> **Security / Trust Boundary**
+> Content placed in `~/la_briguade/` or project-level `content/` directories can override built-in agents, skills, commands, and vendor prompts.
+> Only place files from trusted sources in these override directories.
 
 **Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/content/agents/coder.md` (applies globally) or `<project_root>/content/agents/coder.md` (applies to that project only).
 
