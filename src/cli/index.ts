@@ -106,7 +106,16 @@ program
     }
 
     const { path: configPath, existed } = configFileResult;
-    const { raw, parsed } = readConfig(configPath);
+    let configData: ReturnType<typeof readConfig>;
+    try {
+      configData = readConfig(configPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[la-briguade] Could not read config file: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
+    const { raw, parsed } = configData;
 
     // Config.plugin per @opencode-ai/plugin Config type
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
@@ -134,7 +143,14 @@ program
       updated = applyEdits(updated, edits);
     }
 
-    writeFileSync(configPath, updated, "utf-8");
+    try {
+      writeFileSync(configPath, updated, "utf-8");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[la-briguade] Could not write config file: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
 
     if (existed) {
       console.log(`Installed — added "${PLUGIN_NAME}" to plugin in ${configPath}`);
@@ -155,7 +171,16 @@ program
       return;
     }
 
-    const { raw, parsed } = readConfig(configPath);
+    let configData: ReturnType<typeof readConfig>;
+    try {
+      configData = readConfig(configPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[la-briguade] Could not read config file: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
+    const { raw, parsed } = configData;
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
     if (plugin === undefined) {
@@ -173,7 +198,14 @@ program
       formattingOptions: { tabSize: 2, insertSpaces: true },
     });
     const updated = applyEdits(raw, edits);
-    writeFileSync(configPath, updated, "utf-8");
+    try {
+      writeFileSync(configPath, updated, "utf-8");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[la-briguade] Could not write config file: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
 
     console.log(`Uninstalled — removed "${PLUGIN_NAME}" from plugin in ${configPath}`);
   });
@@ -253,7 +285,16 @@ program
         detail: `Global config not found at ${globalConfigPath} — run: la-briguade install`,
       });
     } else {
-      const { parsed } = readConfig(globalConfigPath);
+      let configData: ReturnType<typeof readConfig>;
+      try {
+        configData = readConfig(globalConfigPath);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[la-briguade] Could not read config file: ${message}`);
+        process.exitCode = 1;
+        return;
+      }
+      const { parsed } = configData;
       const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : [];
       const hasPlugin = plugin.includes(PLUGIN_NAME);
 

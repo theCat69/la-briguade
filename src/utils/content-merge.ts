@@ -2,6 +2,7 @@ import { statSync } from "node:fs";
 import { basename, join } from "node:path";
 
 import { readDirSafe } from "./read-dir.js";
+import { isNodeError } from "./type-guards.js";
 
 /**
  * Collects files matching `extension` from each dir in `dirs` (in order).
@@ -45,8 +46,13 @@ export function collectDirs(roots: string[]): Map<string, string> {
           const safeDirName = basename(entry);
           merged.set(safeDirName, fullPath);
         }
-      } catch {
-        // Ignore unreadable/missing entries.
+      } catch (err) {
+        if (!isNodeError(err) || err.code !== "ENOENT") {
+          const message = err instanceof Error ? err.message : String(err);
+          console.warn(
+            `[la-briguade] Could not access skill directory '${fullPath}': ${message}`,
+          );
+        }
       }
     }
   }
