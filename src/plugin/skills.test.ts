@@ -67,4 +67,17 @@ describe("registerSkills", () => {
       ],
     });
   });
+
+  it("should return empty dirs and keep config unchanged when no skill dirs are discovered", () => {
+    mockCollectDirs.mockReturnValue(new Map());
+
+    const config = makeConfig();
+    const initialConfig = { ...(config as Record<string, unknown>) };
+
+    const result = registerSkills(config, ["/builtin/skills"]);
+
+    expect(result.dirs).toEqual([]);
+    expect(config).toEqual(initialConfig);
+    expect((config as Record<string, unknown>)["skills"]).toBeUndefined();
+  });
 });
