@@ -10,7 +10,7 @@ An [opencode](https://opencode.ai) plugin that provides a production-grade multi
 npx la-briguade install
 ```
 
-The `install` command adds `"la-briguade"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`, respecting `$XDG_CONFIG_HOME` on Linux). If the file or its parent directories don't exist, they are created automatically.
+The `install` command adds `"la-briguade@latest"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`, respecting `$XDG_CONFIG_HOME` on Linux). If the file or its parent directories don't exist, they are created automatically.
 
 To remove the plugin:
 
@@ -18,7 +18,7 @@ To remove the plugin:
 npx la-briguade uninstall
 ```
 
-The `uninstall` command removes `"la-briguade"` from the same global config file.
+The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-briguade"` entry) from the same global config file.
 
 ## What's Included
 
@@ -100,6 +100,7 @@ The plugin registers six built-in hooks that run automatically:
 la-briguade install     # Register plugin in opencode config
 la-briguade uninstall   # Remove plugin from opencode config
 la-briguade doctor      # Run diagnostic checks
+la-briguade update      # Update to the latest version globally
 ```
 
 ## Configuration

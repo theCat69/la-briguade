@@ -9,6 +9,7 @@ import {
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
 
 import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
@@ -22,6 +23,11 @@ const rawPkg: unknown = JSON.parse(readFileSync(join(__dirname, "../../package.j
 const pkg = isRecord(rawPkg) ? rawPkg : {};
 
 const PLUGIN_NAME = "la-briguade";
+const PLUGIN_ENTRY = "la-briguade@latest";
+
+function isPluginEntry(entry: unknown): boolean {
+  return entry === PLUGIN_NAME || entry === PLUGIN_ENTRY;
+}
 
 interface ConfigFileResult {
   path: string;
@@ -121,8 +127,10 @@ program
     // Config.plugin per @opencode-ai/plugin Config type
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
-    if (plugin !== undefined && plugin.includes(PLUGIN_NAME)) {
-      console.log(`Already installed — "${PLUGIN_NAME}" is already in plugin array.`);
+    if (plugin !== undefined && plugin.some(isPluginEntry)) {
+      console.log(
+        `Already installed — "${plugin.find(isPluginEntry)}" is already in plugin array.`
+      );
       return;
     }
 
@@ -131,13 +139,13 @@ program
 
     if (plugin === undefined) {
       // No plugin array — create it with the plugin entry
-      const edits = modify(updated, ["plugin"], [PLUGIN_NAME], {
+      const edits = modify(updated, ["plugin"], [PLUGIN_ENTRY], {
         formattingOptions: { tabSize: 2, insertSpaces: true },
       });
       updated = applyEdits(updated, edits);
     } else {
       // plugin array exists — append to it
-      const edits = modify(updated, ["plugin", plugin.length], PLUGIN_NAME, {
+      const edits = modify(updated, ["plugin", plugin.length], PLUGIN_ENTRY, {
         formattingOptions: { tabSize: 2, insertSpaces: true },
         isArrayInsertion: true,
       });
@@ -154,9 +162,9 @@ program
     }
 
     if (existed) {
-      console.log(`Installed — added "${PLUGIN_NAME}" to plugin in ${configPath}`);
+      console.log(`Installed — added "${PLUGIN_ENTRY}" to plugin in ${configPath}`);
     } else {
-      console.log(`Installed — created ${configPath} with "${PLUGIN_NAME}" in plugin`);
+      console.log(`Installed — created ${configPath} with "${PLUGIN_ENTRY}" in plugin`);
     }
   });
 
@@ -189,11 +197,12 @@ program
       return;
     }
 
-    const index = plugin.indexOf(PLUGIN_NAME);
+    const index = plugin.findIndex(isPluginEntry);
     if (index === -1) {
       console.log(`Not installed — "${PLUGIN_NAME}" not found in plugin array.`);
       return;
     }
+    const removedEntry = typeof plugin[index] === "string" ? plugin[index] : PLUGIN_NAME;
 
     const edits = modify(raw, ["plugin", index], undefined, {
       formattingOptions: { tabSize: 2, insertSpaces: true },
@@ -208,7 +217,7 @@ program
       return;
     }
 
-    console.log(`Uninstalled — removed "${PLUGIN_NAME}" from plugin in ${configPath}`);
+    console.log(`Uninstalled — removed "${removedEntry}" from plugin in ${configPath}`);
   });
 
 // ---- doctor ----
@@ -296,14 +305,15 @@ program
       }
       const { parsed } = configData;
       const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : [];
-      const hasPlugin = plugin.includes(PLUGIN_NAME);
+      const hasPlugin = plugin.some(isPluginEntry);
 
       checks.push({
         label: "Plugin registered",
         ok: hasPlugin,
         detail: hasPlugin
           ? `Found in ${globalConfigPath}`
-          : `"${PLUGIN_NAME}" not in plugin array in ${globalConfigPath}`,
+          : `"${PLUGIN_ENTRY}" not in plugin array in ${globalConfigPath} ` +
+            "— run: la-briguade install",
       });
     }
 
@@ -354,6 +364,41 @@ program
     } else {
       console.log("All checks passed.");
     }
+  });
+
+// ---- update ----
+program
+  .command("update")
+  .description("Update la-briguade to the latest version globally")
+  .action(() => {
+    console.log("[la-briguade] Updating to latest version...");
+    const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+
+    const result = spawnSync(npmCmd, ["install", "-g", "la-briguade@latest"], {
+      stdio: "inherit",
+      shell: false,
+      timeout: 120_000,
+    });
+
+    if (result.error != null) {
+      console.error(`[la-briguade] Update failed: ${result.error.message}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    if (result.signal === "SIGTERM") {
+      console.error("[la-briguade] Update timed out after 120 seconds.");
+      process.exitCode = 1;
+      return;
+    }
+
+    if (result.status !== 0) {
+      console.error(`[la-briguade] Update failed with exit code ${result.status ?? "unknown"}.`);
+      process.exitCode = 1;
+      return;
+    }
+
+    console.log("Updated — la-briguade updated to latest version.");
   });
 
 program.parse();

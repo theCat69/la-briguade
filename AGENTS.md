@@ -69,7 +69,7 @@ src/
   hooks/
     index.ts         ← createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection, skill access gating
   cli/
-    index.ts         ← Commander CLI: install / uninstall / doctor
+    index.ts         ← Commander CLI: install / uninstall / doctor / update
   utils/
     frontmatter.ts   ← YAML frontmatter parser
     read-dir.ts      ← Safe directory reader
