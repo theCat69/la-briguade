@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gemini-3.1-pro-preview
+model: github-copilot/claude-sonnet-4.6
 description: "Security-focused code reviewer for production systems"
 mode: subagent 
 permission:
