@@ -17,6 +17,7 @@ export function resolveConfigBaseDirs(projectDir: string): {
 
 export function resolveOpencodeConfigDir(): string {
   if (process.platform === "win32") {
+    // Use win32.join to construct Windows config paths even on non-Windows runtimes.
     return win32.join(
       process.env["APPDATA"] ?? win32.join(homedir(), "AppData", "Roaming"),
       "opencode",

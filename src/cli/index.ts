@@ -25,7 +25,7 @@ const pkg = isRecord(rawPkg) ? rawPkg : {};
 const PLUGIN_NAME = "la-briguade";
 const PLUGIN_ENTRY = "la-briguade@latest";
 
-function isPluginEntry(entry: unknown): boolean {
+function isPluginEntry(entry: unknown): entry is string {
   return entry === PLUGIN_NAME || entry === PLUGIN_ENTRY;
 }
 
@@ -368,11 +368,19 @@ program
     console.log("[la-briguade] Updating to latest version...");
     const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
-    const result = spawnSync(npmCmd, ["install", "-g", "la-briguade@latest"], {
-      stdio: "inherit",
-      shell: false,
-      timeout: 120_000,
-    });
+    let result: ReturnType<typeof spawnSync>;
+    try {
+      result = spawnSync(npmCmd, ["install", "-g", "la-briguade@latest"], {
+        stdio: "inherit",
+        shell: false,
+        timeout: 120_000,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[la-briguade] Update failed: ${message}`);
+      process.exitCode = 1;
+      return;
+    }
 
     if (result.error != null) {
       console.error(`[la-briguade] Update failed: ${result.error.message}`);

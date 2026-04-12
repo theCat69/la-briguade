@@ -152,7 +152,7 @@ function parseSkillPermissions(
   const skill = permission["skill"];
   if (!isRecord(skill)) return undefined;
 
-  const parsed: Record<string, string> = Object.create(null) as Record<string, string>;
+  const entries: Record<string, string> = Object.create(null) as Record<string, string>;
   for (const [key, value] of Object.entries(skill)) {
     if (!isSafePermissionSubKey(key)) {
       logger.warn(`[agents] permission.skill key "${key}" is unsafe; ignoring`);
@@ -181,8 +181,8 @@ function parseSkillPermissions(
       continue;
     }
 
-    parsed[key] = normalized;
+    entries[key] = normalized;
   }
 
-  return Object.keys(parsed).length > 0 ? parsed : undefined;
+  return Object.keys(entries).length > 0 ? entries : undefined;
 }
