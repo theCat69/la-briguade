@@ -1,5 +1,6 @@
 ---
 model: github-copilot/claude-sonnet-4.6
+variant: high
 description: "specification reviewer and production-readiness quality gate"
 mode: subagent 
 permission:

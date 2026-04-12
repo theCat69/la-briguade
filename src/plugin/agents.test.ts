@@ -125,6 +125,29 @@ describe("registerAgents", () => {
     expect(coder?.["model"]).toBe("github-copilot/claude-sonnet-4.6");
   });
 
+  it("should register variant from frontmatter", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "model: github-copilot/claude-sonnet-4.6",
+        "variant: high",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder?.["variant"]).toBe("high");
+  });
+
   it("should register overridden agent from later directory", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map([["coder", "/project/content/agents/coder.md"]]));

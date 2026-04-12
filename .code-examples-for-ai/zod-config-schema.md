@@ -29,7 +29,9 @@ export const AgentOverrideSchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   topK: z.number().int().min(0).optional(),
-  reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+  variant: z.string().max(100).refine((v) => /^[\w.-]+$/.test(v), {
+    message: "variant contains disallowed characters",
+  }).optional(),
   maxTokens: z.number().int().min(1).optional(),
   // z.record(z.string(), valueSchema) — two-arg form is REQUIRED in Zod v4
   permission: z

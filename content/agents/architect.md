@@ -1,5 +1,6 @@
 ---
 model: github-copilot/claude-sonnet-4.6
+variant: high
 description: "Code structure analyst — maps module boundaries, dependency graphs, and produces before/after architecture blueprints for refactoring and restructuring"
 mode: subagent
 permission:

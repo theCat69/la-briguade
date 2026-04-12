@@ -55,8 +55,14 @@ export const AgentOverrideSchema = z.object({
   topP: z.number().min(0).max(1).optional(),
   /** Top-K sampling (integer ≥ 0). */
   topK: z.number().int().min(0).optional(),
-  /** Reasoning effort hint for models that support it. */
-  reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+  /** Model variant name, e.g. `"high"` for high reasoning effort on GitHub Copilot Claude models. */
+  variant: z
+    .string()
+    .max(100)
+    .refine((v) => /^[\w.-]+$/.test(v), {
+      message: "variant contains disallowed characters",
+    })
+    .optional(),
   /** Maximum number of output tokens (integer ≥ 1). */
   maxTokens: z.number().int().min(1).optional(),
   /** Permission overrides shallow-merged on top of the agent's internal permissions. */
