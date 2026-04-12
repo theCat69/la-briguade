@@ -298,7 +298,7 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
   if (time["completed"] === undefined) return;
 
   const tokens = "tokens" in info ? info.tokens : undefined;
-  if (tokens == null || typeof tokens !== "object") return;
+  if (!isRecord(tokens)) return;
 
   const output = "output" in tokens ? tokens.output : undefined;
   if (output === 0) {

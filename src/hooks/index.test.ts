@@ -721,4 +721,45 @@ describe("tool.execute.before skill access gating", () => {
     // Assert
     expect(output.args).toEqual({ name: "project-test" });
   });
+
+  it("should no-op when session.deleted event is missing properties", async () => {
+    // Arrange
+    const { event } = getSkillHooks(new Map());
+
+    // Act
+    const invoke = async () =>
+      event?.(
+        {
+          event: {
+            type: "session.deleted",
+          },
+        } as never,
+      );
+
+    // Assert
+    await expect(invoke()).resolves.not.toThrow();
+  });
+
+  it("should no-op when session.deleted properties.info.id is not a string", async () => {
+    // Arrange
+    const { event } = getSkillHooks(new Map());
+
+    // Act
+    const invoke = async () =>
+      event?.(
+        {
+          event: {
+            type: "session.deleted",
+            properties: {
+              info: {
+                id: 123,
+              },
+            },
+          },
+        } as never,
+      );
+
+    // Assert
+    await expect(invoke()).resolves.not.toThrow();
+  });
 });

@@ -167,10 +167,14 @@ function parseSkillPermissions(
     }
 
     const normalized = value.toLowerCase();
-    if (
-      value !== normalized ||
-      (normalized !== "allow" && normalized !== "ask" && normalized !== "deny")
-    ) {
+    if (value !== normalized) {
+      logger.warn(
+        `[agents] permission.skill entry "${key}" value "${value}" must be lowercase; ignoring`,
+      );
+      continue;
+    }
+
+    if (normalized !== "allow" && normalized !== "ask" && normalized !== "deny") {
       logger.warn(
         `[agents] permission.skill entry "${key}" has unrecognized value "${value}"; ignoring`,
       );

@@ -173,7 +173,32 @@ describe("registerAgents", () => {
     );
   });
 
-  it("should warn and skip unrecognized permission.skill values like 'DENY'", () => {
+  it("should warn and skip unrecognized permission.skill values like 'invalid'", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "permission:",
+        "  skill:",
+        '    "*": "invalid"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('permission.skill entry "*" has unrecognized value "invalid"'),
+    );
+  });
+
+  it("should warn and skip permission.skill values with wrong case like 'DENY'", () => {
     // Arrange
     const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
@@ -187,7 +212,7 @@ describe("registerAgents", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('permission.skill entry "*" has unrecognized value "DENY"'),
+      expect.stringContaining('permission.skill entry "*" value "DENY" must be lowercase'),
     );
   });
 
