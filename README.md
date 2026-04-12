@@ -78,7 +78,7 @@ The `uninstall` command removes `"la-briguade"` from the same global config file
 
 ## Hooks
 
-The plugin registers five built-in hooks that run automatically:
+The plugin registers six built-in hooks that run automatically:
 
 1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed. Tool outputs with non-string content (e.g. structured MCP responses) are passed through unchanged.
 
@@ -89,6 +89,8 @@ The plugin registers five built-in hooks that run automatically:
 4. **Model Section Injector** — At chat time, inspects the active model ID and appends the matching model-family section from the agent body to its system prompt (see [Model-Specific Prompt Sections](#model-specific-prompt-sections) below).
 
 5. **Vendor Prompt Injector** — After the model section, appends the global vendor prompt for the matched model family (loaded from `content/vendor-prompts/`) to every agent system prompt. Unlike model sections, vendor prompts live in separate files and apply uniformly to all agents — no per-agent markup needed. No fallback is applied; if no family matches the active model, nothing is injected.
+
+6. **Skill Access Gate** — Enforces `permission.skill` declarations from agent frontmatter. Uses `chat.params` to track which agent is active per session, then gates every `skill` tool call in `tool.execute.before`: if an agent declares `permission.skill["*"]: "deny"`, only explicitly allow-listed skill names pass through. Session state is cleaned up on `session.deleted` to prevent memory leaks.
 
 ## CLI Commands
 
@@ -166,6 +168,13 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 
 Files in higher-priority layers override built-in files with the same stem name. All layers are optional — missing directories are silently skipped.
 
+**Skills additionally scan two native opencode paths** (lowest priority, scanned before the la_briguade layers above):
+
+- `~/.config/opencode/skills/` (respects `$XDG_CONFIG_HOME` on Linux; uses `%APPDATA%\opencode\skills` on Windows) — opencode global skills
+- `<project_root>/.opencode/skills/` — opencode project-level skills
+
+This means any skill already installed at the opencode level is automatically available to la-briguade agents without any extra configuration.
+
 > **Security / Trust Boundary**
 > Content placed in `~/la_briguade/` or project-level `content/` directories can override built-in agents, skills, commands, and vendor prompts.
 > Only place files from trusted sources in these override directories.
@@ -190,14 +199,17 @@ permission:
   bash:
     "*": "deny"
     "git *": "allow"
-tools:
-  webSearch: true
-  bash: false
+  skill:
+    "*": "deny"
+    "typescript": "allow"
+    "general-coding": "allow"
 ---
 
 # Identity
 You are a specialized agent that...
 ```
+
+The optional `permission.skill` block controls which skills the agent may load via the `skill` tool. When `"*": "deny"` is set, only explicitly listed skill names with `"allow"` (or `"ask"`) pass through — all others are blocked at the `tool.execute.before` hook. Omitting `permission.skill` entirely leaves skill access unrestricted.
 
 ### Skill
 

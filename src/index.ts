@@ -3,7 +3,11 @@ import { fileURLToPath } from "node:url";
 
 import type { Plugin } from "@opencode-ai/plugin";
 
-import { resolveConfigBaseDirs, resolveUserConfig } from "./config/index.js";
+import {
+  resolveConfigBaseDirs,
+  resolveOpencodeConfigDir,
+  resolveUserConfig,
+} from "./config/index.js";
 import { createHooks } from "./hooks/index.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
 import { registerAgents } from "./plugin/agents.js";
@@ -40,7 +44,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(projectDir, "content", "commands"),
   ];
   const userSkillRoots = [
+    join(resolveOpencodeConfigDir(), "skills"),
     join(globalDir, "content", "skills"),
+    join(projectDir, ".opencode", "skills"),
     join(projectDir, "content", "skills"),
   ];
   const userVendorDirs = [
@@ -49,14 +55,15 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
   const agentSections = new Map<string, AgentSectionsEntry>();
+  const agentSkillPerms = new Map<string, Record<string, string>>();
 
-  const hooks = createHooks(ctx, agentSections, vendorPrompts);
+  const hooks = createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms);
 
   return {
     config: async (input) => {
       const userConfig = resolveUserConfig(ctx.directory);
       logger.setLevel(userConfig.log_level ?? "warn");
-      const { agentSections: sections } = registerAgents(
+      const { agentSections: sections, agentSkillPerms: skillPerms } = registerAgents(
         input,
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
@@ -73,6 +80,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       injectSkillBashPermissions(input, skillBashPermIndex);
       for (const [agentName, entry] of sections) {
         agentSections.set(agentName, entry);
+      }
+      for (const [agentName, perms] of skillPerms) {
+        agentSkillPerms.set(agentName, perms);
       }
     },
     ...hooks,

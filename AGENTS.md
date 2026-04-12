@@ -41,6 +41,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
 | `content-override-merge.md` | Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()` |
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
+| `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
 
 ---
 
@@ -50,7 +51,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 src/
   index.ts           ← Plugin entry point — wires config() + hooks
   plugin/
-    agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides
+    agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides; returns { agentSections, agentSkillPerms }
     commands.ts      ← registerCommands(config, commandDirs[]) — merges .md files across builtin + user dirs via collectFiles()
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
     mcp/
@@ -61,12 +62,12 @@ src/
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
   config/
-    index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveUserConfig() — loads + merges global and project configs
+    index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns opencode config dir (XDG_CONFIG_HOME/APPDATA aware); resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
     merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
-    index.ts         ← createHooks(ctx, agentSections, vendorPrompts) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection
+    index.ts         ← createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection, skill access gating
   cli/
     index.ts         ← Commander CLI: install / uninstall / doctor
   utils/

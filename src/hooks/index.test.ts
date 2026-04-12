@@ -9,7 +9,12 @@ function getSystemTransformHook(
   agentSections: Map<string, AgentSectionsEntry>,
   vendorPrompts: Map<string, string>,
 ) {
-  const hooks = createHooks({} as PluginInput, agentSections, vendorPrompts);
+  const hooks = createHooks(
+    {} as PluginInput,
+    agentSections,
+    vendorPrompts,
+    new Map<string, Record<string, string>>(),
+  );
   return hooks["experimental.chat.system.transform"];
 }
 
@@ -18,6 +23,7 @@ function getEventHook() {
     {} as PluginInput,
     new Map<string, AgentSectionsEntry>(),
     new Map<string, string>(),
+    new Map<string, Record<string, string>>(),
   );
   return hooks.event;
 }
@@ -27,8 +33,24 @@ function getToolExecuteAfterHook() {
     {} as PluginInput,
     new Map<string, AgentSectionsEntry>(),
     new Map<string, string>(),
+    new Map<string, Record<string, string>>(),
   );
   return hooks["tool.execute.after"];
+}
+
+function getSkillHooks(agentSkillPerms: Map<string, Record<string, string>>) {
+  const hooks = createHooks(
+    {} as PluginInput,
+    new Map<string, AgentSectionsEntry>(),
+    new Map<string, string>(),
+    agentSkillPerms,
+  );
+
+  return {
+    chatParams: hooks["chat.params"],
+    toolExecuteBefore: hooks["tool.execute.before"],
+    event: hooks.event,
+  };
 }
 
 describe("tool.execute.after", () => {
@@ -398,5 +420,240 @@ describe("detectEmptyResponse via event hook", () => {
 
     // Assert
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("tool.execute.before skill access gating", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  it("should block skill when deny-mode is active and skill is not allowed", async () => {
+    // Arrange
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([
+        [
+          "coder",
+          {
+            "*": "deny",
+            typescript: "allow",
+          },
+        ],
+      ]),
+    );
+    const output = { args: { name: "project-test" } };
+    await chatParams?.(
+      {
+        sessionID: "s1",
+        agent: "coder",
+      } as never,
+      {} as never,
+    );
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "s1",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "" });
+  });
+
+  it("should allow skill when deny-mode is active and skill is explicitly allow", async () => {
+    // Arrange
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([
+        [
+          "coder",
+          {
+            "*": "deny",
+            typescript: "allow",
+          },
+        ],
+      ]),
+    );
+    const output = { args: { name: "typescript" } };
+    await chatParams?.(
+      {
+        sessionID: "s1",
+        agent: "coder",
+      } as never,
+      {} as never,
+    );
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "s1",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "typescript" });
+  });
+
+  it("should allow all skills by default when no permission.skill block exists", async () => {
+    // Arrange
+    const { chatParams, toolExecuteBefore } = getSkillHooks(new Map());
+    const output = { args: { name: "project-test" } };
+    await chatParams?.(
+      {
+        sessionID: "s1",
+        agent: "coder",
+      } as never,
+      {} as never,
+    );
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "s1",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "project-test" });
+  });
+
+  it("should allow all skills when permission block does not set '*': 'deny'", async () => {
+    // Arrange
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([
+        [
+          "coder",
+          {
+            typescript: "allow",
+          },
+        ],
+      ]),
+    );
+    const output = { args: { name: "project-test" } };
+    await chatParams?.(
+      {
+        sessionID: "s1",
+        agent: "coder",
+      } as never,
+      {} as never,
+    );
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "s1",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "project-test" });
+  });
+
+  it("should fail open when session is unknown", async () => {
+    // Arrange
+    const { toolExecuteBefore } = getSkillHooks(
+      new Map([
+        [
+          "coder",
+          {
+            "*": "deny",
+          },
+        ],
+      ]),
+    );
+    const output = { args: { name: "project-test" } };
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "unknown-session",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "project-test" });
+  });
+
+  it("should not modify args when the tool is not 'skill'", async () => {
+    // Arrange
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([["coder", { "*": "deny" }]]),
+    );
+    const output = { args: { path: "/some/file.ts" } };
+    await chatParams?.({ sessionID: "s1", agent: "coder" } as never, {} as never);
+
+    // Act
+    await toolExecuteBefore?.(
+      { tool: "edit", sessionID: "s1", callID: "c1" } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ path: "/some/file.ts" });
+  });
+
+  it("should delete session mapping on session.deleted event", async () => {
+    // Arrange
+    const { chatParams, event, toolExecuteBefore } = getSkillHooks(
+      new Map([
+        [
+          "coder",
+          {
+            "*": "deny",
+          },
+        ],
+      ]),
+    );
+    const output = { args: { name: "project-test" } };
+
+    await chatParams?.(
+      {
+        sessionID: "s1",
+        agent: "coder",
+      } as never,
+      {} as never,
+    );
+
+    await event?.(
+      {
+        event: {
+          type: "session.deleted",
+          properties: {
+            info: {
+              id: "s1",
+            },
+          },
+        },
+      } as never,
+    );
+
+    // Act
+    await toolExecuteBefore?.(
+      {
+        tool: "skill",
+        sessionID: "s1",
+        callID: "c1",
+      } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: "project-test" });
   });
 });

@@ -99,24 +99,6 @@ describe("applyAgentOverride", () => {
     expect(perm["webfetch"]).toBe("ask");   // from override only
   });
 
-  it("should merge tools: base and override combined, override wins conflicts", () => {
-    // Arrange
-    const base = makeBase({
-      tools: { bash: true, webfetch: false },
-    });
-    const override: AgentOverride = {
-      tools: { webfetch: true, edit: false },
-    };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    expect(result.tools?.["bash"]).toBe(true);      // from base
-    expect(result.tools?.["webfetch"]).toBe(true);  // override wins conflict
-    expect(result.tools?.["edit"]).toBe(false);     // from override only
-  });
-
   it("should not mutate the base object", () => {
     // Arrange
     const base = makeBase({ model: "openai/gpt-4o" });

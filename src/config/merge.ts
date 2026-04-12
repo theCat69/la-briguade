@@ -83,11 +83,6 @@ export function applyAgentOverride(base: AgentConfig, override: AgentOverride): 
     merged["permission"] = mergedPermission;
   }
 
-  // Merge tools: base tools spread then override tools spread
-  if (override.tools !== undefined) {
-    merged["tools"] = { ...base.tools, ...override.tools };
-  }
-
   return merged;
 }
 

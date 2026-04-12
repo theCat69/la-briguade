@@ -4,8 +4,7 @@ import { basename } from "node:path";
 import type { AgentConfig } from "@opencode-ai/sdk";
 
 import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
-import { AgentToolsSchema } from "../config/schema.js";
-import type { LaBriguadeConfig } from "../config/schema.js";
+import { isSafePermissionSubKey, type LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { logger } from "../utils/logger.js";
@@ -34,6 +33,7 @@ function agentNameFromFilename(filename: string): string {
 /** Return type for registerAgents — includes the per-agent model sections map. */
 export type RegisterAgentsResult = {
   agentSections: Map<string, AgentSectionsEntry>;
+  agentSkillPerms: Map<string, Record<string, string>>;
 };
 
 /**
@@ -50,6 +50,7 @@ export function registerAgents(
   userConfig?: LaBriguadeConfig,
 ): RegisterAgentsResult {
   const agentSections: Map<string, AgentSectionsEntry> = new Map();
+  const agentSkillPerms: Map<string, Record<string, string>> = new Map();
   const opusEnabled = userConfig?.opus_enabled ?? false;
 
   const loadedAgents = loadContentFiles(agentDirs, ".md", (filePath, stem) => {
@@ -106,20 +107,7 @@ export function registerAgents(
       agentConfig.permission = permission;
     }
 
-    if (attributes["tools"] !== undefined) {
-      const parsedTools = AgentToolsSchema.safeParse(attributes["tools"]);
-
-      if (parsedTools.success) {
-        const validatedTools = parsedTools.data;
-        if (validatedTools !== undefined && Object.keys(validatedTools).length > 0) {
-          agentConfig["tools"] = validatedTools;
-        }
-      } else {
-        delete agentConfig["tools"];
-        const reason = parsedTools.error.issues.map((issue) => issue.message).join("; ");
-        logger.warn(`agent ${agentName}: invalid tools field — ${reason}`);
-      }
-    }
+    const skillPerms = parseSkillPermissions(permission);
 
     const resolved =
       userConfig !== undefined
@@ -136,10 +124,11 @@ export function registerAgents(
       final,
       base,
       segments,
+      skillPerms,
     };
   });
 
-  if (loadedAgents.size === 0) return { agentSections };
+  if (loadedAgents.size === 0) return { agentSections, agentSkillPerms };
 
   const parsedAgents: Record<string, AgentConfig> = {};
 
@@ -152,10 +141,53 @@ export function registerAgents(
       }
       agentSections.set(parsed.agentName, { base: parsed.base, segments: parsed.segments });
     }
+
+    if (parsed.skillPerms !== undefined) {
+      agentSkillPerms.set(parsed.agentName, parsed.skillPerms);
+    }
   }
 
   const existingAgents = isRecord(config.agent) ? config.agent : {};
   config.agent = { ...existingAgents, ...parsedAgents };
 
-  return { agentSections };
+  return { agentSections, agentSkillPerms };
+}
+
+function parseSkillPermissions(
+  permission: unknown,
+): Record<string, string> | undefined {
+  if (!isRecord(permission)) return undefined;
+
+  const skill = permission["skill"];
+  if (!isRecord(skill)) return undefined;
+
+  const parsed: Record<string, string> = Object.create(null) as Record<string, string>;
+  for (const [key, value] of Object.entries(skill)) {
+    if (!isSafePermissionSubKey(key)) {
+      logger.warn(`[agents] permission.skill key "${key}" is unsafe; ignoring`);
+      continue;
+    }
+
+    if (typeof value !== "string") {
+      logger.warn(
+        `[agents] permission.skill entry "${key}" has non-string value (${typeof value}); ignoring`,
+      );
+      continue;
+    }
+
+    const normalized = value.toLowerCase();
+    if (
+      value !== normalized ||
+      (normalized !== "allow" && normalized !== "ask" && normalized !== "deny")
+    ) {
+      logger.warn(
+        `[agents] permission.skill entry "${key}" has unrecognized value "${value}"; ignoring`,
+      );
+      continue;
+    }
+
+    parsed[key] = normalized;
+  }
+
+  return Object.keys(parsed).length > 0 ? parsed : undefined;
 }

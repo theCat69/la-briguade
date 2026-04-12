@@ -3,15 +3,6 @@ import { z } from "zod";
 /** Regex that rejects keys matching reserved prototype pollution names. */
 export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
 
-/** Tool enable/disable flags shallow-merged on top of agent defaults. */
-export const AgentToolsSchema = z
-  .record(z.string(), z.boolean())
-  .refine(
-    (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
-    { message: "tools keys must not contain reserved prototype keywords" },
-  )
-  .optional();
-
 /** Returns true when a key is safe from prototype pollution (permissive — allows spaces, globs, etc.). */
 export function isSafePermissionSubKey(key: string): boolean {
   return (
@@ -44,8 +35,8 @@ const PermissionNestedSchema = z
  *
  * All fields are optional — only the fields present in the user config are
  * applied. `systemPromptSuffix` is appended to the agent's built-in system
- * prompt rather than replacing it. `permission` and `tools` are shallow-merged
- * on top of the agent's internal defaults.
+ * prompt rather than replacing it. `permission` is shallow-merged on top of
+ * the agent's internal defaults.
  */
 export const AgentOverrideSchema = z.object({
   /** Model identifier, e.g. `"anthropic/claude-opus-4"`. Max 200 chars. */
@@ -76,7 +67,6 @@ export const AgentOverrideSchema = z.object({
       { message: "permission keys must not contain reserved prototype keywords" },
     )
     .optional(),
-  tools: AgentToolsSchema,
 });
 
 /**

@@ -1,4 +1,4 @@
-<!-- Pattern: agent-permissions — Agent frontmatter tools defaults merged with user overrides -->
+<!-- Pattern: agent-permissions — Agent visibility controlled only by permission allow/ask/deny with permission.skill gating -->
 
 ### Agent frontmatter (`content/agents/coder.md`)
 
@@ -6,33 +6,50 @@
 ---
 description: Production coding agent
 model: openai/gpt-4o
-tools:
-  bash: true
-  read: true
-  write: false
+permission:
+  read: "allow"
+  edit: "ask"
+  bash: "deny"
+  skill:
+    "*": "deny"
+    "typescript": "allow"
+    "general-coding": "allow"
 ---
 
 You are the coder agent...
 ```
 
-### User override (`la-briguade.jsonc`)
+### Permission behavior
 
 ```typescript
-// Merge precedence (low → high):
-//   1) agent frontmatter `tools`
-//   2) user config `agents.coder.tools`
+// Visibility is permission-driven:
+// - "allow" or "ask": tool/MCP/skill is available to the agent
+// - "deny": hidden from the agent
 
-{
-  "agents": {
-    "coder": {
-      "tools": {
-        "write": true,
-        "grep": true
-      }
-    }
-  }
+const permission = {
+  read: "allow",
+  edit: "ask",
+  bash: "deny",
+} as const;
+
+const canSeeRead = permission.read === "allow" || permission.read === "ask"; // true
+const canSeeEdit = permission.edit === "allow" || permission.edit === "ask"; // true
+const canSeeBash = permission.bash === "allow" || permission.bash === "ask"; // false
+```
+
+### `permission.skill` gating pattern
+
+```typescript
+// agents.ts extracts permission.skill into:
+// agentSkillPerms: Map<agentName, Record<skillName, "allow" | "ask" | "deny">>
+//
+// With { "*": "deny" }, only explicitly allowed/asked skills pass.
+// Omitting permission.skill means no skill-level gating.
+
+function gateSkillAccess(agentName: string, requestedSkill: string): boolean {
+  const perms = agentSkillPerms.get(agentName);
+  if (perms === undefined) return true;
+  if (perms["*"] !== "deny") return true;
+  return perms[requestedSkill] === "allow" || perms[requestedSkill] === "ask";
 }
-
-// Final merged tools for `coder`:
-// { bash: true, read: true, write: true, grep: true }
 ```
