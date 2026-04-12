@@ -216,7 +216,7 @@ program
     }
 
     console.log(
-      `Uninstalled — removed "${typeof plugin[index] === "string" ? plugin[index] : PLUGIN_NAME}" ` +
+      `Uninstalled — removed "${plugin[index] ?? PLUGIN_NAME}" ` +
         `from plugin in ${configPath}`,
     );
   });

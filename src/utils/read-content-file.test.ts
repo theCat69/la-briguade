@@ -40,7 +40,7 @@ describe("readContentFile", () => {
     expect(act).toThrowError("Could not read agent file: /tmp/missing.md");
   });
 
-  it("should throw when file content exceeds maxBytes", () => {
+  it("should throw when file content exceeds maxLength", () => {
     // Arrange
     mockReadFileSync.mockReturnValue("x".repeat(11));
 
@@ -51,7 +51,7 @@ describe("readContentFile", () => {
     expect(act).toThrowError("agent file exceeds size limit, skipping: /tmp/large.md");
   });
 
-  it("should succeed when file content length is exactly maxBytes", () => {
+  it("should succeed when file content length is exactly maxLength", () => {
     // Arrange
     mockReadFileSync.mockReturnValue("x".repeat(10));
 

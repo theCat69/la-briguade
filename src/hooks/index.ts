@@ -297,10 +297,10 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
   if (!isRecord(time)) return;
   if (time["completed"] === undefined) return;
 
-  const tokens = "tokens" in info ? info.tokens : undefined;
+  const tokens = info["tokens"];
   if (!isRecord(tokens)) return;
 
-  const output = "output" in tokens ? tokens.output : undefined;
+  const output = tokens["output"];
   if (output === 0) {
     notifier.warn("Empty assistant response detected — the model produced no output tokens.");
   }
