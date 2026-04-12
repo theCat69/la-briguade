@@ -1,5 +1,6 @@
 ---
 model: github-copilot/claude-sonnet-4.6
+variant: high
 description: "Code quality and architecture reviewer for production systems"
 mode: subagent 
 permission:

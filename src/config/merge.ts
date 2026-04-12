@@ -56,8 +56,8 @@ export function applyAgentOverride(base: AgentConfig, override: AgentOverride): 
   if (override.topK !== undefined) {
     merged["topK"] = override.topK;
   }
-  if (override.reasoningEffort !== undefined) {
-    merged["reasoningEffort"] = override.reasoningEffort;
+  if (override.variant !== undefined) {
+    merged.variant = override.variant;
   }
   if (override.maxTokens !== undefined) {
     merged["maxTokens"] = override.maxTokens;

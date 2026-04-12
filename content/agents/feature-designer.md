@@ -1,5 +1,6 @@
 ---
 model: github-copilot/claude-sonnet-4.6
+variant: medium 
 description: "product manager and technical lead for production-grade software systems"
 mode: subagent 
 permission:

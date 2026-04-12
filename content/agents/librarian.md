@@ -1,5 +1,6 @@
 ---
 model: github-copilot/claude-sonnet-4.6
+variant: medium
 description: "Keeps documentation in sync with code changes"
 mode: subagent 
 permission:

@@ -92,6 +92,9 @@ export function registerAgents(
     if (typeof attributes["disable"] === "boolean") {
       agentConfig.disable = attributes["disable"];
     }
+    if (typeof attributes["variant"] === "string") {
+      agentConfig.variant = attributes["variant"];
+    }
 
     const permission = attributes["permission"];
     if (isRecord(permission)) {

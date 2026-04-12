@@ -99,13 +99,13 @@ describe("applyAgentOverride", () => {
     expect(perm["webfetch"]).toBe("ask");   // from override only
   });
 
-  it("should apply topP, topK, reasoningEffort, and maxTokens overrides", () => {
+  it("should apply topP, topK, variant, and maxTokens overrides", () => {
     // Arrange
     const base = makeBase({ top_p: 0.1 });
     const override: AgentOverride = {
       topP: 0.8,
       topK: 40,
-      reasoningEffort: "high",
+      variant: "high",
       maxTokens: 2048,
     };
 
@@ -115,7 +115,7 @@ describe("applyAgentOverride", () => {
     // Assert
     expect(result.top_p).toBe(0.8);
     expect(result["topK"]).toBe(40);
-    expect(result["reasoningEffort"]).toBe("high");
+    expect(result.variant).toBe("high");
     expect(result["maxTokens"]).toBe(2048);
   });
 
