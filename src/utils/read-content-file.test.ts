@@ -48,7 +48,7 @@ describe("readContentFile", () => {
     const act = () => readContentFile("/tmp/large.md", 10, "agent");
 
     // Assert
-    expect(act).toThrowError("agent file exceeds size limit, skipping: /tmp/large.md");
+    expect(act).toThrowError("agent file exceeds size limit: /tmp/large.md");
   });
 
   it("should succeed when file content length is exactly maxLength", () => {

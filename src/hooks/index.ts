@@ -298,7 +298,8 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
 
   const time = info["time"];
   if (!isRecord(time)) return;
-  if (time["completed"] === undefined) return;
+  // Non-completed message updates omit the "completed" sentinel field.
+  if (!("completed" in time)) return;
 
   const tokens = info["tokens"];
   if (!isRecord(tokens)) return;

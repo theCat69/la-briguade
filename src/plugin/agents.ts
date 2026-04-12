@@ -58,7 +58,7 @@ export function registerAgents(
 
     const { attributes, body } = parseFrontmatter(raw);
     const { base, segments } = parseModelSections(body);
-    const agentName = agentNameFromFilename(`${stem}.md`);
+    const agentName = agentNameFromFilename(stem);
 
     const agentConfig: AgentConfig = {
       prompt: base,

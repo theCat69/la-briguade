@@ -24,7 +24,6 @@ export function registerCommands(config: Config, commandDirs: string[]): void {
     const raw = readContentFile(filePath, MAX_COMMAND_FILE_LENGTH, "command");
 
     const { attributes, body } = parseFrontmatter(raw);
-    const commandName = stem;
 
     const commandConfig: CommandConfig = {
       template: body,
@@ -51,7 +50,7 @@ export function registerCommands(config: Config, commandDirs: string[]): void {
     }
 
     return {
-      commandName,
+      commandName: stem,
       commandConfig,
     };
   });

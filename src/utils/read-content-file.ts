@@ -13,7 +13,7 @@ export function readContentFile(
   }
 
   if (raw.length > maxLength) {
-    throw new Error(`${contentType} file exceeds size limit, skipping: ${filePath}`);
+    throw new Error(`${contentType} file exceeds size limit: ${filePath}`);
   }
 
   return raw;
