@@ -13,8 +13,7 @@ export function readContentFile(
   }
 
   if (raw.length > maxBytes) {
-    const normalizedType = contentType.charAt(0).toUpperCase() + contentType.slice(1);
-    throw new Error(`${normalizedType} file exceeds size limit, skipping: ${filePath}`);
+    throw new Error(`${contentType} file exceeds size limit, skipping: ${filePath}`);
   }
 
   return raw;

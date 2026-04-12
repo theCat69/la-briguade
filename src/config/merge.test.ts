@@ -163,6 +163,23 @@ describe("resolveAgentConfig", () => {
     expect(result.model).toBe("openai/o3");
   });
 
+  it("should prioritize per-agent model when both global and agent models are configured", () => {
+    // Arrange
+    const base = makeBase({ model: "openai/gpt-4o" });
+    const userConfig: LaBriguadeConfig = {
+      model: "github-copilot/claude-opus-4.6",
+      agents: {
+        reviewer: { model: "github-copilot/gpt-5.3-codex" },
+      },
+    };
+
+    // Act
+    const result = resolveAgentConfig("reviewer", base, userConfig);
+
+    // Assert
+    expect(result.model).toBe("github-copilot/gpt-5.3-codex");
+  });
+
   it("should return base unchanged when userConfig has no agents", () => {
     // Arrange
     const base = makeBase({ prompt: "Original prompt.", model: "openai/gpt-4o" });

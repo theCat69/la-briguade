@@ -378,6 +378,39 @@ describe("collectSkillMcps", () => {
     );
   });
 
+  it("should blank resolved command element containing pipe character and warn", () => {
+    // Arrange
+    vi.stubEnv("TEST_PIPE_ARG", "safe|unsafe");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/local-disallowed-pipe-command";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  context7:",
+        "    type: local",
+        '    command: ["npx", "{env:TEST_PIPE_ARG}"]',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const { mcpMap } = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(mcpMap).toEqual({
+      context7: {
+        type: "local",
+        command: ["npx", ""],
+      },
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[la-briguade] MCP server 'context7': resolved command element contains disallowed " +
+        "characters after env substitution — element skipped",
+    );
+  });
+
   it("should skip invalid MCP frontmatter entries and warn", () => {
     // Arrange
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
