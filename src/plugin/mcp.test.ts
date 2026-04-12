@@ -11,6 +11,7 @@ import {
 } from "./mcp/index.js";
 
 import type { Config } from "../types/plugin.js";
+import { isRecord } from "../utils/type-guards.js";
 import type { SkillBashPermIndex, SkillMcpIndex, SkillMcpMap } from "./mcp/index.js";
 
 vi.mock("node:fs");
@@ -588,9 +589,7 @@ function getAskPermission(config: Config): Record<string, unknown> | undefined {
   const agent = configRecord["agent"] as Record<string, unknown> | undefined;
   const ask = agent?.["ask"] as Record<string, unknown> | undefined;
   const permission = ask?.["permission"];
-  return permission != null && typeof permission === "object" && !Array.isArray(permission)
-    ? (permission as Record<string, unknown>)
-    : undefined;
+  return isRecord(permission) ? permission : undefined;
 }
 
 describe("injectSkillMcpPermissions", () => {
