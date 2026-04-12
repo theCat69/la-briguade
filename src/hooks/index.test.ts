@@ -674,6 +674,26 @@ describe("tool.execute.before skill access gating", () => {
     expect(output.args).toEqual({ name: "" });
   });
 
+  it("should no-op when skill args.name is not a string", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([["coder", { "*": "deny" }]]),
+    );
+    const output = { args: { name: 42 } };
+    await chatParams?.({ sessionID: "s1", agent: "coder" } as never, {} as never);
+
+    // Act
+    await toolExecuteBefore?.(
+      { tool: "skill", sessionID: "s1", callID: "c1" } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(output.args).toEqual({ name: 42 });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   it("should delete session mapping on session.deleted event", async () => {
     // Arrange
     const { chatParams, event, toolExecuteBefore } = getSkillHooks(

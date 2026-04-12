@@ -101,7 +101,11 @@ function gateSkillToolExecution(
     return;
   }
 
-  const requestedSkillName = typeof args["name"] === "string" ? args["name"] : "";
+  const requestedSkillName = args["name"];
+  if (typeof requestedSkillName !== "string") {
+    return;
+  }
+
   if (requestedSkillName === "") {
     logger.warn(
       `[skill-gate] Empty skill name in deny-mode for agent "${agentName}" (session: ${input.sessionID}); blocking`,
