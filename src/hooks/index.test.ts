@@ -282,6 +282,25 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     // Assert
     expect(output.system).toEqual([`${longBase}\n\nLong agent section`]);
   });
+
+  it("should append vendor prompt only once when multiple agents match same system entry", async () => {
+    // Arrange
+    const sharedBase = "Shared base prompt";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      ["agent-one", { base: sharedBase, segments: [] }],
+      ["agent-two", { base: sharedBase, segments: [] }],
+    ]);
+    const vendorPrompts = new Map<string, string>([["gpt", "Global GPT prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+    const output = { system: [sharedBase] };
+
+    // Act
+    await transform?.({ model: { id: "openai/gpt-4o" } } as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual([`${sharedBase}\n\nGlobal GPT prompt`]);
+    expect(output.system[0]?.match(/Global GPT prompt/g)?.length).toBe(1);
+  });
 });
 
 describe("detectEmptyResponse via event hook", () => {

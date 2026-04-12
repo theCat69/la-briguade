@@ -81,4 +81,17 @@ describe("registerSkills", () => {
     expect(config).toEqual(initialConfig);
     expect((config as Record<string, unknown>)["skills"]).toBeUndefined();
   });
+
+  it("should return early without mutating when config is not a record", () => {
+    // Arrange
+    mockCollectDirs.mockReturnValue(new Map([["frontend", "/builtin/skills/frontend"]]));
+    const config = "not-an-object" as unknown as Config;
+
+    // Act
+    const result = registerSkills(config, ["/builtin/skills"]);
+
+    // Assert
+    expect(result.dirs).toEqual(["/builtin/skills/frontend"]);
+    expect(config).toBe("not-an-object");
+  });
 });

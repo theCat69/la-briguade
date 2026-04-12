@@ -39,9 +39,9 @@ export function resolveOpencodeConfigDir(): string {
  * @returns Merged LaBriguadeConfig, or an empty config if both files are absent
  */
 export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
-  const { globalDir, projectDir: resolvedProjectDir } = resolveConfigBaseDirs(projectDir);
+  const { globalDir } = resolveConfigBaseDirs(projectDir);
   const globalConfigBase = join(globalDir, "la-briguade");
-  const projectConfigBase = join(resolvedProjectDir, "la-briguade");
+  const projectConfigBase = join(projectDir, "la-briguade");
 
   const globalResult = loadConfig(globalConfigBase);
   const projectResult = loadConfig(projectConfigBase);

@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerAgents } from "./agents.js";
@@ -8,12 +6,13 @@ import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content-merge.js";
 import { logger } from "../utils/logger.js";
+import { readContentFile } from "../utils/read-content-file.js";
 
-vi.mock("node:fs");
 vi.mock("../utils/content-merge.js");
+vi.mock("../utils/read-content-file.js");
 
-const mockReadFileSync = vi.mocked(readFileSync);
 const mockCollectFiles = vi.mocked(collectFiles);
+const mockReadContentFile = vi.mocked(readContentFile);
 
 function makeConfig(): Config {
   return { agent: {} } as Config;
@@ -33,9 +32,9 @@ describe("registerAgents", () => {
         ["bad", "/builtin/agents/bad.md"],
       ]),
     );
-    mockReadFileSync.mockImplementation((filePath) => {
+    mockReadContentFile.mockImplementation((filePath) => {
       if (String(filePath).endsWith("bad.md")) {
-        throw new Error("EACCES");
+        throw new Error(`Could not read content file: ${String(filePath)}`);
       }
       return [
         "---",
@@ -68,7 +67,7 @@ describe("registerAgents", () => {
         ["coder", "/builtin/agents/coder.md"],
       ]),
     );
-    mockReadFileSync.mockImplementation((filePath) => {
+    mockReadContentFile.mockImplementation((filePath) => {
       if (String(filePath).endsWith("Coder.md")) {
         return [
           "---",
@@ -106,7 +105,7 @@ describe("registerAgents", () => {
   it("should swap opus model to sonnet when opus_enabled is false", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       [
         "---",
         "model: github-copilot/claude-opus-4.6",
@@ -129,7 +128,7 @@ describe("registerAgents", () => {
   it("should register overridden agent from later directory", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map([["coder", "/project/content/agents/coder.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       [
         "---",
         "model: openai/gpt-4o-mini",
@@ -152,7 +151,7 @@ describe("registerAgents", () => {
     // Arrange
     const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       [
         "---",
         "permission:",
@@ -178,7 +177,7 @@ describe("registerAgents", () => {
     // Arrange
     const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       ["---", "permission:", "  skill:", '    "*": "DENY"', "---", "Body"].join("\n"),
     );
     const config = makeConfig();
@@ -196,7 +195,7 @@ describe("registerAgents", () => {
     // Arrange
     const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       ["---", "permission:", "  skill:", "    typescript: true", "---", "Body"].join("\n"),
     );
     const config = makeConfig();
@@ -211,5 +210,20 @@ describe("registerAgents", () => {
       ),
     );
     expect(result.agentSkillPerms.get("coder")).toBeUndefined();
+  });
+
+  it("should return early and keep config unchanged when no agent files are found", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map());
+    const config = makeConfig();
+    const initialConfig = { ...config };
+
+    // Act
+    const result = registerAgents(config, []);
+
+    // Assert
+    expect(result.agentSections.size).toBe(0);
+    expect(result.agentSkillPerms.size).toBe(0);
+    expect(config).toEqual(initialConfig);
   });
 });

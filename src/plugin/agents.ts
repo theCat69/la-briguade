@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 import type { AgentConfig } from "@opencode-ai/sdk";
@@ -10,6 +9,7 @@ import { parseFrontmatter } from "../utils/frontmatter.js";
 import { logger } from "../utils/logger.js";
 import { loadContentFiles } from "../utils/load-content.js";
 import { parseModelSections } from "../utils/model-sections.js";
+import { readContentFile } from "../utils/read-content-file.js";
 import { isRecord } from "../utils/type-guards.js";
 import type { AgentSectionsEntry } from "../hooks/index.js";
 
@@ -54,16 +54,7 @@ export function registerAgents(
   const opusEnabled = userConfig?.opus_enabled ?? false;
 
   const loadedAgents = loadContentFiles(agentDirs, ".md", (filePath, stem) => {
-    let raw: string;
-    try {
-      raw = readFileSync(filePath, "utf-8");
-    } catch {
-      throw new Error(`Could not read agent file: ${filePath}`);
-    }
-
-    if (raw.length > MAX_AGENT_FILE_LENGTH) {
-      throw new Error(`Agent file exceeds size limit, skipping: ${filePath}`);
-    }
+    const raw = readContentFile(filePath, MAX_AGENT_FILE_LENGTH, "agent");
 
     const { attributes, body } = parseFrontmatter(raw);
     const { base, segments } = parseModelSections(body);

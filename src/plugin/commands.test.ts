@@ -1,17 +1,16 @@
-import { readFileSync } from "node:fs";
-
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerCommands } from "./commands.js";
 
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content-merge.js";
+import { readContentFile } from "../utils/read-content-file.js";
 
-vi.mock("node:fs");
 vi.mock("../utils/content-merge.js");
+vi.mock("../utils/read-content-file.js");
 
-const mockReadFileSync = vi.mocked(readFileSync);
 const mockCollectFiles = vi.mocked(collectFiles);
+const mockReadContentFile = vi.mocked(readContentFile);
 
 function makeConfig(): Config {
   return { command: {} } as Config;
@@ -25,7 +24,7 @@ describe("registerCommands", () => {
 
   it("should register command template from merged files", () => {
     mockCollectFiles.mockReturnValue(new Map([["critic", "/builtin/commands/critic.md"]]));
-    mockReadFileSync.mockReturnValue("---\ndescription: Critic\n---\nReview this.");
+    mockReadContentFile.mockReturnValue("---\ndescription: Critic\n---\nReview this.");
 
     const config = makeConfig();
 
@@ -41,7 +40,7 @@ describe("registerCommands", () => {
     mockCollectFiles.mockReturnValue(
       new Map([["critic", "/project/content/commands/critic.md"]]),
     );
-    mockReadFileSync.mockReturnValue("Project critic command");
+    mockReadContentFile.mockReturnValue("Project critic command");
 
     const config = makeConfig();
 
@@ -54,8 +53,8 @@ describe("registerCommands", () => {
 
   it("should warn and skip when reading a command file fails", () => {
     mockCollectFiles.mockReturnValue(new Map([["critic", "/builtin/commands/critic.md"]]));
-    mockReadFileSync.mockImplementation(() => {
-      throw new Error("EACCES: permission denied");
+    mockReadContentFile.mockImplementation((filePath) => {
+      throw new Error(`Could not read command file: ${String(filePath)}`);
     });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
@@ -73,7 +72,7 @@ describe("registerCommands", () => {
 
   it("should parse agent, model, and subtask from frontmatter", () => {
     mockCollectFiles.mockReturnValue(new Map([["unslop", "/builtin/commands/unslop.md"]]));
-    mockReadFileSync.mockReturnValue(
+    mockReadContentFile.mockReturnValue(
       [
         "---",
         "description: Run unslop",
