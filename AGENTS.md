@@ -88,6 +88,12 @@ content/
   commands/          ← Slash command .md files
   vendor-prompts/    ← Global vendor prompt files (claude.md, gpt.md, gemini.md, grok.md) — appended to all agent system prompts at chat time
 
+scripts/
+  generate-schema.mjs ← Build-time ESM script: reads dist/config/schema.js (compiled Zod output), wraps it with $id/$schema/$title, and writes schemas/la-briguade.schema.json. Run via `npm run generate-schema`.
+
+schemas/
+  la-briguade.schema.json ← Generated JSON Schema for la-briguade.json/la-briguade.jsonc. Published with the package (declared in `files`). Canonical URL: https://unpkg.com/la-briguade/schemas/la-briguade.schema.json
+
 bin/
   la-briguade.js     ← CLI shebang entry → dist/cli/index.js
 ```
