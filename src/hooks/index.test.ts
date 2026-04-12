@@ -72,6 +72,7 @@ describe("tool.execute.after", () => {
   it("should truncate output above the max chars threshold", async () => {
     // Arrange
     const hook = getToolExecuteAfterHook();
+    // 50_010 total length - 25_000 head - 10_000 tail = 15_010 removed chars.
     const largeOutput = "x".repeat(50_010);
     const output = { output: largeOutput };
 
