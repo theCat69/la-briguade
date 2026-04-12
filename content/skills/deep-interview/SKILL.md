@@ -44,7 +44,7 @@ Score the request across three weighted dimensions. Each dimension is scored 0�
 
 1. Score the request across all 3 dimensions. Report the score explicitly: each dimension's clarity %, the weighted clarity %, and the ambiguity %.
 2. **If ambiguity < 20%**: state "Requirements are clear. Proceeding." and stop — do not ask any questions.
-3. **If ambiguity ≥ 20%**: identify the single highest-impact clarifying question — the one whose answer will most reduce ambiguity across the weighted dimensions. Ask that one question only.
+3. **If ambiguity ≥ 20%**: identify the highest-impact clarifying questions for the dominant ambiguity dimension. When 2–3 closely related questions all target the **same** dimension, group them in a single round. Ask only one group per round; never mix questions from different dimensions.
 4. After each answer: re-score, report the new score, ask the next question if ambiguity is still ≥ 20%.
 5. **Round 4** — Contrarian mode: after your clarifying question, also challenge one assumption: *"What if the opposite were true?"*
 6. **Round 6** — Simplifier mode: after your clarifying question, propose the simplest version of the solution that still meets the stated goal and ask whether that would be sufficient.
@@ -69,7 +69,7 @@ When the interview reaches ambiguity < 20%, output the following and nothing els
 
 ## Critical Rules
 
-- Never ask more than one question per round.
+- Per round, ask at most 3 closely related clarifying questions — only when they all target the **same** ambiguity dimension. Never mix questions from different dimensions in the same round.
 - Never invent requirements — only clarify what the user implies or can confirm.
 - If the user says "just do it" or refuses to clarify, proceed with the lowest-risk interpretation and list every assumption explicitly in the Structured Spec under **Assumptions Made**.
 - The goal is not perfect specs — it is specs clear enough to implement safely and verifiably.
