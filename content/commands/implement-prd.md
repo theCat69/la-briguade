@@ -1,5 +1,5 @@
 ---
-description: Implement a PRD spec file via Orchestrator pipeline with validation, scoped execution, phased approvals, and completion reporting.
+description: "Implement a PRD spec file via Orchestrator pipeline with validation, scoped execution, phased approvals, and completion reporting."
 ---
 
 > **Requires**: `question` tool, `read` tool, `task→feature-designer`, `task→coder`, `task→reviewer`, `task→security-reviewer`, `task→librarian`, `task→local-context-gatherer`. Safe to invoke from Orchestrator only.
