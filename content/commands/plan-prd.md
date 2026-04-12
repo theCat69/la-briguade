@@ -1,5 +1,5 @@
 ---
-description: End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation.
+description: "End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation."
 ---
 
 > **Requires**: `question` tool, `task→architect`, `task→external-context-gatherer`, `task→critic`, `task→feature-designer`, and `deep-interview` skill permission.
