@@ -178,4 +178,14 @@ describe("logger", () => {
     expect(mockMkdirSync).toHaveBeenCalledWith("/xdg/data/opencode/log", { recursive: true });
     expect(logger.getLogFilePath()).toContain("/xdg/data/opencode/log/");
   });
+
+  it("should create log filename with la-briguade timestamp format", () => {
+    // Act
+    initLogger();
+
+    // Assert
+    const logPath = logger.getLogFilePath();
+    expect(logPath).toBeDefined();
+    expect(logPath).toMatch(/\/la-briguade-\d{4}-\d{2}-\d{2}T\d{6}\.log$/);
+  });
 });

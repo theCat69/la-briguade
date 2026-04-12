@@ -235,8 +235,7 @@ program
     // 1. Plugin package importable
     // Dynamic module name avoids TS2307 — these are runtime probes, not build-time deps
     try {
-      const runtimePluginPackage = "la-briguade";
-      await import(runtimePluginPackage);
+      await import("la-briguade");
       checks.push({ label: "Plugin package", ok: true, detail: "la-briguade importable" });
     } catch {
       checks.push({ label: "Plugin package", ok: false, detail: "Cannot import la-briguade" });

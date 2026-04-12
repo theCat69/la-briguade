@@ -90,7 +90,7 @@ export function collectSkillMcps(
 ): { mcpMap: SkillMcpMap; skillMcpIndex: SkillMcpIndex } {
   const collected: SkillMcpMap = {};
   const skillMcpIndex: SkillMcpIndex = {};
-  const seenBySkillDir = new Map<string, string>();
+  const mcpKeyOwner = new Map<string, string>();
 
   forEachSkillDir(skillDirs, ({ attributes, skillName, skillFilePath, skillDir }) => {
     const mcpAttributes = attributes["mcp"];
@@ -105,7 +105,7 @@ export function collectSkillMcps(
     }
 
     for (const [key, entry] of Object.entries(parsedMcpMap.data)) {
-      const firstSkillDir = seenBySkillDir.get(key);
+      const firstSkillDir = mcpKeyOwner.get(key);
       if (firstSkillDir !== undefined) {
         logger.warn(
           `skill MCP conflict: key "${key}" declared by both ` +
@@ -114,7 +114,7 @@ export function collectSkillMcps(
         continue;
       }
 
-      seenBySkillDir.set(key, skillDir);
+      mcpKeyOwner.set(key, skillDir);
       collected[key] = toSdkMcpEntry(key, entry);
 
       const skillBindings = skillMcpIndex[skillName] ?? [];

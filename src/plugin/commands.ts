@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { loadContentFiles } from "../utils/load-content.js";
+import { readContentFile } from "../utils/read-content-file.js";
 import { isRecord } from "../utils/type-guards.js";
 
 interface CommandConfig {
@@ -36,16 +36,7 @@ function commandNameFromFilename(filename: string): string {
  */
 export function registerCommands(config: Config, commandDirs: string[]): void {
   const parsedCommands = loadContentFiles(commandDirs, ".md", (filePath, stem) => {
-    let raw: string;
-    try {
-      raw = readFileSync(filePath, "utf-8");
-    } catch {
-      throw new Error(`Could not read command file: ${filePath}`);
-    }
-
-    if (raw.length > MAX_COMMAND_FILE_LENGTH) {
-      throw new Error(`Command file exceeds size limit, skipping: ${filePath}`);
-    }
+    const raw = readContentFile(filePath, MAX_COMMAND_FILE_LENGTH, "command");
 
     const { attributes, body } = parseFrontmatter(raw);
     const commandName = commandNameFromFilename(`${stem}.md`);
