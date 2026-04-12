@@ -191,4 +191,25 @@ describe("registerAgents", () => {
       expect.stringContaining('permission.skill entry "*" has unrecognized value "DENY"'),
     );
   });
+
+  it("should warn and skip non-string permission.skill values", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadFileSync.mockReturnValue(
+      ["---", "permission:", "  skill:", "    typescript: true", "---", "Body"].join("\n"),
+    );
+    const config = makeConfig();
+
+    // Act
+    const result = registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'permission.skill entry "typescript" has non-string value (boolean)',
+      ),
+    );
+    expect(result.agentSkillPerms.get("coder")).toBeUndefined();
+  });
 });

@@ -208,6 +208,28 @@ describe("loadConfig", () => {
     }
   });
 
+  it("should return ok when .json read-errors and .jsonc succeeds", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      const p = String(path);
+      if (p.endsWith(".json")) {
+        throw Object.assign(new Error("EACCES"), { code: "EACCES" });
+      }
+      if (p.endsWith(".jsonc")) return JSON.stringify({ model: "fallback-jsonc" });
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.model).toBe("fallback-jsonc");
+    }
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
+  });
+
   it("should return ok with top-level model field", () => {
     // Arrange
     mockReadFileSync.mockImplementation((path) => {

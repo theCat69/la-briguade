@@ -43,9 +43,8 @@ function forEachAgentWithSkillPermission(
     if (!isRecord(agentConfig)) {
       continue;
     }
-    const agentRecord: Record<string, unknown> = agentConfig;
 
-    const rawPermission = agentRecord["permission"];
+    const rawPermission = agentConfig["permission"];
     if (!isRecord(rawPermission)) {
       continue;
     }

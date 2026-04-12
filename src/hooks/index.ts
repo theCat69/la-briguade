@@ -285,10 +285,10 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
   if (event.type !== "message.updated") return;
 
   const props = event.properties;
-  if (props == null || typeof props !== "object") return;
+  if (!isRecord(props)) return;
 
   const info = "info" in props ? props.info : undefined;
-  if (info == null || typeof info !== "object") return;
+  if (!isRecord(info)) return;
 
   const role = "role" in info ? info.role : undefined;
   if (role !== "assistant") return;
