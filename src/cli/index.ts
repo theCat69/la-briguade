@@ -235,8 +235,8 @@ program
     const checks: CheckResult[] = [];
 
     // 1. Plugin package importable
-    // Dynamic module name avoids TS2307 — these are runtime probes, not build-time deps
     try {
+      // @ts-expect-error -- runtime availability probe; 'la-briguade' is not a build-time dependency
       await import("la-briguade");
       checks.push({ label: "Plugin package", ok: true, detail: "la-briguade importable" });
     } catch {
@@ -329,6 +329,7 @@ program
 
     // 5. cache-ctrl peer dependency
     try {
+      // @ts-expect-error -- runtime availability probe; 'cache-ctrl' is not a build-time dependency
       await import("cache-ctrl");
       checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
     } catch {

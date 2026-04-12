@@ -44,7 +44,9 @@ function forEachAgentWithSkillPermission(
       continue;
     }
 
-    const rawPermission = agentConfig["permission"];
+    // Annotate as unknown so isRecord() narrows to Record<string, unknown> without
+    // carrying the SDK's AgentPermissions intersection, which blocks "skill" key access.
+    const rawPermission: unknown = agentConfig["permission"];
     if (!isRecord(rawPermission)) {
       continue;
     }
