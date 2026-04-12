@@ -82,6 +82,19 @@ function readConfig(configPath: string): { raw: string; parsed: Record<string, u
   return { raw, parsed };
 }
 
+function readConfigOrExit(
+  configPath: string,
+): { raw: string; parsed: Record<string, unknown> } | undefined {
+  try {
+    return readConfig(configPath);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[la-briguade] Could not read config file: ${message}`);
+    process.exitCode = 1;
+    return undefined;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // CLI definition
 // ---------------------------------------------------------------------------
@@ -113,16 +126,9 @@ program
     }
 
     const { path: configPath, existed } = configFileResult;
-    let raw: string;
-    let parsed: Record<string, unknown>;
-    try {
-      ({ raw, parsed } = readConfig(configPath));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[la-briguade] Could not read config file: ${message}`);
-      process.exitCode = 1;
-      return;
-    }
+    const configData = readConfigOrExit(configPath);
+    if (configData === undefined) return;
+    const { raw, parsed } = configData;
 
     // Config.plugin per @opencode-ai/plugin Config type
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
@@ -180,15 +186,8 @@ program
       return;
     }
 
-    let configData: ReturnType<typeof readConfig>;
-    try {
-      configData = readConfig(configPath);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[la-briguade] Could not read config file: ${message}`);
-      process.exitCode = 1;
-      return;
-    }
+    const configData = readConfigOrExit(configPath);
+    if (configData === undefined) return;
     const { raw, parsed } = configData;
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
@@ -236,7 +235,8 @@ program
     // 1. Plugin package importable
     // Dynamic module name avoids TS2307 — these are runtime probes, not build-time deps
     try {
-      await import("la-briguade" as string);
+      const runtimePluginPackage = "la-briguade";
+      await import(runtimePluginPackage);
       checks.push({ label: "Plugin package", ok: true, detail: "la-briguade importable" });
     } catch {
       checks.push({ label: "Plugin package", ok: false, detail: "Cannot import la-briguade" });
@@ -294,15 +294,8 @@ program
         detail: `Global config not found at ${globalConfigPath} — run: la-briguade install`,
       });
     } else {
-      let configData: ReturnType<typeof readConfig>;
-      try {
-        configData = readConfig(globalConfigPath);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(`[la-briguade] Could not read config file: ${message}`);
-        process.exitCode = 1;
-        return;
-      }
+      const configData = readConfigOrExit(globalConfigPath);
+      if (configData === undefined) return;
       const { parsed } = configData;
       const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : [];
       const hasPlugin = plugin.some(isPluginEntry);
@@ -335,7 +328,8 @@ program
 
     // 5. cache-ctrl peer dependency
     try {
-      await import("cache-ctrl" as string);
+      const runtimeCacheCtrlPackage = "cache-ctrl";
+      await import(runtimeCacheCtrlPackage);
       checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
     } catch {
       checks.push({

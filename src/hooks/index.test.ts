@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createHooks, type AgentSectionsEntry } from "./index.js";
 import { notifier } from "../utils/notifier.js";
+import { logger } from "../utils/logger.js";
 
 import type { PluginInput } from "../types/plugin.js";
 
@@ -606,6 +607,28 @@ describe("tool.execute.before skill access gating", () => {
 
     // Assert
     expect(output.args).toEqual({ path: "/some/file.ts" });
+  });
+
+  it("should warn and block when skill args are not a record", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const { chatParams, toolExecuteBefore } = getSkillHooks(
+      new Map([["coder", { "*": "deny" }]]),
+    );
+    const output = { args: "typescript" };
+    await chatParams?.({ sessionID: "s1", agent: "coder" } as never, {} as never);
+
+    // Act
+    await toolExecuteBefore?.(
+      { tool: "skill", sessionID: "s1", callID: "c1" } as never,
+      output as never,
+    );
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Unexpected non-record args for skill tool call"),
+    );
+    expect(output.args).toEqual({ name: "" });
   });
 
   it("should delete session mapping on session.deleted event", async () => {
