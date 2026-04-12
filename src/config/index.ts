@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, win32 } from "node:path";
 
 import { loadConfig } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
@@ -13,6 +13,17 @@ export function resolveConfigBaseDirs(projectDir: string): {
     globalDir: join(homedir(), "la_briguade"),
     projectDir,
   };
+}
+
+export function resolveOpencodeConfigDir(): string {
+  if (process.platform === "win32") {
+    return win32.join(
+      process.env["APPDATA"] ?? win32.join(homedir(), "AppData", "Roaming"),
+      "opencode",
+    );
+  }
+
+  return join(process.env["XDG_CONFIG_HOME"] ?? join(homedir(), ".config"), "opencode");
 }
 
 /**

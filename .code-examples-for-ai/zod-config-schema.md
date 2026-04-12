@@ -33,17 +33,10 @@ export const AgentOverrideSchema = z.object({
   maxTokens: z.number().int().min(1).optional(),
   // z.record(z.string(), valueSchema) — two-arg form is REQUIRED in Zod v4
   permission: z
-    .record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+    .record(z.string(), z.union([z.string(), z.record(z.string(), z.string())]))
     .refine(
       (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
       { message: "permission keys must not contain reserved prototype keywords" },
-    )
-    .optional(),
-  tools: z
-    .record(z.string(), z.boolean())
-    .refine(
-      (obj) => Object.keys(obj).every((k) => SAFE_RECORD_KEY.test(k)),
-      { message: "tools keys must not contain reserved prototype keywords" },
     )
     .optional(),
 });

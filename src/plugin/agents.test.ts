@@ -7,6 +7,7 @@ import { registerAgents } from "./agents.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content-merge.js";
+import { logger } from "../utils/logger.js";
 
 vi.mock("node:fs");
 vi.mock("../utils/content-merge.js");
@@ -125,141 +126,6 @@ describe("registerAgents", () => {
     expect(coder?.["model"]).toBe("github-copilot/claude-sonnet-4.6");
   });
 
-  it("should parse valid frontmatter tools into base agent config", () => {
-    // Arrange
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
-      [
-        "---",
-        "tools:",
-        "  bash: true",
-        "  read: false",
-        "---",
-        "Base prompt",
-      ].join("\n"),
-    );
-
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder?.["tools"]).toEqual({ bash: true, read: false });
-  });
-
-  it("should leave tools unset when frontmatter tools field is absent", () => {
-    // Arrange
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
-      [
-        "---",
-        "description: Coder",
-        "model: openai/gpt-4o",
-        "---",
-        "Base prompt",
-      ].join("\n"),
-    );
-
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder).toBeDefined();
-    expect(coder).not.toHaveProperty("tools");
-  });
-
-  it("should let user config tools override frontmatter tools", () => {
-    // Arrange
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
-      [
-        "---",
-        "tools:",
-        "  bash: true",
-        "  read: false",
-        "---",
-        "Base prompt",
-      ].join("\n"),
-    );
-
-    const userConfig: LaBriguadeConfig = {
-      agents: {
-        coder: {
-          tools: {
-            bash: false,
-            write: true,
-          },
-        },
-      },
-    };
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"], userConfig);
-
-    // Assert
-    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder?.["tools"]).toEqual({ bash: false, read: false, write: true });
-  });
-
-  it("should warn and skip invalid frontmatter tools keys", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
-      [
-        "---",
-        "tools:",
-        "  bad/key: true",
-        "---",
-        "Base prompt",
-      ].join("\n"),
-    );
-
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder).toBeDefined();
-    expect(coder).not.toHaveProperty("tools");
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] agent coder: invalid tools field —"),
-    );
-  });
-
-  it("should accept empty frontmatter tools object as a valid no-op", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadFileSync.mockReturnValue(
-      [
-        "---",
-        "tools: {}",
-        "---",
-        "Base prompt",
-      ].join("\n"),
-    );
-
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder).toBeDefined();
-    expect(coder).not.toHaveProperty("tools");
-    expect(warnSpy).not.toHaveBeenCalled();
-  });
-
   it("should register overridden agent from later directory", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map([["coder", "/project/content/agents/coder.md"]]));
@@ -280,5 +146,49 @@ describe("registerAgents", () => {
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
     expect(coder?.["prompt"]).toBe("Project override prompt");
+  });
+
+  it("should warn and skip unsafe permission.skill keys like __proto__", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "permission:",
+        "  skill:",
+        '    "*": "deny"',
+        '    __proto__: "allow"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('permission.skill key "__proto__" is unsafe'),
+    );
+  });
+
+  it("should warn and skip unrecognized permission.skill values like 'DENY'", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadFileSync.mockReturnValue(
+      ["---", "permission:", "  skill:", '    "*": "DENY"', "---", "Body"].join("\n"),
+    );
+    const config = makeConfig();
+
+    // Act
+    registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('permission.skill entry "*" has unrecognized value "DENY"'),
+    );
   });
 });

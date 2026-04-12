@@ -10,7 +10,11 @@ vi.mock("../utils/logger.js", () => ({
 
 import { homedir } from "node:os";
 import { loadConfig } from "./loader.js";
-import { resolveConfigBaseDirs, resolveUserConfig } from "./index.js";
+import {
+  resolveConfigBaseDirs,
+  resolveOpencodeConfigDir,
+  resolveUserConfig,
+} from "./index.js";
 import type { LaBriguadeConfig } from "./schema.js";
 import type { ConfigLoadResult } from "./loader.js";
 import { logger } from "../utils/logger.js";
@@ -270,5 +274,72 @@ describe("resolveConfigBaseDirs", () => {
       globalDir: "/home/user/la_briguade",
       projectDir: "/project",
     });
+  });
+});
+
+describe("resolveOpencodeConfigDir", () => {
+  const originalPlatform = process.platform;
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    Object.defineProperty(process, "platform", {
+      value: originalPlatform,
+      configurable: true,
+    });
+  });
+
+  it("should use XDG_CONFIG_HOME when set", () => {
+    // Arrange
+    vi.stubEnv("XDG_CONFIG_HOME", "/tmp/custom-xdg");
+
+    // Act
+    const result = resolveOpencodeConfigDir();
+
+    // Assert
+    expect(result).toBe("/tmp/custom-xdg/opencode");
+  });
+
+  it("should fall back to homedir/.config when XDG_CONFIG_HOME is unset", () => {
+    // Arrange
+    vi.stubEnv("XDG_CONFIG_HOME", undefined);
+    mockHomedir.mockReturnValue("/home/user");
+
+    // Act
+    const result = resolveOpencodeConfigDir();
+
+    // Assert
+    expect(result).toBe("/home/user/.config/opencode");
+  });
+
+  it("should use APPDATA on win32", () => {
+    // Arrange
+    Object.defineProperty(process, "platform", {
+      value: "win32",
+      configurable: true,
+    });
+    vi.stubEnv("APPDATA", "C:\\Users\\alice\\AppData\\Roaming");
+
+    // Act
+    const result = resolveOpencodeConfigDir();
+
+    // Assert
+    expect(result).toBe("C:\\Users\\alice\\AppData\\Roaming\\opencode");
+  });
+
+  it("should fall back to homedir AppData/Roaming on win32 when APPDATA is unset", () => {
+    // Arrange
+    Object.defineProperty(process, "platform", {
+      value: "win32",
+      configurable: true,
+    });
+    vi.stubEnv("APPDATA", undefined);
+    mockHomedir.mockReturnValue("C:\\Users\\alice");
+
+    // Act
+    const result = resolveOpencodeConfigDir();
+
+    // Assert
+    expect(result).toBe("C:\\Users\\alice\\AppData\\Roaming\\opencode");
   });
 });
