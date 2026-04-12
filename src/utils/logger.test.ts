@@ -149,6 +149,23 @@ describe("logger", () => {
     expect(logger.getLogFilePath()).toContain("/.local/share/opencode/log/");
   });
 
+  it("should clear logFilePath and warn when mkdirSync throws", () => {
+    // Arrange
+    mockMkdirSync.mockImplementationOnce(() => {
+      throw new Error("disk full");
+    });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // Act
+    initLogger();
+
+    // Assert
+    expect(logger.getLogFilePath()).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[la-briguade] Could not create log directory: disk full",
+    );
+  });
+
   it("should use XDG_DATA_HOME when available", () => {
     // Arrange
     mockHomedir.mockReturnValue("/home/fallback");
