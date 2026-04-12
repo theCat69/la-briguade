@@ -31,7 +31,8 @@ node --version     # should print v22.x or higher
 | `npm run build` | Compile TypeScript → `dist/` via `tsc` |
 | `npm run dev` | Watch mode — `tsc --watch`, recompiles on save |
 | `npm run clean` | Delete `dist/` (`rm -rf dist`) |
-| `npm run prepublishOnly` | Runs `clean` then `build` automatically before `npm publish` |
+| `npm run generate-schema` | Build then generate `schemas/la-briguade.schema.json` from Zod output |
+| `npm run prepublishOnly` | Runs `clean`, `build`, and `generate-schema` automatically before `npm publish` |
 | `npm test` | Run test suite once — `vitest run` |
 | `npm run test:watch` | Run tests in watch mode — `vitest` |
 
@@ -96,12 +97,23 @@ jobs:
 
 1. Bump `version` in `package.json`
 2. Update `CHANGELOG.md`
-3. Run `npm run prepublishOnly` (clean + build)
+3. Run `npm run prepublishOnly` (clean + build + generate-schema)
 4. Run `npm test` — all tests must pass
 5. Run `npm audit` — no high/critical vulnerabilities
 6. `npm publish`
 
-> **Never commit `dist/` or `node_modules/`** — both are in `.gitignore`. Published package includes `dist/`, `content/`, and `bin/` (declared in `package.json` `files` field).
+> **Never commit `dist/` or `node_modules/`** — both are in `.gitignore`. Published package includes `dist/`, `content/`, `bin/`, and `schemas/` (declared in `package.json` `files` field).
+
+## JSON Schema
+
+`schemas/la-briguade.schema.json` is generated at publish time by `scripts/generate-schema.mjs`. It reads the compiled Zod output from `dist/config/schema.js` and wraps it with `$id`, `$schema`, `title`, and `description` fields.
+
+- **Generation command**: `npm run generate-schema`
+- **Canonical unpkg URL**: `https://unpkg.com/la-briguade/schemas/la-briguade.schema.json`
+- **Local reference** (for projects with the package installed): `./node_modules/la-briguade/schemas/la-briguade.schema.json`
+- The schema is included in the npm published package via the `schemas` entry in `package.json` `files`.
+
+> **Note**: Do not commit manually-edited versions of `schemas/la-briguade.schema.json` — always regenerate via `npm run generate-schema` to keep it in sync with `src/config/schema.ts`.
 
 ## Dependency Alignment
 

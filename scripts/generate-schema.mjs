@@ -24,7 +24,6 @@ const pkgName = rawPkg.name ?? "la-briguade";
 const { configJsonSchema } = await import("../dist/config/schema.js");
 
 const schema = {
-  $schema: "http://json-schema.org/draft-07/schema#",
   $id: `https://unpkg.com/${pkgName}@${version}/schemas/la-briguade.schema.json`,
   title: "la-briguade configuration",
   description:
