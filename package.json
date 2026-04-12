@@ -12,14 +12,16 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "npm run clean && npm run build && node scripts/generate-schema.mjs",
+    "generate-schema": "npm run build && node scripts/generate-schema.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "files": [
     "dist",
     "content",
-    "bin"
+    "bin",
+    "schemas"
   ],
   "engines": {
     "node": ">=22"
