@@ -110,7 +110,6 @@ function gateSkillToolExecution(
     logger.warn(
       `[skill-gate] Empty skill name in deny-mode for agent "${agentName}" (session: ${input.sessionID}); blocking`,
     );
-    output.args = { ...args, name: "" };
     return;
   }
 

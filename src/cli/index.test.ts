@@ -73,4 +73,19 @@ describe("cli update command", () => {
     expect(process.exitCode).toBe(1);
     expect(errorSpy).toHaveBeenCalledWith("[la-briguade] Update failed: spawn failed");
   });
+
+  it("should set exitCode and print timeout error when update is terminated", async () => {
+    // Arrange
+    process.exitCode = undefined;
+    mockSpawnSync.mockReturnValue({ status: null, signal: "SIGTERM" } as never);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    // Act
+    await runUpdateCommand();
+
+    // Assert
+    expect(process.exitCode).toBe(1);
+    expect(errorSpy).toHaveBeenCalledWith("[la-briguade] Update timed out after 120 seconds.");
+  });
 });

@@ -103,11 +103,9 @@ function mergeConfigs(
     }
   }
 
-  const hasAgents = Object.keys(mergedAgents).length > 0;
-
   return {
     ...globalCfg,
     ...projectCfg,
-    ...(hasAgents ? { agents: mergedAgents } : {}),
+    ...(Object.keys(mergedAgents).length > 0 ? { agents: mergedAgents } : {}),
   };
 }
