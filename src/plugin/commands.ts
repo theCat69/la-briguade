@@ -1,5 +1,3 @@
-import { basename } from "node:path";
-
 import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/frontmatter.js";
 import { loadContentFiles } from "../utils/load-content.js";
@@ -17,19 +15,6 @@ interface CommandConfig {
 const MAX_COMMAND_FILE_LENGTH = 50_000;
 
 /**
- * Derive the command registration key from a filename.
- *
- * Strips the `.md` extension — the filename IS the slash-command name.
- *
- * Examples:
- *   critic.md → critic
- *   unslop-loop.md → unslop-loop
- */
-function commandNameFromFilename(filename: string): string {
-  return basename(filename, ".md");
-}
-
-/**
  * Register all slash command definitions from content/commands/ into the config.
  * Reads .md files with YAML frontmatter, parses them into command config objects,
  * and merges them into `config.command`.
@@ -39,7 +24,7 @@ export function registerCommands(config: Config, commandDirs: string[]): void {
     const raw = readContentFile(filePath, MAX_COMMAND_FILE_LENGTH, "command");
 
     const { attributes, body } = parseFrontmatter(raw);
-    const commandName = commandNameFromFilename(`${stem}.md`);
+    const commandName = stem;
 
     const commandConfig: CommandConfig = {
       template: body,
