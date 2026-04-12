@@ -327,8 +327,7 @@ program
 
     // 5. cache-ctrl peer dependency
     try {
-      const runtimeCacheCtrlPackage = "cache-ctrl";
-      await import(runtimeCacheCtrlPackage);
+      await import("cache-ctrl");
       checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
     } catch {
       checks.push({

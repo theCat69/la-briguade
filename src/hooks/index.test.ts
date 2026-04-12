@@ -441,6 +441,29 @@ describe("detectEmptyResponse via event hook", () => {
     // Assert
     expect(warnSpy).not.toHaveBeenCalled();
   });
+
+  it("should not warn when tokens exists but has no output property", async () => {
+    // Arrange
+    const warnSpy = vi.spyOn(notifier, "warn").mockImplementation(() => undefined);
+    const eventHook = getEventHook();
+
+    // Act
+    await eventHook?.({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            role: "assistant",
+            time: { completed: "2026-01-01T00:00:00.000Z" },
+            tokens: {},
+          },
+        },
+      },
+    } as never);
+
+    // Assert
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("tool.execute.before skill access gating", () => {

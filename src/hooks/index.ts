@@ -293,9 +293,9 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
   const role = info["role"];
   if (role !== "assistant") return;
 
-  const time = "time" in info ? info.time : undefined;
-  if (time == null || typeof time !== "object") return;
-  if (!("completed" in time) || time.completed === undefined) return;
+  const time = info["time"];
+  if (!isRecord(time)) return;
+  if (time["completed"] === undefined) return;
 
   const tokens = "tokens" in info ? info.tokens : undefined;
   if (tokens == null || typeof tokens !== "object") return;

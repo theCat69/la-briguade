@@ -212,6 +212,32 @@ describe("registerAgents", () => {
     expect(result.agentSkillPerms.get("coder")).toBeUndefined();
   });
 
+  it("should accept ask in permission.skill and include it in agentSkillPerms", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "permission:",
+        "  skill:",
+        '    "*": "deny"',
+        '    typescript: "ask"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+    const config = makeConfig();
+
+    // Act
+    const result = registerAgents(config, ["/builtin/agents"]);
+
+    // Assert
+    expect(result.agentSkillPerms.get("coder")).toEqual({
+      "*": "deny",
+      typescript: "ask",
+    });
+  });
+
   it("should return early and keep config unchanged when no agent files are found", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map());

@@ -136,4 +136,32 @@ describe("parseFrontmatter", () => {
     expect(result.attributes).toEqual({ key: "val" });
     expect(result.body).toBe("body");
   });
+
+  it("should drop prototype-poisoning keys and warn for each blocked key", () => {
+    // Arrange
+    const input = [
+      "---",
+      '__proto__: "pollute"',
+      'constructor: "pollute"',
+      'prototype: "pollute"',
+      'safeKey: "ok"',
+      "---",
+      "body",
+    ].join("\n");
+
+    // Act
+    const result = parseFrontmatter(input);
+
+    // Assert
+    expect(result.attributes).toEqual({ safeKey: "ok" });
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Blocked prototype-poisoning frontmatter key: __proto__",
+    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Blocked prototype-poisoning frontmatter key: constructor",
+    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Blocked prototype-poisoning frontmatter key: prototype",
+    );
+  });
 });
