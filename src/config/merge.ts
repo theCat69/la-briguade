@@ -110,10 +110,7 @@ export function resolveAgentConfig(
     globalModel !== undefined &&
     (agentOverride === undefined || agentOverride.model === undefined);
 
-  let current: AgentConfig =
-    globalModelApplies && globalModel !== undefined
-      ? { ...base, model: globalModel }
-      : base;
+  let current: AgentConfig = globalModelApplies ? { ...base, model: globalModel } : base;
 
   if (agentOverride !== undefined) {
     current = applyAgentOverride(current, agentOverride);

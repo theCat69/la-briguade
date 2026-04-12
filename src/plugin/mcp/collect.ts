@@ -60,16 +60,6 @@ function readSkillFileData(skillDir: string): Result<SkillFileData, ReadSkillFil
   };
 }
 
-function warnReadSkillFileError(error: ReadSkillFileError): void {
-  if (error.kind === "not-found") {
-    return;
-  }
-
-  if (error.kind === "read-error") {
-    logger.warn(`Could not read skill file: ${error.skillFilePath} (${String(error.error)})`);
-  }
-}
-
 function forEachSkillDir(
   skillDirs: string[],
   callback: (fileData: SkillFileData) => void,
@@ -77,7 +67,12 @@ function forEachSkillDir(
   for (const skillDir of skillDirs) {
     const fileDataResult = readSkillFileData(skillDir);
     if (!fileDataResult.ok) {
-      warnReadSkillFileError(fileDataResult.error);
+      if (fileDataResult.error.kind === "read-error") {
+        logger.warn(
+          `Could not read skill file: ${fileDataResult.error.skillFilePath} ` +
+            `(${String(fileDataResult.error.error)})`,
+        );
+      }
       continue;
     }
 

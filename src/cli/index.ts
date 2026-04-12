@@ -36,6 +36,7 @@ interface ConfigFileResult {
 
 function resolveGlobalConfigPath(): string {
   const xdg = process.env["XDG_CONFIG_HOME"];
+  // Require an absolute XDG path to avoid path traversal via relative injection.
   const configBase =
     typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
   return join(configBase, "opencode", "opencode.json");
@@ -201,8 +202,6 @@ program
       console.log(`Not installed — "${PLUGIN_NAME}" not found in plugin array.`);
       return;
     }
-    const removedEntry = typeof plugin[index] === "string" ? plugin[index] : PLUGIN_NAME;
-
     const edits = modify(raw, ["plugin", index], undefined, {
       formattingOptions: { tabSize: 2, insertSpaces: true },
     });
@@ -216,7 +215,10 @@ program
       return;
     }
 
-    console.log(`Uninstalled — removed "${removedEntry}" from plugin in ${configPath}`);
+    console.log(
+      `Uninstalled — removed "${typeof plugin[index] === "string" ? plugin[index] : PLUGIN_NAME}" ` +
+        `from plugin in ${configPath}`,
+    );
   });
 
 // ---- doctor ----
