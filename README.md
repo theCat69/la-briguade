@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 17 skills, 10 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 17 skills, 11 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -71,6 +71,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/interview` | Run a deep-interview requirements session with Socratic scored loop |
 | `/critic` | Challenge a plan, spec, or current work from first principles |
 | `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
+| `/go-back-to-work` | Resume work after a session failure — loads git log, git diff, git status, and the last context snapshot to restore working context |
 | `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, and commits after each cycle |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
