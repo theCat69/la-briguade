@@ -342,7 +342,7 @@ program
     const maxLabel = Math.max(...checks.map((c) => c.label.length));
 
     for (const check of checks) {
-      const icon = check.ok ? "\u2705" : "\u274C";
+      const icon = check.ok ? "✅" : "❌";
       const paddedLabel = check.label.padEnd(maxLabel);
       console.log(`  ${icon} ${paddedLabel}  ${check.detail}`);
     }

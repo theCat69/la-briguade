@@ -50,4 +50,15 @@ describe("readContentFile", () => {
     // Assert
     expect(act).toThrowError("Agent file exceeds size limit, skipping: /tmp/large.md");
   });
+
+  it("should succeed when file content length is exactly maxBytes", () => {
+    // Arrange
+    mockReadFileSync.mockReturnValue("x".repeat(10));
+
+    // Act
+    const result = readContentFile("/tmp/boundary.md", 10, "agent");
+
+    // Assert
+    expect(result).toBe("x".repeat(10));
+  });
 });
