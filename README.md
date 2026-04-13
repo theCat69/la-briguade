@@ -148,7 +148,7 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 
 ```jsonc
 {
-  "$schema": "https://unpkg.com/la-briguade/schemas/la-briguade.schema.json",
+  "$schema": "https://thecatmaincave.com/la-briguade-dev/la-briguade.schema.json",
   "model": "openai/gpt-4o",
   "agents": {
     "coder": {
