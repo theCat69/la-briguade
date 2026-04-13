@@ -266,7 +266,8 @@ function injectVendorPrompts(
   const family = resolveVendorFamily(vendorPrompts, modelId);
   if (family === undefined) return;
 
-  const vendorPrompt = vendorPrompts.get(family)!;
+  const vendorPrompt = vendorPrompts.get(family) ?? "";
+  if (vendorPrompt === "") return;
 
   // injectModelSections intentionally allows repeated matches because each matched
   // entry may contribute a distinct section. Here we dedupe by index because the

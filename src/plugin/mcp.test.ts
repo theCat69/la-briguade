@@ -166,7 +166,7 @@ describe("collectSkillMcps", () => {
       ],
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] MCP server 'context7': env var " +
+      "[la-briguade] MCP server 'context7': env var(s) " +
         "'LA_BRIGUADE_TEST_MISSING_ENV' referenced in command is not set",
     );
   });

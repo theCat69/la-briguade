@@ -15,23 +15,24 @@ type EnvResolutionResult = {
 };
 
 function resolveEnvTokens(value: string, key: string, field: string): EnvResolutionResult {
-  let missingVarName: string | undefined;
+  const missingVarNames = new Set<string>();
 
   const resolvedValue = value.replace(/\{env:([^}]+)\}/g, (_, varName: string) => {
     const normalizedVarName = varName.trim();
     const envValue = process.env[normalizedVarName];
     if (envValue === undefined) {
-      missingVarName = normalizedVarName;
+      missingVarNames.add(normalizedVarName);
       return "";
     }
     return envValue;
   });
 
-  if (missingVarName !== undefined) {
+  if (missingVarNames.size > 0) {
+    const formattedVarNames = [...missingVarNames].map((name) => `'${name}'`).join(", ");
     return {
       value: resolvedValue,
       issue:
-        `MCP server '${key}': env var '${missingVarName}' referenced in ` +
+        `MCP server '${key}': env var(s) ${formattedVarNames} referenced in ` +
         `${field} is not set`,
     };
   }
