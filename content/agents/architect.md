@@ -23,6 +23,7 @@ permission:
     "cache-ctrl-caller": "allow"
     "typescript": "allow"
     "java": "allow"
+    "rust": "allow"
     "angular": "allow"
     "quarkus": "allow"
   task:

@@ -23,6 +23,7 @@ permission:
     "project-code-examples": "allow"
     "typescript": "allow"
     "java": "allow"
+    "rust": "allow"
     "angular": "allow"
     "quarkus": "allow"
     "cache-ctrl-caller": "allow"

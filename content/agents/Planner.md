@@ -15,6 +15,7 @@ permission:
     "general-coding": "allow"
     "typescript": "allow"
     "java": "allow"
+    "rust": "allow"
     "angular": "allow"
     "quarkus": "allow"
     "project-coding": "allow"
