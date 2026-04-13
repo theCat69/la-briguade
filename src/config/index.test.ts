@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 vi.mock("node:os");
 vi.mock("./loader.js");
 vi.mock("../utils/logger.js", () => ({
+  LOG_LEVELS: ["off", "error", "warn", "info", "debug"] as const,
   logger: {
     warn: vi.fn(),
   },

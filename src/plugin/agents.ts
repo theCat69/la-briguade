@@ -92,9 +92,9 @@ export function registerAgents(
     if (typeof attributes["disable"] === "boolean") {
       agentConfig.disable = attributes["disable"];
     }
-    const v = attributes["variant"];
-    if (typeof v === "string" && /^[\w.-]+$/.test(v) && v.length <= 100) {
-      agentConfig.variant = v;
+    const rawVariant = attributes["variant"];
+    if (typeof rawVariant === "string" && /^[\w.-]+$/.test(rawVariant) && rawVariant.length <= 100) {
+      agentConfig.variant = rawVariant;
     }
 
     const permission = attributes["permission"];
