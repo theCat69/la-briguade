@@ -220,7 +220,7 @@ describe("resolveModelSection", () => {
     expect(result).toBe("Think step by step.");
   });
 
-  it("should return 'C\\n\\nA' for claude with claude and all segments", () => {
+  it("should join claude and all segments for a claude model", () => {
     // Arrange
     const segments = [
       { target: "claude", text: "C" },

@@ -2,7 +2,6 @@ import type { Config } from "../../types/plugin.js";
 import { isRecord } from "../../utils/type-guards.js";
 
 import {
-  buildPrefixedPermissionMap,
   type SkillBashPermIndex,
   type SkillMcpIndex,
 } from "./types.js";
@@ -103,12 +102,7 @@ export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcp
       }
 
       for (const binding of bindings) {
-        const bindingPermissions =
-          Object.keys(binding.permission).length > 0
-            ? binding.permission
-            : buildPrefixedPermissionMap(binding.id, undefined);
-
-        for (const [permissionKey, permissionValue] of Object.entries(bindingPermissions)) {
+        for (const [permissionKey, permissionValue] of Object.entries(binding.permission)) {
           if (permissionValue === "deny") {
             continue;
           }
