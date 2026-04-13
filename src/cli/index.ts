@@ -130,9 +130,10 @@ program
     // Config.plugin per @opencode-ai/plugin Config type
     const plugin = Array.isArray(parsed["plugin"]) ? parsed["plugin"] : undefined;
 
-    if (plugin !== undefined && plugin.some(isPluginEntry)) {
+    const existing = plugin?.find(isPluginEntry);
+    if (existing !== undefined) {
       console.log(
-        `Already installed — "${plugin.find(isPluginEntry)}" is already in plugin array.`
+        `Already installed — "${existing}" is already in plugin array.`
       );
       return;
     }
