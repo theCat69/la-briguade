@@ -321,18 +321,23 @@ program
       detail: logFilePath,
     });
 
-    // 5. cache-ctrl peer dependency
+    // 5. cache-ctrl CLI availability
+    let cacheCtrlOk = false;
     try {
-      // @ts-expect-error -- runtime availability probe; 'cache-ctrl' is not a build-time dependency
-      await import("cache-ctrl");
-      checks.push({ label: "cache-ctrl", ok: true, detail: "Peer dependency available" });
+      const result = spawnSync("cache-ctrl", ["--version"], { stdio: "pipe" });
+      cacheCtrlOk = result.error == null && result.status === 0;
     } catch {
-      checks.push({
-        label: "cache-ctrl",
-        ok: false,
-        detail: "Cannot import cache-ctrl (optional peer)",
-      });
+      // spawnSync itself never throws; catch guards unexpected runtime failures.
+      cacheCtrlOk = false;
     }
+
+    checks.push({
+      label: "cache-ctrl",
+      ok: cacheCtrlOk,
+      detail: cacheCtrlOk
+        ? "cache-ctrl CLI available"
+        : "cache-ctrl unavailable (not in PATH or exited non-zero)",
+    });
 
     // Print summary table
     console.log("\nla-briguade doctor\n");
