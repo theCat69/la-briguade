@@ -679,18 +679,18 @@ describe("injectSkillMcpPermissions", () => {
   it("should skip injection when resolved skill permission is neither allow nor ask", () => {
     // Arrange
     const config = createInjectConfig({
-      skill: { "playwright-cli": "unknown", "*": "unknown" },
+      skill: { context7: "unknown", "*": "unknown" },
     });
-    const skillBashPermIndex: SkillBashPermIndex = {
-      "playwright-cli": { "playwright-cli *": "allow" },
+    const skillMcpIndex: SkillMcpIndex = {
+      context7: [{ id: "context7", permission: { "context7_*": "allow" } }],
     };
 
     // Act
-    injectSkillBashPermissions(config, skillBashPermIndex);
+    injectSkillMcpPermissions(config, skillMcpIndex);
 
     // Assert
     expect(getAskPermission(config)).toEqual({
-      skill: { "playwright-cli": "unknown", "*": "unknown" },
+      skill: { context7: "unknown", "*": "unknown" },
     });
   });
 

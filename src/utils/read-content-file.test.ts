@@ -40,6 +40,19 @@ describe("readContentFile", () => {
     expect(act).toThrowError("Could not read agent file: /tmp/missing.md");
   });
 
+  it("should use default content type in read error message", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation(() => {
+      throw Object.assign(new Error("not found"), { code: "ENOENT" });
+    });
+
+    // Act
+    const act = () => readContentFile("/tmp/missing.md", 100);
+
+    // Assert
+    expect(act).toThrowError("Could not read content file: /tmp/missing.md");
+  });
+
   it("should throw when file content exceeds maxLength", () => {
     // Arrange
     mockReadFileSync.mockReturnValue("x".repeat(11));

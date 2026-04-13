@@ -8,8 +8,8 @@ export function readContentFile(
   let raw: string;
   try {
     raw = readFileSync(filePath, "utf-8");
-  } catch {
-    throw new Error(`Could not read ${contentType} file: ${filePath}`);
+  } catch (error) {
+    throw new Error(`Could not read ${contentType} file: ${filePath}`, { cause: error });
   }
 
   if (raw.length > maxLength) {
