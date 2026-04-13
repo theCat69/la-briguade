@@ -33,15 +33,11 @@ interface ConfigFileResult {
   existed: boolean;
 }
 
-function resolveGlobalConfigPath(): string {
-  return join(resolveOpencodeConfigDir(), "opencode.json");
-}
-
 /**
  * Ensure the global opencode config file exists and return its path.
  */
 function findOrCreateConfigFile(): ConfigFileResult {
-  const configPath = resolveGlobalConfigPath();
+  const configPath = join(resolveOpencodeConfigDir(), "opencode.json");
   const existed = existsSync(configPath);
 
   try {
@@ -65,7 +61,7 @@ function findOrCreateConfigFile(): ConfigFileResult {
  * Find an existing global opencode config file.
  */
 function findConfigFile(): string | undefined {
-  const configPath = resolveGlobalConfigPath();
+  const configPath = join(resolveOpencodeConfigDir(), "opencode.json");
   return existsSync(configPath) ? configPath : undefined;
 }
 
@@ -284,7 +280,7 @@ program
     });
 
     // 3. opencode config has la-briguade in plugin
-    const globalConfigPath = resolveGlobalConfigPath();
+    const globalConfigPath = join(resolveOpencodeConfigDir(), "opencode.json");
     if (!existsSync(globalConfigPath)) {
       checks.push({
         label: "Plugin registered",
