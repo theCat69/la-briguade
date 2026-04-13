@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-import { parseModelSections, resolveModelSection } from "./model-sections.js";
+import { MAX_SEGMENTS, parseModelSections, resolveModelSection } from "./model-sections.js";
 import type { ModelSegment } from "./model-sections.js";
 import { logger } from "./logger.js";
 
@@ -196,10 +196,13 @@ describe("parseModelSections", () => {
     const result = parseModelSections(body);
 
     // Assert
-    expect(result.segments).toHaveLength(50);
-    expect(result.segments[49]).toEqual({ target: "gpt", text: "Section 50" });
+    expect(result.segments).toHaveLength(MAX_SEGMENTS);
+    expect(result.segments[MAX_SEGMENTS - 1]).toEqual({
+      target: "gpt",
+      text: `Section ${MAX_SEGMENTS}`,
+    });
     expect(mockLoggerWarn).toHaveBeenCalledWith(
-      "model section count exceeded MAX_SEGMENTS=50; remaining sections skipped",
+      `model section count exceeded MAX_SEGMENTS=${MAX_SEGMENTS}; remaining sections skipped`,
     );
   });
 });

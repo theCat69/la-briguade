@@ -11,11 +11,11 @@ vi.mock("./logger.js", () => ({
 import type { PluginInput } from "../types/plugin.js";
 
 import { logger } from "./logger.js";
-import { initNotifier, notifier, resetNotifier } from "./notifier.js";
+import { initNotifier, notifier } from "./notifier.js";
 
 describe("notifier", () => {
   afterEach(() => {
-    resetNotifier();
+    initNotifier({} as PluginInput);
     vi.clearAllMocks();
     vi.restoreAllMocks();
   });
@@ -91,13 +91,52 @@ describe("notifier", () => {
     });
   });
 
-  it("should clear notifier state on resetNotifier", () => {
+  it("should fallback to logger.warn when showToast throws", () => {
+    // Arrange
+    const showToast = vi.fn(() => {
+      throw new Error("toast failed");
+    });
+    const mockWarn = vi.mocked(logger.warn);
+    initNotifier({ client: { tui: { showToast } } } as unknown as PluginInput);
+
+    // Act
+    notifier.warn("warn after throw");
+
+    // Assert
+    expect(showToast).toHaveBeenCalledOnce();
+    expect(mockWarn).toHaveBeenCalledWith("warn after throw");
+  });
+
+  it("should fallback to logger.error when tui is unavailable", () => {
+    // Arrange
+    const mockError = vi.mocked(logger.error);
+    initNotifier({} as PluginInput);
+
+    // Act
+    notifier.error("fallback error");
+
+    // Assert
+    expect(mockError).toHaveBeenCalledWith("fallback error");
+  });
+
+  it("should fallback to logger.info when tui is unavailable", () => {
+    // Arrange
+    const mockInfo = vi.mocked(logger.info);
+    initNotifier({} as PluginInput);
+
+    // Act
+    notifier.info("fallback info");
+
+    // Assert
+    expect(mockInfo).toHaveBeenCalledWith("fallback info");
+  });
+
+  it("should clear notifier state when reinitialized without tui", () => {
     // Arrange
     const showToast = vi.fn();
     const mockWarn = vi.mocked(logger.warn);
-    mockWarn.mockClear();
     initNotifier({ client: { tui: { showToast } } } as unknown as PluginInput);
-    resetNotifier();
+    initNotifier({} as PluginInput);
 
     // Act
     notifier.warn("after reset");

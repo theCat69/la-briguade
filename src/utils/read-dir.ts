@@ -15,7 +15,8 @@ export function readDirSafe(dir: string, label: string): string[] | undefined {
     if (code === "ENOENT") {
       return undefined;
     }
-    logger.warn(`Could not read ${label} directory: ${dir}`);
+    const codeLabel = code ?? "UNKNOWN";
+    logger.warn(`Could not read ${label} directory (${codeLabel}): ${dir}`);
     return undefined;
   }
 }

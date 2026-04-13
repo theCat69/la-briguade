@@ -15,27 +15,33 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, "..");
 
-// Read package metadata (version for $id, name for title)
-const rawPkg = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf-8"));
-const version = rawPkg.version ?? "0.0.0";
-const pkgName = rawPkg.name ?? "la-briguade";
+try {
+  // Read package metadata (version for $id, name for title)
+  const rawPkg = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf-8"));
+  const version = rawPkg.version ?? "0.0.0";
+  const pkgName = rawPkg.name ?? "la-briguade";
 
-// Import the pre-built schema object from the compiled output
-const { configJsonSchema } = await import("../dist/config/schema.js");
+  // Import the pre-built schema object from the compiled output
+  const { configJsonSchema } = await import("../dist/config/schema.js");
 
-const schema = {
-  $id: `https://unpkg.com/${pkgName}@${version}/schemas/la-briguade.schema.json`,
-  title: "la-briguade configuration",
-  description:
-    "Configuration file for the la-briguade opencode plugin. " +
-    "Place as la-briguade.json or la-briguade.jsonc in your project root.",
-  ...configJsonSchema,
-};
+  const schema = {
+    $id: `https://unpkg.com/${pkgName}@${version}/schemas/la-briguade.schema.json`,
+    title: "la-briguade configuration",
+    description:
+      "Configuration file for the la-briguade opencode plugin. " +
+      "Place as la-briguade.json or la-briguade.jsonc in your project root.",
+    ...configJsonSchema,
+  };
 
-const outDir = resolve(rootDir, "schemas");
-const outFile = resolve(outDir, "la-briguade.schema.json");
+  const outDir = resolve(rootDir, "schemas");
+  const outFile = resolve(outDir, "la-briguade.schema.json");
 
-mkdirSync(outDir, { recursive: true });
-writeFileSync(outFile, JSON.stringify(schema, null, 2) + "\n", "utf-8");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(outFile, JSON.stringify(schema, null, 2) + "\n", "utf-8");
 
-console.log(`Generated: ${outFile}`);
+  console.log(`Generated: ${outFile}`);
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[la-briguade] Failed to generate JSON schema: ${message}`);
+  process.exit(1);
+}
