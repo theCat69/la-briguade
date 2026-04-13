@@ -90,7 +90,7 @@ describe("resolveUserConfig", () => {
     expect(result.model).toBe("project-model");
   });
 
-  it("should override global model with project model", () => {
+  it("should preserve global agent fields when project overrides top-level model", () => {
     // Arrange
     mockHomedir.mockReturnValue("/home/user");
     mockLoadConfig.mockImplementation((filePath) => {
@@ -110,6 +110,30 @@ describe("resolveUserConfig", () => {
     expect(result.model).toBe("project-model");
     // Agent from global is still present since project doesn't override it
     expect(result.agents?.["coder"]?.temperature).toBe(0.3);
+  });
+
+  it("should return project config as-is when global config is absent", () => {
+    // Arrange
+    mockHomedir.mockReturnValue("/home/user");
+    const projectConfig: LaBriguadeConfig = {
+      model: "project-model",
+      agents: { coder: { temperature: 0.7 } },
+    };
+    mockLoadConfig.mockImplementation((filePath) => {
+      if (filePath.includes("la_briguade")) {
+        return notFoundResult();
+      }
+      if (filePath.includes("/project")) {
+        return okResult(projectConfig);
+      }
+      return notFoundResult();
+    });
+
+    // Act
+    const result = resolveUserConfig("/project");
+
+    // Assert
+    expect(result).toEqual(projectConfig);
   });
 
   it("should merge non-overlapping agents from global and project", () => {

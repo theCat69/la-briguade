@@ -125,6 +125,29 @@ describe("registerAgents", () => {
     expect(coder?.["model"]).toBe("github-copilot/claude-sonnet-4.6");
   });
 
+  it("should keep opus model unchanged when opus_enabled is true", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "model: github-copilot/claude-opus-4.6",
+        "---",
+        "Base prompt",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+    const userConfig: LaBriguadeConfig = { opus_enabled: true };
+
+    // Act
+    registerAgents(config, ["/builtin/agents"], userConfig);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
+    expect(coder?.["model"]).toBe("github-copilot/claude-opus-4.6");
+  });
+
   it("should register variant from frontmatter", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
