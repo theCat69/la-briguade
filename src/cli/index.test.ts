@@ -58,17 +58,6 @@ async function runCliCommand(command: "install" | "uninstall" | "doctor" | "upda
   await import("./index.js");
 }
 
-async function waitFor(condition: () => boolean, maxTicks = 40): Promise<void> {
-  for (let i = 0; i < maxTicks; i += 1) {
-    if (condition()) return;
-    await new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), 0);
-    });
-  }
-
-  throw new Error(`waitFor timed out after ${maxTicks} ticks`);
-}
-
 function configureConfigRead(rawConfig: string): void {
   mockReadFileSync.mockImplementation((filePath) => {
     const path = String(filePath);
@@ -285,7 +274,9 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
     // Act
     await runCliCommand("doctor");
-    await waitFor(() => mockResolveUserConfig.mock.calls.length > 0);
+    await vi.waitFor(() => {
+      expect(mockResolveUserConfig.mock.calls.length).toBeGreaterThan(0);
+    });
 
     // Assert
     expect(mockResolveUserConfig).toHaveBeenCalledWith("/workspace");
@@ -306,7 +297,9 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
     // Act
     await runCliCommand("doctor");
-    await waitFor(() => process.exitCode === 1);
+    await vi.waitFor(() => {
+      expect(process.exitCode).toBe(1);
+    });
 
     // Assert
     expect(process.exitCode).toBe(1);

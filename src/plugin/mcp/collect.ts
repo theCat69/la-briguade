@@ -72,7 +72,9 @@ function forEachSkillDir(
       if (fileDataResult.error.kind === "read-error") {
         logger.warn(
           `Could not read skill file: ${fileDataResult.error.skillFilePath} ` +
-            `(${String(fileDataResult.error.error)})`,
+            `(${fileDataResult.error.error instanceof Error
+              ? fileDataResult.error.error.message
+              : String(fileDataResult.error.error)})`,
         );
       }
       continue;

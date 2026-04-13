@@ -15,6 +15,7 @@ import {
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
+import type { AgentSectionsEntry } from "./hooks/index.js";
 import { initLogger, logger } from "./utils/logger.js";
 
 vi.mock("./config/index.js", () => ({
@@ -126,11 +127,11 @@ describe("LaBriguadePlugin", () => {
     mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} }, skillMcpIndex: { coder: {} } });
     mockCollectSkillBashPermissions.mockReturnValue({ coder: { "npm *": "allow" } });
 
-    let capturedSections: Map<string, unknown> | undefined;
-    let capturedPerms: Map<string, unknown> | undefined;
+    let capturedSections: ReadonlyMap<string, AgentSectionsEntry> | undefined;
+    let capturedPerms: ReadonlyMap<string, Record<string, string>> | undefined;
     mockCreateHooks.mockImplementation((_, agentSections, __, agentSkillPerms) => {
-      capturedSections = agentSections as Map<string, unknown>;
-      capturedPerms = agentSkillPerms as Map<string, unknown>;
+      capturedSections = agentSections;
+      capturedPerms = agentSkillPerms;
       return { event: vi.fn() };
     });
 
