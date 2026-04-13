@@ -65,6 +65,8 @@ async function waitFor(condition: () => boolean, maxTicks = 40): Promise<void> {
       setTimeout(() => resolve(), 0);
     });
   }
+
+  throw new Error(`waitFor timed out after ${maxTicks} ticks`);
 }
 
 function configureConfigRead(rawConfig: string): void {
@@ -105,7 +107,6 @@ describe("cli install/uninstall/doctor/update commands", () => {
     vi.doUnmock("la-briguade");
     vi.doUnmock("cache-ctrl");
     vi.resetAllMocks();
-    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
