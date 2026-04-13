@@ -54,7 +54,7 @@ describe("registerCommands", () => {
   it("should warn and skip when reading a command file fails", () => {
     mockCollectFiles.mockReturnValue(new Map([["critic", "/builtin/commands/critic.md"]]));
     mockReadContentFile.mockImplementation((filePath) => {
-      throw new Error(`Could not read command file: ${String(filePath)}`);
+      throw new Error(`Could not read command file: ${filePath}`);
     });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 

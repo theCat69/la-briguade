@@ -190,6 +190,24 @@ describe("cli install/uninstall/doctor/update commands", () => {
     expect(mockWriteFileSync).not.toHaveBeenCalled();
   });
 
+  it("should report not-installed when uninstall finds no plugin array", async () => {
+    // Arrange
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockExistsSync.mockImplementation((path) => String(path) === GLOBAL_CONFIG_PATH);
+    configureConfigRead("{}\n");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    // Act
+    await runCliCommand("uninstall");
+
+    // Assert
+    expect(logSpy).toHaveBeenCalledWith(
+      `Not installed — no plugin array in ${GLOBAL_CONFIG_PATH}`,
+    );
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
   it("should remove plugin entry on uninstall when present", async () => {
     // Arrange
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
@@ -210,6 +228,27 @@ describe("cli install/uninstall/doctor/update commands", () => {
     expect(written).toContain("another-plugin");
     expect(written).not.toContain("la-briguade@latest");
     expect(process.exitCode).toBeUndefined();
+  });
+
+  it("should set exitCode when uninstall write fails", async () => {
+    // Arrange
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockExistsSync.mockImplementation((path) => String(path) === GLOBAL_CONFIG_PATH);
+    configureConfigRead("{\n  \"plugin\": [\"la-briguade@latest\"]\n}\n");
+    mockWriteFileSync.mockImplementation(() => {
+      throw new Error("disk full");
+    });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    // Act
+    await runCliCommand("uninstall");
+
+    // Assert
+    expect(process.exitCode).toBe(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[la-briguade] Could not write config file:"),
+    );
   });
 
   it("should report all checks passed in doctor happy path", async () => {
