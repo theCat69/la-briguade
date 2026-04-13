@@ -34,7 +34,7 @@ export type ModelSections = {
  * - Case-insensitive, multiline
  */
 const SECTION_HEADER_RE = /^={4,}\s*(\w+)\s*={4,}\s*$/im;
-const MAX_SEGMENTS = 50;
+export const MAX_SEGMENTS = 50;
 
 /**
  * Parse a markdown agent body that may contain model-family-specific sections.

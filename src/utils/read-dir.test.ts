@@ -61,7 +61,9 @@ describe("readDirSafe", () => {
 
     // Assert
     expect(result).toBeUndefined();
-    expect(mockLoggerWarn).toHaveBeenCalledWith("Could not read agents directory: /weird");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Could not read agents directory (UNKNOWN): /weird",
+    );
   });
 
   it("should return undefined and warn on non-ENOENT readdir error", () => {
@@ -76,7 +78,7 @@ describe("readDirSafe", () => {
     // Assert
     expect(result).toBeUndefined();
     expect(mockLoggerWarn).toHaveBeenCalledWith(
-      "Could not read agents directory: /restricted",
+      "Could not read agents directory (EACCES): /restricted",
     );
   });
 });

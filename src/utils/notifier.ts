@@ -59,10 +59,6 @@ export function initNotifier(ctx: PluginInput): void {
   showToast = resolveShowToast(ctx);
 }
 
-export function resetNotifier(): void {
-  showToast = undefined;
-}
-
 export const notifier = {
   warn(message: string): void {
     emitOrFallback(message, "warning", logger.warn);
