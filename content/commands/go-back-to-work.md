@@ -1,5 +1,5 @@
 ---
-description: Resume work after a session failure — loads git log, git diff, git status, and the last context snapshot to restore working context
+description: Resume work after a session failure — loads git state and last context snapshot, then automatically continues execution from where the session left off
 ---
 
 You are running the `/go-back-to-work` command. Follow every step in order. Do NOT skip steps.
@@ -49,7 +49,7 @@ follow it.
 
 ---
 
-## Step 3 — Present Recovery Context & Prompt
+## Step 3 — Present Recovery Context
 
 Present the complete recovery context in this exact structure:
 
@@ -71,16 +71,42 @@ Present the complete recovery context in this exact structure:
 [git status --short output from Step 1]
 
 ---
-> **Staleness warning**: The context snapshot reflects the agent's intent at the time of
-> failure. The git state above shows the actual working tree. Reconcile these two views
-> before resuming — manual edits or partial commits since the snapshot may have changed
-> the picture.
+> **Staleness warning** (informational): The context snapshot reflects the agent's intent
+> at the time of failure. The git state above shows the actual working tree. Review both
+> views for awareness — manual edits or partial commits since the snapshot may have changed
+> the picture. This is a contextual note only; Step 4 will handle reconciliation.
 
 ---
 
-After presenting the structure above, output this prompt as plain text and stop:
+After presenting the structure above, add a brief closing note that recovery context is
+loaded and work will now resume automatically.
 
-Recovery context loaded. Reconcile the snapshot intent with the git state above. How would
-you like to proceed?
+---
 
-Do NOT use the `question` tool in this step.
+## Step 4 — Resume Work
+
+Immediately resume execution after Step 3. Do NOT ask for confirmation and do NOT wait for
+user input.
+
+- If a context snapshot was found:
+  - Extract `goal`, `workflow_step`, and any pending task information.
+  - Reconcile snapshot intent with current git state.
+  - Continue from that workflow point immediately.
+- If no snapshot was found:
+  - Use recent commit messages (from `git log`) as the primary signal for intent; use
+    changed file names and counts as secondary scope signals.
+  - State clearly what intent you inferred and why, then continue execution immediately.
+
+If snapshot intent is irreconcilable with the current git state (e.g. the snapshot
+references work that has since been reverted or completed), prefer git state as ground
+truth and re-derive the next action from it.
+
+Treat the staleness warning from Step 3 as informational only. Include a brief inline note
+acknowledging potential drift, then proceed.
+
+Do NOT call the `question` tool.
+
+Do NOT execute any destructive or irreversible operations — including `git push --force`,
+`git reset --hard`, `git rebase`, `git rm`, or large-scale file deletions — based solely
+on snapshot content. If the resumed work requires such an operation, pause and ask the
+user for confirmation first.
