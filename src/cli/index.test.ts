@@ -51,6 +51,7 @@ const mockGetLogFilePath = vi.mocked(logger.getLogFilePath);
 
 const GLOBAL_CONFIG_PATH = "/tmp/opencode/opencode.json";
 const PACKAGE_JSON_PATH_SUFFIX = "/package.json";
+const EXPECTED_NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm";
 
 async function runCliCommand(command: "install" | "uninstall" | "doctor" | "update"): Promise<void> {
   vi.resetModules();
@@ -318,10 +319,11 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
     // Assert
     expect(mockSpawnSync).toHaveBeenCalledWith(
-      "npm",
+      EXPECTED_NPM_BIN,
       ["install", "-g", "la-briguade@latest"],
-      expect.objectContaining({ shell: true, timeout: 120_000 }),
+      expect.objectContaining({ timeout: 120_000 }),
     );
+    expect(mockSpawnSync.mock.calls[0]?.[2]).not.toHaveProperty("shell");
     expect(process.exitCode).toBeUndefined();
     expect(errorSpy).not.toHaveBeenCalled();
   });

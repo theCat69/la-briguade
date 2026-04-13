@@ -23,6 +23,7 @@ const pkg = isRecord(rawPkg) ? rawPkg : {};
 
 const PLUGIN_NAME = "la-briguade";
 const PLUGIN_ENTRY = "la-briguade@latest";
+const NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm";
 
 function isPluginEntry(entry: unknown): entry is string {
   return entry === PLUGIN_NAME || entry === PLUGIN_ENTRY;
@@ -362,12 +363,8 @@ program
     console.log("[la-briguade] Updating to latest version...");
     let result: ReturnType<typeof spawnSync>;
     try {
-      result = spawnSync("npm", ["install", "-g", "la-briguade@latest"], {
+      result = spawnSync(NPM_BIN, ["install", "-g", "la-briguade@latest"], {
         stdio: "inherit",
-        // shell:true is required on Windows — cmd.exe resolves npm.cmd automatically.
-        // Note: on Windows, timeout kills the shell process but not the npm child;
-        // the subprocess may continue orphaned if the timeout fires.
-        shell: true,
         timeout: 120_000,
       });
     } catch (err) {
