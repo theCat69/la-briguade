@@ -35,7 +35,7 @@ Identify vulnerabilities, unsafe patterns, secrets exposure, and CVEs in depende
 
 # Startup Sequence (Always Execute First)
 Before reviewing any code, unconditionally run all of the following steps:
-1. Load skill `project-security`. (If unavailable, fall back to OWASP Top 10 and general security best practices.)
+1. Load skill `project-security`.
 2. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Shared Scope Rules

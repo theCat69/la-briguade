@@ -14,9 +14,6 @@ mcp:
 
 # Context7 MCP Skill
 
-Context7 is an MCP server that provides up-to-date, version-specific library and
-framework documentation, plus practical code examples, directly to LLM agents.
-
 ## Available MCP tools
 
 - `resolve-library-id` — map a library name or query to a Context7 library ID.

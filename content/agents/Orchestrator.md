@@ -60,8 +60,8 @@ Safely transform user requests into production-ready code for production systems
 
 # Startup Sequence (Always Execute First)
 Before starting any workflow step, unconditionally run all of the following steps:
-1. Load skill `project-coding`. (If unavailable, warn the user and continue with industry best practices.)
-2. Load skill `general-coding`. (If unavailable, warn the user and continue with industry best practices.)
+1. Load skill `project-coding`.
+2. Load skill `general-coding`.
 3. Load skill `cache-ctrl-caller`.
 4. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) directly, or use the stack value from the Context Snapshot if explicitly provided. Load the corresponding skill(s) unconditionally:
    - `package.json` containing `@angular/core` → load `angular` + `typescript`
@@ -119,14 +119,6 @@ Every task type below MUST be delegated to its designated subagent. The Orchestr
 | Feature spec review | `feature-reviewer` | Review feature specs or acceptance criteria |
 | Design challenge | `critic` | Challenge architectural decisions (when applicable) |
 | Architecture analysis | `architect` | Produce structure maps, migration checklists, or before/after blueprints |
-
-**Anti-pattern examples (violations):**
-- ❌ Reading a controller file to "quickly understand the endpoint structure" → ✅ `cache_ctrl_inspect` with task keywords, or call `local-context-gatherer`
-- ❌ Grepping for `import.*vulnerable-lib` to check exposure → ✅ call `security-reviewer`
-- ❌ Reading a git diff and listing "here are the issues I see" → ✅ call `reviewer` with the diff
-- ❌ Calling `local-context-gatherer` without checking cache first → ✅ run `cache_ctrl_check_files` first
-- ❌ Calling `external-context-gatherer` without searching cache → ✅ run `cache_ctrl_search` first
-- ❌ Producing a migration checklist or before/after module map → ✅ call `architect`
 
 ## Permitted Direct File Access
 The `read`, `glob`, and `grep` tools exist for these narrow purposes ONLY:

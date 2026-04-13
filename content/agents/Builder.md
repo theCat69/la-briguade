@@ -51,8 +51,8 @@ Transform user requests into working, production-quality code. You write all cod
 
 # Startup Sequence (Always Execute First)
 Before selecting mode or writing any code, unconditionally run all of the following steps:
-1. Load skill `project-coding`. (If unavailable, warn the user and continue with industry best practices.)
-2. Load skill `general-coding`. (If unavailable, warn the user and continue with industry best practices.)
+1. Load skill `project-coding`.
+2. Load skill `general-coding`.
 3. Load skill `cache-ctrl-caller`.
 4. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) in the repo root. Load the corresponding skill(s) unconditionally:
    - `package.json` containing `@angular/core` → load `angular` + `typescript`

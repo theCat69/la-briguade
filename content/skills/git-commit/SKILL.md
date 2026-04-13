@@ -12,8 +12,6 @@ tags:
 
 # Git commit Skill
 
-> **Purpose**: Give proper good pratice and commit template.
-
 ---
 
 # Git commit skill Prerequisites

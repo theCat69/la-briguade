@@ -7,8 +7,6 @@ description: Socratic requirements gathering with mathematical ambiguity scoring
 
 **Purpose**: replace vague or incomplete user requests with crystal-clear, measurable specifications before any code is written or any implementation agent is called. No implementation begins while the interview is in progress.
 
----
-
 ## When to Load This Skill
 
 Load this skill when one or more of the following ambiguity signals is present in the user's request:
@@ -20,8 +18,6 @@ Load this skill when one or more of the following ambiguity signals is present i
 - **Missing constraints** — no mention of what NOT to do; no performance, security, or compatibility constraints stated
 - **Undefined entities** — references to "it", "the thing", "this" without a clear antecedent in the conversation
 
----
-
 ## Ambiguity Scoring
 
 Score the request across three weighted dimensions. Each dimension is scored 0–100% for clarity. The weighted sum is the overall **Clarity %**. **Ambiguity % = 100 − Clarity %**.
@@ -32,13 +28,9 @@ Score the request across three weighted dimensions. Each dimension is scored 0�
 | **Constraint Clarity** | 30% | Are technical, scope, and non-functional constraints specified? |
 | **Success Criteria** | 30% | Are acceptance criteria concrete and verifiable by a third party? |
 
-**Example**: Goal Clarity = 60%, Constraint Clarity = 50%, Success Criteria = 40%
-→ Clarity = (0.40 × 60) + (0.30 × 50) + (0.30 × 40) = 24 + 15 + 12 = **51%**
-→ Ambiguity = **49%** — interview required.
+**Example**: Goal 60%, Constraints 50%, Success 40% → Clarity = (0.40×60) + (0.30×50) + (0.30×40) = **51%**; Ambiguity = **49%** (interview required).
 
 **Proceed threshold**: Ambiguity < 20% (Clarity > 80%).
-
----
 
 ## Interview Workflow
 
@@ -52,8 +44,6 @@ Score the request across three weighted dimensions. Each dimension is scored 0�
 8. **Round 8+** — Ontologist mode: restate in one sentence what the thing fundamentally IS (not what it does) and ask whether that matches the user's mental model.
 9. When ambiguity drops below 20%: produce the Structured Spec and hand off.
 
----
-
 ## Output — Structured Spec
 
 When the interview reaches ambiguity < 20%, output the following and nothing else:
@@ -64,8 +54,6 @@ When the interview reaches ambiguity < 20%, output the following and nothing els
 - **Out of Scope** — bullet list of explicit exclusions agreed during the interview
 - **Final Ambiguity Score** — the ambiguity % at handoff
 - **Assumptions Made** — any assumption the agent made because the user refused to answer or said "just do it"
-
----
 
 ## Critical Rules
 

@@ -5,13 +5,9 @@ description: Universal coding best practices — naming, testing philosophy, com
 
 # General Coding Guidelines
 
-These principles apply across all languages and project types. They are not style rules — they are engineering discipline.
-
 ---
 
 ## 1. Naming Over Comments
-
-> *"If a name needs a comment to explain it, rename it."* — Clean Code (Martin)
 
 - Use **intention-revealing names** for every variable, function, parameter, class, and module
 - A good name answers: *what it is, what it does, why it exists*
@@ -48,8 +44,6 @@ These principles apply across all languages and project types. They are not styl
 
 ## 4. Single Responsibility Principle (SRP)
 
-> *"A module should have one, and only one, reason to change."* — SOLID (Martin)
-
 - Each **function** has one job and fits in a visible screen window (~20–30 lines max)
 - Each **class/module** has one cohesive purpose
 - If you use "and" to describe what something does — **split it**
@@ -59,8 +53,6 @@ These principles apply across all languages and project types. They are not styl
 
 ## 5. Open / Closed Principle (OCP)
 
-> *"Open for extension, closed for modification."* — SOLID (Martin)
-
 - Add behavior by writing **new code** — avoid editing working, tested logic
 - Use abstractions, interfaces, and composition points to enable extension without touching existing paths
 - Every `if/switch` on type is a sign you need polymorphism or a strategy pattern
@@ -68,8 +60,6 @@ These principles apply across all languages and project types. They are not styl
 ---
 
 ## 6. DRY — Don't Repeat Yourself
-
-> *"Every piece of knowledge must have a single, unambiguous, authoritative representation."* — The Pragmatic Programmer (Hunt & Thomas)
 
 - When the same logic appears twice, extract it; when it appears three times, it has earned an abstraction
 - **Acceptable duplication**: tests (explicitness beats brevity), diverging concerns that happen to look alike today
@@ -88,8 +78,6 @@ These principles apply across all languages and project types. They are not styl
 ---
 
 ## 8. High Cohesion / Low Coupling
-
-> *"Put things together that change together. Keep apart things that change independently."* — GRASP (Larman)
 
 - **Cohesion**: related logic belongs in the same module; unrelated logic should not
 - **Coupling**: modules depend on as little as possible; prefer narrow, stable interfaces over broad ones
@@ -118,8 +106,6 @@ These principles apply across all languages and project types. They are not styl
 ---
 
 ## 11. Protected Variations
-
-> *"Identify points of predicted variation and create a stable interface around them."* — GRASP (Larman)
 
 - Wrap **volatile points** behind stable interfaces: external APIs, third-party dependencies, configuration, business rules
 - Change impact stays local; dependents never need to feel the tremor
