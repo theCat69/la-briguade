@@ -25,7 +25,7 @@ describe("registerAgents", () => {
 
   it("should skip unreadable agent file, warn, and still register other agents", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(
       new Map([
         ["good", "/builtin/agents/good.md"],
@@ -52,7 +52,7 @@ describe("registerAgents", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] skipping /builtin/agents/bad.md:"),
+      expect.stringContaining("skipping /builtin/agents/bad.md:"),
     );
     expect(config.agent?.["good"]).toBeDefined();
     expect(config.agent?.["bad"]).toBeUndefined();
@@ -60,7 +60,7 @@ describe("registerAgents", () => {
 
   it("should warn on duplicate derived agent names and keep collision handling behavior", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(
       new Map([
         ["Coder", "/builtin/agents/Coder.md"],
@@ -95,7 +95,7 @@ describe("registerAgents", () => {
 
     // Assert
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] duplicate agent name in sections map: 'coder'"),
+      expect.stringContaining("duplicate agent name in sections map: 'coder'"),
     );
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
     expect(coder?.["prompt"]).toBe("Base two");

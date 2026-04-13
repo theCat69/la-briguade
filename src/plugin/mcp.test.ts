@@ -815,7 +815,7 @@ describe("injectSkillMcpPermissions", () => {
     });
   });
 
-  it("should fallback to wildcard permission when binding.permission is empty", () => {
+  it("should skip injection when binding.permission is empty", () => {
     // Arrange
     const config = createInjectConfig({ skill: { context7: "allow" } });
     const skillMcpIndex: SkillMcpIndex = {
@@ -828,7 +828,6 @@ describe("injectSkillMcpPermissions", () => {
     // Assert
     expect(getAskPermission(config)).toEqual({
       skill: { context7: "allow" },
-      "context7_*": "allow",
     });
   });
 });

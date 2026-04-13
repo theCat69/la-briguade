@@ -124,7 +124,7 @@ describe("LaBriguadePlugin", () => {
       agentSkillPerms: new Map([["coder", sharedPerms]]),
     });
     mockRegisterSkills.mockReturnValue({ dirs: ["/skills/typescript"] });
-    mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} }, skillMcpIndex: { coder: {} } });
+    mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} }, skillMcpIndex: { coder: [] } });
     mockCollectSkillBashPermissions.mockReturnValue({ coder: { "npm *": "allow" } });
 
     let capturedSections: ReadonlyMap<string, AgentSectionsEntry> | undefined;
@@ -147,7 +147,7 @@ describe("LaBriguadePlugin", () => {
     expect(mockRegisterSkills).toHaveBeenCalledOnce();
     expect(mockCollectSkillMcps).toHaveBeenCalledWith(["/skills/typescript"]);
     expect(mockMergeSkillMcps).toHaveBeenCalledWith(input, { context7: {} });
-    expect(mockInjectSkillMcpPermissions).toHaveBeenCalledWith(input, { coder: {} });
+    expect(mockInjectSkillMcpPermissions).toHaveBeenCalledWith(input, { coder: [] });
     expect(mockInjectSkillBashPermissions).toHaveBeenCalledWith(input, {
       coder: { "npm *": "allow" },
     });

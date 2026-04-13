@@ -109,18 +109,18 @@ export function registerAgents(
         ? resolveAgentConfig(agentName, agentConfig, userConfig)
         : agentConfig;
 
-    const final =
+    const swappedConfig =
       !opusEnabled && typeof resolved.model === "string"
         ? { ...resolved, model: swapOpusModel(resolved.model) }
         : resolved;
 
-    return {
-      agentName,
-      final,
-      base,
-      segments,
-      skillPerms,
-    };
+      return {
+        agentName,
+        swappedConfig,
+        base,
+        segments,
+        skillPerms,
+      };
   });
 
   if (loadedAgents.size === 0) return { agentSections, agentSkillPerms };
@@ -128,7 +128,7 @@ export function registerAgents(
   const parsedAgents: Record<string, AgentConfig> = {};
 
   for (const parsed of loadedAgents.values()) {
-    parsedAgents[parsed.agentName] = parsed.final;
+    parsedAgents[parsed.agentName] = parsed.swappedConfig;
 
     if (parsed.segments.length > 0) {
       if (agentSections.has(parsed.agentName)) {
