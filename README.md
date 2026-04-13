@@ -78,7 +78,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
 | `/plan-prd` | End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation |
 | `/implement-prd` | Implement a PRD spec file via Orchestrator pipeline with validation, scoped execution, phased approvals, and completion reporting |
-| `/just-do-it` | Zero-ceremony implementation workflow — understand intent, gather context, architect a plan, challenge it, refine if needed, implement the full pipeline, and commit |
+| `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
 
 ## Hooks
 
