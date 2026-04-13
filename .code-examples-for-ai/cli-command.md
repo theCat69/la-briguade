@@ -12,7 +12,8 @@
 //   7. Config key is "plugin" (singular) — per @opencode-ai/plugin Config type
 //   8. PLUGIN_ENTRY is "la-briguade@latest" (written on install); isPluginEntry() accepts
 //      both "la-briguade" (legacy) and "la-briguade@latest" for backward-compat uninstall/doctor
-//   9. update command uses spawnSync with shell:false, 120s timeout, cross-platform npm.cmd on Windows
+//   9. update command uses spawnSync with shell:true (required on Windows — cmd.exe resolves npm.cmd),
+//      120s timeout; on Windows, timeout kills the shell but not the npm child (orphan edge case)
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
@@ -131,18 +132,21 @@ program
   });
 
 // ---- update ----
-// Cross-platform: use "npm.cmd" on Windows, "npm" elsewhere.
-// spawnSync with shell:false prevents shell injection; 120s timeout guards against hung installs.
+// shell:true is required on all platforms — on Windows, cmd.exe resolves npm.cmd automatically.
+// All arguments are hardcoded so shell:true introduces no injection risk.
+// Note: on Windows, timeout kills the shell process but the npm child may continue orphaned.
 program
   .command("update")
   .description("Update la-briguade to the latest version globally")
   .action(() => {
     console.log("[la-briguade] Updating to latest version...");
-    const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
-    const result = spawnSync(npmCmd, ["install", "-g", "la-briguade@latest"], {
+    const result = spawnSync("npm", ["install", "-g", "la-briguade@latest"], {
       stdio: "inherit",
-      shell: false,
+      // shell:true is required on Windows — cmd.exe resolves npm.cmd automatically.
+      // Note: on Windows, timeout kills the shell process but not the npm child;
+      // the subprocess may continue orphaned if the timeout fires.
+      shell: true,
       timeout: 120_000,
     });
 
