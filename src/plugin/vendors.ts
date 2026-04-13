@@ -23,8 +23,8 @@ export function loadVendorPrompts(vendorDirs: string[]): Map<string, string> {
     let body: string;
     try {
       body = readFileSync(filePath, "utf-8");
-    } catch {
-      throw new Error(`Could not read vendor prompt file: ${filePath}`);
+    } catch (error) {
+      throw new Error(`Could not read vendor prompt file: ${filePath}`, { cause: error });
     }
 
     const trimmed = body.trim();
