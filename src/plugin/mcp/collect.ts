@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 import { parseFrontmatter } from "../../utils/frontmatter.js";
-import { isNodeError, type Result } from "../../utils/type-guards.js";
+import { isNodeError } from "../../utils/type-guards.js";
 import { logger } from "../../utils/logger.js";
 
 import { toSdkMcpEntry } from "./merge.js";
@@ -16,6 +16,8 @@ import {
 } from "./types.js";
 
 const SKILL_FILE_NAME = "SKILL.md";
+
+type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 type SkillFileData = {
   attributes: Record<string, unknown>;

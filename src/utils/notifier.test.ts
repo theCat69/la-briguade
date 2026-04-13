@@ -107,6 +107,38 @@ describe("notifier", () => {
     expect(mockWarn).toHaveBeenCalledWith("warn after throw");
   });
 
+  it("should fallback to logger.error when showToast throws", () => {
+    // Arrange
+    const showToast = vi.fn(() => {
+      throw new Error("toast failed");
+    });
+    const mockError = vi.mocked(logger.error);
+    initNotifier({ client: { tui: { showToast } } } as unknown as PluginInput);
+
+    // Act
+    notifier.error("error after throw");
+
+    // Assert
+    expect(showToast).toHaveBeenCalledOnce();
+    expect(mockError).toHaveBeenCalledWith("error after throw");
+  });
+
+  it("should fallback to logger.info when showToast throws", () => {
+    // Arrange
+    const showToast = vi.fn(() => {
+      throw new Error("toast failed");
+    });
+    const mockInfo = vi.mocked(logger.info);
+    initNotifier({ client: { tui: { showToast } } } as unknown as PluginInput);
+
+    // Act
+    notifier.info("info after throw");
+
+    // Assert
+    expect(showToast).toHaveBeenCalledOnce();
+    expect(mockInfo).toHaveBeenCalledWith("info after throw");
+  });
+
   it("should fallback to logger.error when tui is unavailable", () => {
     // Arrange
     const mockError = vi.mocked(logger.error);
