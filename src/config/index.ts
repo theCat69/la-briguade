@@ -45,10 +45,10 @@ export function resolveOpencodeConfigDir(): string {
 export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
   const { globalDir } = resolveConfigBaseDirs(projectDir);
   const globalConfigBasePath = join(globalDir, "la-briguade");
-  const projectConfigDir = join(projectDir, "la-briguade");
+  const projectConfigBasePath = join(projectDir, "la-briguade");
 
   const globalResult = loadConfig(globalConfigBasePath);
-  const projectResult = loadConfig(projectConfigDir);
+  const projectResult = loadConfig(projectConfigBasePath);
 
   let globalConfig: LaBriguadeConfig | undefined;
   if (globalResult.ok) {

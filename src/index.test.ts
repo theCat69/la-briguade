@@ -153,4 +153,27 @@ describe("LaBriguadePlugin", () => {
     expect(capturedSections?.get("coder")).toEqual(sharedSection);
     expect(capturedPerms?.get("coder")).toEqual(sharedPerms);
   });
+
+  it('should default logger level to "warn" when log_level is missing', async () => {
+    // Arrange
+    mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
+    mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
+    mockResolveUserConfig.mockReturnValue({});
+    mockLoadVendorPrompts.mockReturnValue(new Map());
+    mockCreateHooks.mockReturnValue({});
+    mockRegisterAgents.mockReturnValue({
+      agentSections: new Map(),
+      agentSkillPerms: new Map(),
+    });
+    mockRegisterSkills.mockReturnValue({ dirs: [] });
+    mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
+    mockCollectSkillBashPermissions.mockReturnValue({});
+
+    // Act
+    const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
+    await plugin.config?.({} as never);
+
+    // Assert
+    expect(mockSetLevel).toHaveBeenCalledWith("warn");
+  });
 });
