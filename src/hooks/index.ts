@@ -127,10 +127,10 @@ function cleanupDeletedSession(
   if (event.type !== "session.deleted") return;
   if (!isRecord(event.properties)) return;
 
-  const info = event.properties["info"];
-  if (!isRecord(info)) return;
+  const sessionInfo = event.properties["info"];
+  if (!isRecord(sessionInfo)) return;
 
-  const sessionID = info["id"];
+  const sessionID = sessionInfo["id"];
   if (typeof sessionID !== "string") return;
 
   sessionAgentMap.delete(sessionID);
@@ -291,18 +291,18 @@ function detectEmptyResponse(event: { type: string; properties?: unknown }): voi
   const props = event.properties;
   if (!isRecord(props)) return;
 
-  const info = props["info"];
-  if (!isRecord(info)) return;
+  const messageInfo = props["info"];
+  if (!isRecord(messageInfo)) return;
 
-  const role = info["role"];
+  const role = messageInfo["role"];
   if (role !== "assistant") return;
 
-  const time = info["time"];
+  const time = messageInfo["time"];
   if (!isRecord(time)) return;
   // Non-completed message updates omit the "completed" sentinel field.
   if (!("completed" in time)) return;
 
-  const tokens = info["tokens"];
+  const tokens = messageInfo["tokens"];
   if (!isRecord(tokens)) return;
 
   const output = tokens["output"];

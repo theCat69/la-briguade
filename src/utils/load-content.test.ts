@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { collectFiles } from "./content-merge.js";
 import { logger } from "./logger.js";
@@ -15,6 +15,11 @@ const mockCollectFiles = vi.mocked(collectFiles);
 const mockLoggerWarn = vi.mocked(logger.warn);
 
 describe("loadContentFiles", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
   it("should load parsed values keyed by stem", () => {
     mockCollectFiles.mockReturnValue(new Map([["coder", "/tmp/coder.md"]]));
 

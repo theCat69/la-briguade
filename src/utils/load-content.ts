@@ -19,7 +19,7 @@ export function loadContentFiles<T>(
       loaded.set(stem, parsed);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "unknown parse error";
-      const sanitizedReason = String(reason)
+      const sanitizedReason = reason
         .replace(/[^\x20-\x7E]/g, "?")
         .slice(0, 200);
       logger.warn(`skipping ${filePath}: ${sanitizedReason}`);
