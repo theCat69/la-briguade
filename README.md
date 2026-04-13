@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 17 skills, 12 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 18 skills, 12 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -50,6 +50,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | angular | Angular-specific coding guidelines — standalone components, OnPush, signals, reactive forms, and testing conventions |
 | java | Java-specific coding guidelines — records, sealed classes, Optional, virtual threads, and stream-based data handling |
 | quarkus | Quarkus-specific coding guidelines — reactive I/O, CDI scopes, repository pattern, config mapping, and testing strategy |
+| rust | Rust-specific coding guidelines — ownership, error handling, traits, async, testing, Cargo, and safety conventions |
 | frontend | Frontend verification workflow — HTML semantics, CSS architecture decisions, and browser-based verification |
 | playwright-cli | Automate browser interactions, test web pages, and work with Playwright tests |
 | git-commit | Git commit guidelines |

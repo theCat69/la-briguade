@@ -46,6 +46,7 @@ Before reviewing any code, unconditionally run all of the following steps:
    - `package.json` without Angular → load `typescript`
    - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
    - `pom.xml` or `build.gradle` without quarkus → load `java`
+   - `Cargo.toml` present → load `rust`
    - No recognizable manifest → warn caller and continue with `general-coding` only
 
 # Review Mode

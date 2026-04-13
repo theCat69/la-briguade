@@ -68,6 +68,7 @@ Before starting any workflow step, unconditionally run all of the following step
    - `package.json` without Angular → load `typescript`
    - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
    - `pom.xml` or `build.gradle` without quarkus → load `java`
+   - `Cargo.toml` present → load `rust`
    - No recognizable manifest → warn Orchestrator and continue with `general-coding` only
 
 # Critical Rules
@@ -171,6 +172,7 @@ Before ANY context need — local or external — follow this exact sequence. Sk
    - `package.json` without Angular → stack: `[typescript]`
    - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
    - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
+   - `Cargo.toml` present → stack: `[rust]`
    - No recognizable manifest → warn user, continue with `general-coding` only
    Load the corresponding stack skills (e.g. `Load skill \`angular\``, `Load skill \`typescript\``).
    Record the detected stack as `"stack": ["angular", "typescript"]` in the Context Snapshot.

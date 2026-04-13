@@ -55,6 +55,7 @@ Before writing any code, unconditionally run all of the following steps:
    - `package.json` without Angular → load `typescript`
    - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
    - `pom.xml` or `build.gradle` without quarkus → load `java`
+   - `Cargo.toml` present → load `rust`
    - No recognizable manifest → warn Orchestrator and continue with `general-coding` only
 8. Check for frontend project signals (run after stack detection — these load in addition to the stack skills):
    - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`, `solid-js`, `astro` → load `frontend` + `playwright-cli`
