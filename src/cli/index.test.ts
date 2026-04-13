@@ -317,6 +317,11 @@ describe("cli install/uninstall/doctor/update commands", () => {
     await runCliCommand("update");
 
     // Assert
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "npm",
+      ["install", "-g", "la-briguade@latest"],
+      expect.objectContaining({ shell: true, timeout: 120_000 }),
+    );
     expect(process.exitCode).toBeUndefined();
     expect(errorSpy).not.toHaveBeenCalled();
   });

@@ -360,13 +360,14 @@ program
   .description("Update la-briguade to the latest version globally")
   .action(() => {
     console.log("[la-briguade] Updating to latest version...");
-    const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-
     let result: ReturnType<typeof spawnSync>;
     try {
-      result = spawnSync(npmCmd, ["install", "-g", "la-briguade@latest"], {
+      result = spawnSync("npm", ["install", "-g", "la-briguade@latest"], {
         stdio: "inherit",
-        shell: false,
+        // shell:true is required on Windows — cmd.exe resolves npm.cmd automatically.
+        // Note: on Windows, timeout kills the shell process but not the npm child;
+        // the subprocess may continue orphaned if the timeout fires.
+        shell: true,
         timeout: 120_000,
       });
     } catch (err) {
