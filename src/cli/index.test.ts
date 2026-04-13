@@ -95,7 +95,6 @@ describe("cli install/uninstall/doctor/update commands", () => {
     process.exitCode = originalExitCode;
     process.cwd = originalCwd;
     vi.doUnmock("la-briguade");
-    vi.doUnmock("cache-ctrl");
     vi.resetAllMocks();
     vi.restoreAllMocks();
   });
@@ -244,7 +243,11 @@ describe("cli install/uninstall/doctor/update commands", () => {
   it("should report all checks passed in doctor happy path", async () => {
     // Arrange
     vi.doMock("la-briguade", () => ({}), { virtual: true });
-    vi.doMock("cache-ctrl", () => ({}), { virtual: true });
+    mockSpawnSync.mockReturnValueOnce({
+      status: 0,
+      signal: null,
+      error: undefined,
+    } as ReturnType<typeof spawnSync>);
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
     mockResolveUserConfig.mockReturnValue({ log_level: "info" });
     mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
@@ -286,6 +289,11 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
   it("should set exitCode when doctor reports failures", async () => {
     // Arrange
+    mockSpawnSync.mockReturnValueOnce({
+      status: 1,
+      signal: null,
+      error: undefined,
+    } as ReturnType<typeof spawnSync>);
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
     mockResolveUserConfig.mockReturnValue({});
     mockGetLogFilePath.mockReturnValue("not initialized");
