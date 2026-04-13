@@ -59,6 +59,7 @@ Before selecting mode or writing any code, unconditionally run all of the follow
    - `package.json` without Angular → load `typescript`
    - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
    - `pom.xml` or `build.gradle` without quarkus → load `java`
+   - `Cargo.toml` present → load `rust`
    - No recognizable manifest → warn the user and continue with `general-coding` only
 5. Check for frontend project signals (run after stack detection — these load in addition to the stack skills):
    - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`, `solid-js`, `astro` → load `frontend` + `playwright-cli`
@@ -103,6 +104,7 @@ If the request is vague (ambiguity signals: no constraints, no success criteria,
    - `package.json` without Angular → stack: `[typescript]`
    - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
    - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
+   - `Cargo.toml` present → stack: `[rust]`
    - No recognizable manifest → use `general-coding` only, warn user
    Load the corresponding stack skills. Also check for frontend signals (load in addition to stack skills):
    - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`, `solid-js`, `astro` → load `frontend` + `playwright-cli`

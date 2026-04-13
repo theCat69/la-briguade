@@ -67,6 +67,7 @@ Stack skills are loaded in Workflow step 3b after stack detection.
    - `package.json` without Angular → stack: `[typescript]`
    - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
    - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
+   - `Cargo.toml` present → stack: `[rust]`
    - No recognizable manifest → warn user, continue with `general-coding` only
    Load the corresponding stack skills. Pass detected stack to feature-designer and feature-reviewer in each call prompt (e.g. `Stack: [angular, typescript]`).
 4. Delegate feature breakdown and writing to feature-designer Agent.
