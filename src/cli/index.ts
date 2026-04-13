@@ -6,7 +6,6 @@ import {
   statSync,
   mkdirSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -14,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
-import { resolveUserConfig } from "../config/index.js";
+import { resolveOpencodeConfigDir, resolveUserConfig } from "../config/index.js";
 import { logger } from "../utils/logger.js";
 import { isRecord } from "../utils/type-guards.js";
 
@@ -35,11 +34,7 @@ interface ConfigFileResult {
 }
 
 function resolveGlobalConfigPath(): string {
-  const xdg = process.env["XDG_CONFIG_HOME"];
-  // Require an absolute XDG path to avoid path traversal via relative injection.
-  const configBase =
-    typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
-  return join(configBase, "opencode", "opencode.json");
+  return join(resolveOpencodeConfigDir(), "opencode.json");
 }
 
 /**
@@ -51,10 +46,11 @@ function findOrCreateConfigFile(): ConfigFileResult {
 
   try {
     mkdirSync(dirname(configPath), { recursive: true });
-  } catch {
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
     const message =
       `[la-briguade] Cannot create config directory: ${dirname(configPath)}. ` +
-      "Check permissions.";
+      `Check permissions. ${reason}`;
     throw new Error(message);
   }
 

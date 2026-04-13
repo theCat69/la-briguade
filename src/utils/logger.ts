@@ -2,7 +2,7 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export const LOG_LEVELS = ["off", "error", "warn", "info", "debug"] as const;
+const LOG_LEVELS = ["off", "error", "warn", "info", "debug"] as const;
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 

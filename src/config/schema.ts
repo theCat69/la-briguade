@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const LOG_LEVELS = ["off", "error", "warn", "info", "debug"] as const;
+
 /** Regex that rejects keys matching reserved prototype pollution names. */
 export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
 
@@ -101,7 +103,7 @@ export const LaBriguadeConfigSchema = z.object({
   /** Per-agent override map keyed by agent identifier (e.g. `"coder"`). */
   agents: z.record(z.string(), AgentOverrideSchema).optional(),
   /** Logger verbosity for file + console output. Default is resolved at runtime. */
-  log_level: z.enum(["off", "error", "warn", "info", "debug"]).optional(),
+  log_level: z.enum(LOG_LEVELS).optional(),
 });
 
 /** TypeScript type inferred from {@link AgentOverrideSchema}. */

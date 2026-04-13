@@ -24,7 +24,10 @@ export function resolveOpencodeConfigDir(): string {
     );
   }
 
-  return join(process.env["XDG_CONFIG_HOME"] ?? join(homedir(), ".config"), "opencode");
+  const xdg = process.env["XDG_CONFIG_HOME"];
+  const configBase =
+    typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
+  return join(configBase, "opencode");
 }
 
 /**
