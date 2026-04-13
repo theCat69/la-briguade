@@ -10,7 +10,7 @@ An [opencode](https://opencode.ai) plugin that provides a production-grade multi
 npx la-briguade install
 ```
 
-The `install` command adds `"la-briguade@latest"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`, respecting `$XDG_CONFIG_HOME` on Linux). If the file or its parent directories don't exist, they are created automatically.
+The `install` command adds `"la-briguade@latest"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`). If the file or its parent directories don't exist, they are created automatically.
 
 To remove the plugin:
 
@@ -175,7 +175,7 @@ Files in higher-priority layers override built-in files with the same stem name.
 
 **Skills additionally scan two native opencode paths** (lowest priority, scanned before the la_briguade layers above):
 
-- `~/.config/opencode/skills/` (respects `$XDG_CONFIG_HOME` on Linux; uses `%APPDATA%\opencode\skills` on Windows) — opencode global skills
+- `~/.config/opencode/skills/` — opencode global skills
 - `<project_root>/.opencode/skills/` — opencode project-level skills
 
 This means any skill already installed at the opencode level is automatically available to la-briguade agents without any extra configuration.

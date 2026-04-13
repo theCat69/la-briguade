@@ -5,7 +5,7 @@
 // Key points to imitate:
 //   1. Use jsonc-parser modify() + applyEdits() — never JSON.parse + string replace
 //   2. Use isArrayInsertion: true when appending to an existing array
-//   3. resolveGlobalConfigPath() uses XDG_CONFIG_HOME with fallback to ~/.config/opencode/opencode.json
+//   3. resolveGlobalConfigPath() uses homedir()/.config/opencode/opencode.json
 //   4. mkdirSync with { recursive: true } inside try-catch — set exitCode + throw on failure
 //   5. Report clearly: already installed / installed / created
 //   6. The modify() call path mirrors the JSONC key path: ["plugin", index]
@@ -34,12 +34,9 @@ interface ConfigFileResult {
   existed: boolean;
 }
 
-/** Resolve the global opencode config path, respecting XDG_CONFIG_HOME. */
+/** Resolve the global opencode config path. */
 function resolveGlobalConfigPath(): string {
-  const xdg = process.env["XDG_CONFIG_HOME"];
-  const configBase =
-    typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
-  return join(configBase, "opencode", "opencode.json");
+  return join(homedir(), ".config", "opencode", "opencode.json");
 }
 
 /**

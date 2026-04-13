@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join, win32 } from "node:path";
+import { join } from "node:path";
 
 import { loadConfig } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
@@ -15,19 +15,10 @@ export function resolveConfigBaseDirs(projectDir: string): {
   };
 }
 
+// Mirrors opencode's own resolution strategy: homedir()/.config/opencode.
+// No XDG_CONFIG_HOME or APPDATA — intentional; opencode does not use them.
 export function resolveOpencodeConfigDir(): string {
-  if (process.platform === "win32") {
-    // Use win32.join to construct Windows config paths even on non-Windows runtimes.
-    return win32.join(
-      process.env["APPDATA"] ?? win32.join(homedir(), "AppData", "Roaming"),
-      "opencode",
-    );
-  }
-
-  const xdg = process.env["XDG_CONFIG_HOME"];
-  const configBase =
-    typeof xdg === "string" && xdg.startsWith("/") ? xdg : join(homedir(), ".config");
-  return join(configBase, "opencode");
+  return join(homedir(), ".config", "opencode");
 }
 
 /**
