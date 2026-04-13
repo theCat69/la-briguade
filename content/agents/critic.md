@@ -51,19 +51,21 @@ Before challenging any plan, unconditionally run all of the following steps:
   before/after structure maps — this is `architect`'s domain.
 - Return ≤ 300 tokens.
 
+# Shared Challenge Angles
+- **Necessity**: Do we need this at all? Is there a simpler existing mechanism that
+  already handles this? Would removing this feature or component reduce overall
+  complexity without losing core value?
+- **Simplicity**: What is the absolute simplest version of this that still solves the
+  core problem? Name one specific thing that could be cut without harming the goal.
+- **Coupling**: Does this introduce hidden dependencies? Does it violate a boundary
+  that exists in the codebase? Will this change ripple into unrelated areas?
+
 ====== CLAUDE ======
 # Workflow
 1. Read the plan, spec, or design provided in the calling prompt.
 2. Apply the skills loaded in the Startup Sequence to ground each challenge in named
    principles and real project conventions.
-3. Challenge from 3 mandatory angles:
-   - **Necessity**: Do we need this at all? Is there a simpler existing mechanism that
-     already handles this? Would removing this feature or component reduce overall
-     complexity without losing core value?
-   - **Simplicity**: What is the absolute simplest version of this that still solves the
-     core problem? Name one specific thing that could be cut without harming the goal.
-   - **Coupling**: Does this introduce hidden dependencies? Does it violate a boundary
-     that exists in the codebase? Will this change ripple into unrelated areas?
+3. Challenge from the 3 mandatory angles in **Shared Challenge Angles**.
 4. For each challenge angle, propose 1 concrete alternative approach — not a full
    redesign, but a specific change or cut.
 5. Identify the single most dangerous assumption in the plan — the one whose failure
@@ -80,14 +82,7 @@ Use this sequence:
 2. If the challenge depends on project conventions, existing boundaries, or current
    architecture, gather enough project context first. Do not challenge from generic
    priors when repo context matters.
-3. Challenge from the 3 mandatory angles and keep them distinct:
-   - **Necessity**: Do we need this at all? Is there a simpler existing mechanism that
-     already handles this? Would removing this feature or component reduce overall
-     complexity without losing core value?
-   - **Simplicity**: What is the absolute simplest version of this that still solves the
-     core problem? Name one specific thing that could be cut without harming the goal.
-   - **Coupling**: Does this introduce hidden dependencies? Does it violate a boundary
-     that exists in the codebase? Will this change ripple into unrelated areas?
+3. Challenge from the 3 mandatory angles in **Shared Challenge Angles** and keep them distinct.
 4. Produce only evidence-backed challenges. Each challenge must name:
    - the decision being challenged
    - the specific principle being violated

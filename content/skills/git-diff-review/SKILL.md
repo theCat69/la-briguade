@@ -13,8 +13,6 @@ tags:
 
 # Git Diff Review Skill
 
-> **Purpose**: Determine what changed on the current branch vs. upstream, so the reviewing agent can focus on the actual modified files rather than the entire codebase.
-
 ---
 
 # Prerequisites

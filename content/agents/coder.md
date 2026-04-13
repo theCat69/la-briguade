@@ -44,10 +44,10 @@ Do not consider work done until the build and tests pass.
 
 # Startup Sequence (Always Execute First)
 Before writing any code, unconditionally run all of the following steps:
-1. Load skill `project-coding`. (If unavailable, warn Orchestrator and continue with industry best practices.)
-2. Load skill `general-coding`. (If unavailable, warn Orchestrator and continue with industry best practices.)
-3. Load skill `project-build`. (If unavailable, warn Orchestrator and continue with industry best practices.)
-4. Load skill `project-test`. (If unavailable, warn Orchestrator and continue with industry best practices.)
+1. Load skill `project-coding`.
+2. Load skill `general-coding`.
+3. Load skill `project-build`.
+4. Load skill `project-test`.
 5. Load skill `project-code-examples`. When loaded, read the relevant example files from `.code-examples-for-ai/` that apply to the task.
 6. Load skill `cache-ctrl-caller`. Use it to understand how to interact with `cache_ctrl_*` tools before calling context gatherer subagents.
 7. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) directly, or use the stack value from the Context Snapshot if explicitly provided. Load the corresponding skill(s) unconditionally:
