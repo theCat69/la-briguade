@@ -71,7 +71,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/interview` | Run a deep-interview requirements session with Socratic scored loop |
 | `/critic` | Challenge a plan, spec, or current work from first principles |
 | `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
-| `/go-back-to-work` | Resume work after a session failure — loads git log, git diff, git status, and the last context snapshot to restore working context |
+| `/go-back-to-work` | Resume work after a session failure — loads git state and last context snapshot, then automatically continues execution from where the session left off |
 | `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, and commits after each cycle |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
