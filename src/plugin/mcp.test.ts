@@ -144,7 +144,7 @@ describe("collectSkillMcps", () => {
 
   it("should resolve missing {env:VAR} token to empty string and warn", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/local-missing-env-command";
     mockReadFileSync.mockReturnValue(
       [
@@ -174,7 +174,7 @@ describe("collectSkillMcps", () => {
       ],
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] MCP server 'context7': env var(s) " +
+      "MCP server 'context7': env var(s) " +
         "'LA_BRIGUADE_TEST_MISSING_ENV' referenced in command is not set",
     );
   });
@@ -218,7 +218,7 @@ describe("collectSkillMcps", () => {
   it("should omit local MCP environment entry when referenced env var is missing", () => {
     // Arrange
     vi.stubEnv("LA_BRIGUADE_TEST_OPTIONAL_API_KEY", undefined);
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
     const skillDir = "/skills/local-missing-env-map";
     mockReadFileSync.mockReturnValue(
@@ -392,7 +392,7 @@ describe("collectSkillMcps", () => {
   it("should skip resolved command element with disallowed characters and warn", () => {
     // Arrange
     vi.stubEnv("TEST_BAD_ARG", "abc$def");
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/local-disallowed-resolved-command";
     mockReadFileSync.mockReturnValue(
       [
@@ -422,7 +422,7 @@ describe("collectSkillMcps", () => {
       ],
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] MCP server 'context7': resolved command element contains disallowed " +
+      "MCP server 'context7': resolved command element contains disallowed " +
         "characters after env substitution — element skipped",
     );
   });
@@ -430,7 +430,7 @@ describe("collectSkillMcps", () => {
   it("should blank resolved command element containing pipe character and warn", () => {
     // Arrange
     vi.stubEnv("TEST_PIPE_ARG", "safe|unsafe");
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/local-disallowed-pipe-command";
     mockReadFileSync.mockReturnValue(
       [
@@ -455,14 +455,14 @@ describe("collectSkillMcps", () => {
       },
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] MCP server 'context7': resolved command element contains disallowed " +
+      "MCP server 'context7': resolved command element contains disallowed " +
         "characters after env substitution — element skipped",
     );
   });
 
   it("should skip invalid MCP frontmatter entries and warn", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const invalidSkillDir = "/skills/invalid-skill";
     mockReadFileSync.mockReturnValue(
       [
@@ -483,13 +483,13 @@ describe("collectSkillMcps", () => {
     expect(mcpMap).toEqual({});
     expect(skillMcpIndex).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Invalid skill MCP frontmatter in:"),
+      expect.stringContaining("Invalid skill MCP frontmatter in:"),
     );
   });
 
   it("should keep first key on conflict and warn", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const firstSkillDir = "/skills/first-skill";
     const secondSkillDir = "/skills/second-skill";
     mockReadFileSync.mockImplementation((path) => {
@@ -529,9 +529,7 @@ describe("collectSkillMcps", () => {
     expect(skillMcpIndex).toEqual({
       "first-skill": [{ id: "playwright", permission: { "playwright_*": "allow" } }],
     });
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] skill MCP conflict:"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("skill MCP conflict:"));
   });
 
   it("should skip SKILL.md files without mcp field", () => {
@@ -557,7 +555,7 @@ describe("collectSkillMcps", () => {
 
   it("should skip missing SKILL.md file without warning", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockReadFileSync.mockImplementation(() => {
       const missingError = new Error("ENOENT");
       Object.assign(missingError, { code: "ENOENT" });
@@ -575,7 +573,7 @@ describe("collectSkillMcps", () => {
 
   it("should warn and continue when reading SKILL.md fails with non-ENOENT", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const unreadableSkillDir = "/skills/unreadable-skill";
     const validSkillDir = "/skills/valid-skill";
 
@@ -599,9 +597,7 @@ describe("collectSkillMcps", () => {
     const { mcpMap, skillMcpIndex } = collectSkillMcps([unreadableSkillDir, validSkillDir]);
 
     // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Could not read skill file:"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Could not read skill file:"));
     expect(mcpMap).toEqual({
       docs: {
         type: "remote",
@@ -953,7 +949,7 @@ describe("collectSkillBashPermissions", () => {
 
   it("should warn and skip skill with invalid permission frontmatter", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/invalid-permission";
     mockReadFileSync.mockReturnValue(
       [
@@ -970,13 +966,13 @@ describe("collectSkillBashPermissions", () => {
     // Assert
     expect(skillBashPermIndex).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[la-briguade] Invalid skill permission frontmatter in:"),
+      expect.stringContaining("Invalid skill permission frontmatter in:"),
     );
   });
 
   it("should skip missing SKILL.md file without warning", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockReadFileSync.mockImplementation(() => {
       const missingError = new Error("ENOENT");
       Object.assign(missingError, { code: "ENOENT" });
@@ -1084,7 +1080,7 @@ describe("collectSkillAgents", () => {
 
   it("should skip unsafe agent names from agents frontmatter", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/secure-skill";
     mockReadFileSync.mockReturnValue(
       [
@@ -1105,13 +1101,13 @@ describe("collectSkillAgents", () => {
       "secure-skill": ["agent-a"],
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[la-briguade] Invalid skill agent name "__proto__"'),
+      expect.stringContaining('Invalid skill agent name "__proto__"'),
     );
   });
 
   it("should skip agent names with control characters", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const skillDir = "/skills/log-safe-skill";
     mockReadFileSync.mockReturnValue(
       [
@@ -1138,7 +1134,7 @@ describe("collectSkillAgents", () => {
 
   it("should skip unsafe skill directory names", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
     // Act
     const skillAgentIndex = collectSkillAgents(["/skills/__proto__"]);
@@ -1147,7 +1143,7 @@ describe("collectSkillAgents", () => {
     expect(skillAgentIndex).toEqual({});
     expect(mockReadFileSync).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith(
-      '[la-briguade] Skill directory name "__proto__" is unsafe; skipping',
+      'Skill directory name "__proto__" is unsafe; skipping',
     );
   });
 });
@@ -1446,7 +1442,7 @@ describe("injectSkillAgentPermissions", () => {
 
   it("should skip unknown agent names and warn", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const config = createAgentPermissionConfig();
     const skillAgentIndex: SkillAgentIndex = {
       "my-skill": ["missing-agent"],
@@ -1460,7 +1456,7 @@ describe("injectSkillAgentPermissions", () => {
       "*": "deny",
     });
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[la-briguade] Could not inject skill permission: unknown agent "missing-agent"'),
+      expect.stringContaining('Could not inject skill permission: unknown agent "missing-agent"'),
     );
   });
 
@@ -1500,7 +1496,7 @@ describe("injectSkillAgentPermissions", () => {
 
   it("should warn and skip when permission is non-record", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const config = createConfig();
     const mutableConfig = config as Record<string, unknown>;
     mutableConfig["agent"] = {
@@ -1517,13 +1513,13 @@ describe("injectSkillAgentPermissions", () => {
     const agentMap = configRecord["agent"] as Record<string, unknown>;
     expect((agentMap["agent-a"] as Record<string, unknown>)["permission"]).toBe("allow");
     expect(warnSpy).toHaveBeenCalledWith(
-      '[la-briguade] Unexpected permission type for agent "agent-a"; skipping skill injection',
+      'Unexpected permission type for agent "agent-a"; skipping skill injection',
     );
   });
 
   it("should warn and skip when permission.skill is non-record", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const config = createConfig();
     const mutableConfig = config as Record<string, unknown>;
     mutableConfig["agent"] = {
@@ -1545,7 +1541,7 @@ describe("injectSkillAgentPermissions", () => {
     ] as Record<string, unknown>;
     expect(permission["skill"]).toBe("allow");
     expect(warnSpy).toHaveBeenCalledWith(
-      '[la-briguade] Unexpected permission type for agent "agent-a"; skipping skill injection',
+      'Unexpected permission type for agent "agent-a"; skipping skill injection',
     );
   });
 });

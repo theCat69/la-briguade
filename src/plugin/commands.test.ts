@@ -4,6 +4,7 @@ import { registerCommands } from "./commands.js";
 
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content-merge.js";
+import { logger } from "../utils/logger.js";
 import { readContentFile } from "../utils/read-content-file.js";
 
 vi.mock("../utils/content-merge.js");
@@ -56,7 +57,7 @@ describe("registerCommands", () => {
     mockReadContentFile.mockImplementation((filePath) => {
       throw new Error(`Could not read command file: ${filePath}`);
     });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
     const config = makeConfig();
 
@@ -64,9 +65,7 @@ describe("registerCommands", () => {
 
     expect(config.command).toEqual({});
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "[la-briguade] skipping /builtin/commands/critic.md: Could not read command file:",
-      ),
+      expect.stringContaining("skipping /builtin/commands/critic.md: Could not read command file:"),
     );
   });
 

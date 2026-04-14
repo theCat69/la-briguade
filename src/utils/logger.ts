@@ -6,8 +6,6 @@ export const LOG_LEVELS = ["off", "error", "warn", "info", "debug"] as const;
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-const LOGGER_PREFIX = "[la-briguade]";
-
 let currentLevel: LogLevel = "warn";
 let logFilePath: string | undefined;
 
@@ -45,19 +43,18 @@ function writeLogLine(level: Exclude<LogLevel, "off">, message: string): void {
   if (!isEnabledFor(level)) return;
   if (logFilePath === undefined) return;
 
-  const line = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}\n`;
-  appendFileSync(logFilePath, line, "utf-8");
+  const safeMessage = message.replace(/[\r\n]/g, " ");
+  const line = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${safeMessage}\n`;
+  appendFileSync(logFilePath, line, { encoding: "utf-8", mode: 0o600 });
 }
 
 function logWarn(message: string): void {
   if (!isEnabledFor("warn")) return;
-  console.warn(`${LOGGER_PREFIX} ${message}`);
   writeLogLine("warn", message);
 }
 
 function logError(message: string): void {
   if (!isEnabledFor("error")) return;
-  console.error(`${LOGGER_PREFIX} ${message}`);
   writeLogLine("error", message);
 }
 
@@ -86,8 +83,8 @@ export function initLogger(): void {
     mkdirSync(logDir, { recursive: true });
   } catch (error) {
     logFilePath = undefined;
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[la-briguade] Could not create log directory: ${message}`);
+    // Silent fallback: notifier/logger wiring is not ready yet during init.
+    // writeLogLine() guards undefined logFilePath, so logging remains safe.
     return;
   }
   const timestamp = toSessionTimestamp(new Date());

@@ -141,7 +141,7 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `variant` | `string` (max 100 chars) | Model variant name (e.g. `"high"` for high reasoning effort on GitHub Copilot Claude models). |
 | `permission` | `Record<string, string \| boolean \| number \| Record<string, string \| boolean \| number>>` | Permission overrides merged on top of agent defaults. Top-level values may be scalars or nested objects (e.g. `{ "bash": { "playwright-cli *": "allow" } }`) |
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
-| `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. Applies to both console output and the per-session log file. Default: `"warn"`. The log file is written to `~/.local/share/opencode/log/la-briguade-<timestamp>.log` (respects `$XDG_DATA_HOME`). |
+| `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. All output goes to the per-session log file only (`~/.local/share/opencode/log/la-briguade-<timestamp>.log`, respects `$XDG_DATA_HOME`). Default: `"warn"`. |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
 
