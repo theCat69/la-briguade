@@ -56,10 +56,10 @@ src/
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
     mcp/
       index.ts       ← barrel re-export
-      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() — reads mcp: and permission.bash from SKILL.md files
+      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() — reads mcp:, permission.bash, and agents: from SKILL.md files
       merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
-      permissions.ts ← injectSkillMcpPermissions() / injectSkillBashPermissions() — injects prefixed MCP and bash permissions into agents
-      types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, etc.)
+      permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
+      types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs

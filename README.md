@@ -248,6 +248,22 @@ Each MCP entry must specify a `type`:
 
 An optional `permission:` block on a local entry declares tool-level permissions for that MCP's tools. Values must be `"allow"`, `"ask"`, or `"deny"`. At startup, la-briguade automatically injects prefixed versions of these permissions into any agent that opts in to the skill (e.g. `"*": "allow"` becomes `"context7_*": "allow"` for the `context7` skill). Agents that already declare a matching key are not overridden.
 
+#### Skill-directed agent opt-in — `agents:`
+
+A `SKILL.md` can declare which agents should automatically receive `permission.skill["<skillName>"] = "allow"` at startup:
+
+```yaml
+---
+name: my-skill
+description: My skill description
+agents:
+  - coder
+  - reviewer
+---
+```
+
+When `agents:` is present, each listed agent automatically gets `permission.skill["my-skill"] = "allow"` before MCP and bash permission injection runs — so any MCP tools or bash patterns the skill declares will be injected into those agents as well. Agents that already have an explicit `permission.skill["my-skill"]` entry are not overridden (non-overwrite policy applies). Unknown agent names produce a warning and are skipped. This is intended for first-party project-specific skills; portable community skills should generally not hard-code agent names.
+
 #### Environment variable tokens
 
 Use `{env:VAR_NAME}` in `command` elements, `environment` values, and `headers` values to inject environment variables at plugin startup. If a variable is not set, la-briguade logs a warning and substitutes an empty string. For `command` elements, if the resolved value contains shell metacharacters (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$` — note: `/` and `\` are allowed for scoped packages), the element is replaced with an empty string and a warning is logged — this prevents command injection via compromised env vars.

@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  collectSkillAgents,
   collectSkillBashPermissions,
   collectSkillMcps,
+  injectSkillAgentPermissions,
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
@@ -12,7 +14,12 @@ import {
 
 import type { Config } from "../types/plugin.js";
 import { isRecord } from "../utils/type-guards.js";
-import type { SkillBashPermIndex, SkillMcpIndex, SkillMcpMap } from "./mcp/index.js";
+import type {
+  SkillAgentIndex,
+  SkillBashPermIndex,
+  SkillMcpIndex,
+  SkillMcpMap,
+} from "./mcp/index.js";
 
 vi.mock("node:fs");
 
@@ -985,6 +992,125 @@ describe("collectSkillBashPermissions", () => {
   });
 });
 
+describe("collectSkillAgents", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  it("should return empty index when no agents field is declared", () => {
+    // Arrange
+    const skillDir = "/skills/no-agents";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "name: no-agents",
+        "description: no agents field",
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillAgentIndex = collectSkillAgents([skillDir]);
+
+    // Assert
+    expect(skillAgentIndex).toEqual({});
+  });
+
+  it("should return skill agent index from agents frontmatter", () => {
+    // Arrange
+    const skillDir = "/skills/my-skill";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "agents:",
+        '  - "agent-a"',
+        '  - "agent-b"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillAgentIndex = collectSkillAgents([skillDir]);
+
+    // Assert
+    expect(skillAgentIndex).toEqual({
+      "my-skill": ["agent-a", "agent-b"],
+    });
+  });
+
+  it("should skip unsafe agent names from agents frontmatter", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/secure-skill";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "agents:",
+        '  - "agent-a"',
+        '  - "__proto__"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillAgentIndex = collectSkillAgents([skillDir]);
+
+    // Assert
+    expect(skillAgentIndex).toEqual({
+      "secure-skill": ["agent-a"],
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[la-briguade] Invalid skill agent name "__proto__"'),
+    );
+  });
+
+  it("should skip agent names with control characters", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/log-safe-skill";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "agents:",
+        '  - "agent-a"',
+        '  - "agent-a\\nINFO: fake-log"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const skillAgentIndex = collectSkillAgents([skillDir]);
+
+    // Assert
+    expect(skillAgentIndex).toEqual({
+      "log-safe-skill": ["agent-a"],
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("contains control characters; skipping"),
+    );
+  });
+
+  it("should skip unsafe skill directory names", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // Act
+    const skillAgentIndex = collectSkillAgents(["/skills/__proto__"]);
+
+    // Assert
+    expect(skillAgentIndex).toEqual({});
+    expect(mockReadFileSync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[la-briguade] Skill directory name "__proto__" is unsafe; skipping',
+    );
+  });
+});
+
 describe("injectSkillBashPermissions", () => {
   it("should inject bash permission section when skill is 'allow'", () => {
     // Arrange
@@ -1196,6 +1322,190 @@ describe("injectSkillBashPermissions", () => {
       skill: { "playwright-cli": "allow" },
       bash: { "playwright-cli *": "allow" },
     });
+  });
+});
+
+describe("injectSkillAgentPermissions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  function createAgentPermissionConfig(): Config {
+    const config = createConfig();
+    const mutableConfig = config as Record<string, unknown>;
+    mutableConfig["agent"] = {
+      "agent-a": {
+        permission: {
+          skill: {
+            "*": "deny",
+          },
+        },
+      },
+      "agent-b": {
+        permission: {
+          skill: {
+            "existing-skill": "ask",
+          },
+        },
+      },
+      "agent-c": {},
+    };
+    return config;
+  }
+
+  function getAgentSkillPermission(
+    config: Config,
+    agentName: string,
+  ): Record<string, unknown> | undefined {
+    const configRecord = config as Record<string, unknown>;
+    const agents = configRecord["agent"] as Record<string, unknown> | undefined;
+    const agent = agents?.[agentName] as Record<string, unknown> | undefined;
+    const permission = agent?.["permission"];
+    if (!isRecord(permission)) {
+      return undefined;
+    }
+
+    const skill = permission["skill"];
+    return isRecord(skill) ? skill : undefined;
+  }
+
+  it("should add skill allow to targeted agent permission.skill", () => {
+    // Arrange
+    const config = createAgentPermissionConfig();
+    const skillAgentIndex: SkillAgentIndex = {
+      "my-skill": ["agent-a"],
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, skillAgentIndex);
+
+    // Assert
+    expect(getAgentSkillPermission(config, "agent-a")).toEqual({
+      "*": "deny",
+      "my-skill": "allow",
+    });
+  });
+
+  it("should NOT overwrite existing permission.skill entries", () => {
+    // Arrange
+    const config = createAgentPermissionConfig();
+    const skillAgentIndex: SkillAgentIndex = {
+      "existing-skill": ["agent-b"],
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, skillAgentIndex);
+
+    // Assert
+    expect(getAgentSkillPermission(config, "agent-b")).toEqual({
+      "existing-skill": "ask",
+    });
+  });
+
+  it("should skip unknown agent names and warn", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const config = createAgentPermissionConfig();
+    const skillAgentIndex: SkillAgentIndex = {
+      "my-skill": ["missing-agent"],
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, skillAgentIndex);
+
+    // Assert
+    expect(getAgentSkillPermission(config, "agent-a")).toEqual({
+      "*": "deny",
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[la-briguade] Could not inject skill permission: unknown agent "missing-agent"'),
+    );
+  });
+
+  it("should be a no-op when skill is not in the index", () => {
+    // Arrange
+    const config = createAgentPermissionConfig();
+
+    // Act
+    injectSkillAgentPermissions(config, {});
+
+    // Assert
+    expect(getAgentSkillPermission(config, "agent-a")).toEqual({
+      "*": "deny",
+    });
+    expect(getAgentSkillPermission(config, "agent-b")).toEqual({
+      "existing-skill": "ask",
+    });
+  });
+
+  it("should lazily create permission.skill for bare agent config", () => {
+    // Arrange
+    const config = createConfig();
+    const mutableConfig = config as Record<string, unknown>;
+    mutableConfig["agent"] = { "agent-bare": {} };
+    const skillAgentIndex: SkillAgentIndex = {
+      "new-skill": ["agent-bare"],
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, skillAgentIndex);
+
+    // Assert
+    expect(getAgentSkillPermission(config, "agent-bare")).toEqual({
+      "new-skill": "allow",
+    });
+  });
+
+  it("should warn and skip when permission is non-record", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const config = createConfig();
+    const mutableConfig = config as Record<string, unknown>;
+    mutableConfig["agent"] = {
+      "agent-a": {
+        permission: "allow",
+      },
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, { "my-skill": ["agent-a"] });
+
+    // Assert
+    const configRecord = config as Record<string, unknown>;
+    const agentMap = configRecord["agent"] as Record<string, unknown>;
+    expect((agentMap["agent-a"] as Record<string, unknown>)["permission"]).toBe("allow");
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[la-briguade] Unexpected permission type for agent "agent-a"; skipping skill injection',
+    );
+  });
+
+  it("should warn and skip when permission.skill is non-record", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const config = createConfig();
+    const mutableConfig = config as Record<string, unknown>;
+    mutableConfig["agent"] = {
+      "agent-a": {
+        permission: {
+          skill: "allow",
+        },
+      },
+    };
+
+    // Act
+    injectSkillAgentPermissions(config, { "my-skill": ["agent-a"] });
+
+    // Assert
+    const configRecord = config as Record<string, unknown>;
+    const agentMap = configRecord["agent"] as Record<string, unknown>;
+    const permission = (agentMap["agent-a"] as Record<string, unknown>)[
+      "permission"
+    ] as Record<string, unknown>;
+    expect(permission["skill"]).toBe("allow");
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[la-briguade] Unexpected permission type for agent "agent-a"; skipping skill injection',
+    );
   });
 });
 

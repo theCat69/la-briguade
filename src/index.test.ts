@@ -7,8 +7,10 @@ import { createHooks } from "./hooks/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerCommands } from "./plugin/commands.js";
 import {
+  collectSkillAgents,
   collectSkillBashPermissions,
   collectSkillMcps,
+  injectSkillAgentPermissions,
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
@@ -45,8 +47,10 @@ vi.mock("./plugin/vendors.js", () => ({
 }));
 
 vi.mock("./plugin/mcp/index.js", () => ({
+  collectSkillAgents: vi.fn(),
   collectSkillBashPermissions: vi.fn(),
   collectSkillMcps: vi.fn(),
+  injectSkillAgentPermissions: vi.fn(),
   injectSkillBashPermissions: vi.fn(),
   injectSkillMcpPermissions: vi.fn(),
   mergeSkillMcps: vi.fn(),
@@ -67,8 +71,10 @@ const mockRegisterAgents = vi.mocked(registerAgents);
 const mockRegisterCommands = vi.mocked(registerCommands);
 const mockRegisterSkills = vi.mocked(registerSkills);
 const mockLoadVendorPrompts = vi.mocked(loadVendorPrompts);
+const mockCollectSkillAgents = vi.mocked(collectSkillAgents);
 const mockCollectSkillBashPermissions = vi.mocked(collectSkillBashPermissions);
 const mockCollectSkillMcps = vi.mocked(collectSkillMcps);
+const mockInjectSkillAgentPermissions = vi.mocked(injectSkillAgentPermissions);
 const mockInjectSkillBashPermissions = vi.mocked(injectSkillBashPermissions);
 const mockInjectSkillMcpPermissions = vi.mocked(injectSkillMcpPermissions);
 const mockMergeSkillMcps = vi.mocked(mergeSkillMcps);
@@ -94,6 +100,7 @@ describe("LaBriguadePlugin", () => {
       agentSkillPerms: new Map(),
     });
     mockRegisterSkills.mockReturnValue({ dirs: [] });
+    mockCollectSkillAgents.mockReturnValue({});
     mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
     mockCollectSkillBashPermissions.mockReturnValue({});
 
@@ -124,6 +131,7 @@ describe("LaBriguadePlugin", () => {
       agentSkillPerms: new Map([["coder", sharedPerms]]),
     });
     mockRegisterSkills.mockReturnValue({ dirs: ["/skills/typescript"] });
+    mockCollectSkillAgents.mockReturnValue({ typescript: ["coder"] });
     mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} }, skillMcpIndex: { coder: [] } });
     mockCollectSkillBashPermissions.mockReturnValue({ coder: { "npm *": "allow" } });
 
@@ -145,6 +153,10 @@ describe("LaBriguadePlugin", () => {
     expect(mockRegisterAgents).toHaveBeenCalledOnce();
     expect(mockRegisterCommands).toHaveBeenCalledOnce();
     expect(mockRegisterSkills).toHaveBeenCalledOnce();
+    expect(mockCollectSkillAgents).toHaveBeenCalledWith(["/skills/typescript"]);
+    expect(mockInjectSkillAgentPermissions).toHaveBeenCalledWith(input, {
+      typescript: ["coder"],
+    });
     expect(mockCollectSkillMcps).toHaveBeenCalledWith(["/skills/typescript"]);
     expect(mockMergeSkillMcps).toHaveBeenCalledWith(input, { context7: {} });
     expect(mockInjectSkillMcpPermissions).toHaveBeenCalledWith(input, { coder: [] });
@@ -167,6 +179,7 @@ describe("LaBriguadePlugin", () => {
       agentSkillPerms: new Map(),
     });
     mockRegisterSkills.mockReturnValue({ dirs: [] });
+    mockCollectSkillAgents.mockReturnValue({});
     mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
     mockCollectSkillBashPermissions.mockReturnValue({});
 

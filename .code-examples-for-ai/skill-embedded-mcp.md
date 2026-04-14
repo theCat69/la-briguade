@@ -43,6 +43,23 @@ mcp:
 // Agents that allow a skill via permission.skill["<skill>"] or wildcard
 // permission.skill["*"] automatically receive missing prefixed tool permissions.
 
+## Skill-directed agent opt-in — `agents`
+
+// SKILL.md can optionally declare agent names that should auto-receive
+// permission.skill["<skillName>"] = "allow" before MCP/bash injection.
+// NOTE: this intentionally couples a skill to project-specific agent names,
+// so use it for first-party project skills, not portable community skills.
+
+---
+agents:
+  - my-agent
+---
+
+// Example effect for skill dir name "my-skill":
+// before: permission.skill = { "*": "deny" }
+// after:  permission.skill = { "*": "deny", "my-skill": "allow" }
+// Then MCP and permission.bash entries for "my-skill" can be injected.
+
 ## {env:VAR_NAME} token resolution
 
 // resolveEnvTokens() is applied to: command elements, environment record values, header values.

@@ -96,8 +96,18 @@ const SkillBashPermissionSchema = z
 export const SkillPermissionFrontmatterSchema = z
   .object({ bash: SkillBashPermissionSchema.optional() });
 
+export const SkillAgentsSchema = z
+  .array(
+    z.string().refine((value) => isSafePermissionSubKey(value), {
+      message: "agent name must not be empty or a reserved prototype keyword",
+    }),
+  )
+  .max(50)
+  .optional();
+
 export type SkillMcpEntry = z.infer<typeof SkillMcpEntrySchema>;
 export type SkillMcpMap = Record<string, McpLocalConfig | McpRemoteConfig>;
 export type SkillMcpBinding = { id: string; permission: Record<string, string> };
 export type SkillMcpIndex = Record<string, SkillMcpBinding[]>;
 export type SkillBashPermIndex = Record<string, Record<string, string>>;
+export type SkillAgentIndex = Record<string, string[]>;

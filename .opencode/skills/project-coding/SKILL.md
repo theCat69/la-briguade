@@ -111,6 +111,16 @@ SKILL.md files can also declare bash command permissions under `permission.bash`
 
 Keys in `permission.bash` may contain spaces and glob patterns (e.g. `"playwright-cli *": "allow"`). They are validated with `isSafePermissionSubKey` (blocks prototype pollution names, allows all other characters).
 
+### Skill-Directed Agent Opt-In — `agents:`
+
+SKILL.md files can declare which agents should automatically receive `permission.skill["<skillName>"] = "allow"` at startup. This runs before MCP and bash permission injection, so any MCP tools or bash patterns the skill declares are subsequently injected into those agents as well.
+
+`collectSkillAgents(skillDirs)` reads the optional `agents:` string array from each SKILL.md and returns a `SkillAgentIndex` (`Record<skillName, string[]>`). `injectSkillAgentPermissions(input, skillAgentIndex)` iterates the index and writes the skill's name into each listed agent's `permission.skill` block — without overwriting an existing entry (non-overwrite policy). Unknown agent names (not present in `input.agent`) produce a `logger.warn`. Agent names are validated with `isSafePermissionSubKey` plus a control-character check to guard against log injection.
+
+**Call order in `config()` callback**: `collectSkillAgents` → `injectSkillAgentPermissions` → `collectSkillMcps` → `mergeSkillMcps` → `injectSkillMcpPermissions` → `collectSkillBashPermissions` → `injectSkillBashPermissions`. The agent opt-in step must come first so that agents are already opted-in when MCP/bash injection checks `permission.skill`.
+
+**Design note**: this couples a skill to project-specific agent names; it is intended for first-party project skills, not portable community skills.
+
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.
 
