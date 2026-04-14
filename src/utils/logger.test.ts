@@ -39,7 +39,7 @@ describe("logger", () => {
     expect(mockAppendFileSync).not.toHaveBeenCalled();
   });
 
-  it("should warn to console and file at default warn level", () => {
+  it("should write warn to file without console output at default warn level", () => {
     // Arrange
     initLogger();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -48,7 +48,7 @@ describe("logger", () => {
     logger.warn("something happened");
 
     // Assert
-    expect(warnSpy).toHaveBeenCalledWith("[la-briguade] something happened");
+    expect(warnSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).toHaveBeenCalledOnce();
     const [pathArg, lineArg] = mockAppendFileSync.mock.calls[0]!;
     expect(String(pathArg)).toContain("/opencode/log/la-briguade-");
@@ -68,7 +68,7 @@ describe("logger", () => {
     expect(mockAppendFileSync).not.toHaveBeenCalled();
   });
 
-  it("should call console.error when level is warn and logger.error is called", () => {
+  it("should write error to file without console output at warn level", () => {
     // Arrange
     initLogger();
     logger.setLevel("warn");
@@ -78,7 +78,8 @@ describe("logger", () => {
     logger.error("error at warn level");
 
     // Assert
-    expect(errorSpy).toHaveBeenCalledWith("[la-briguade] error at warn level");
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(mockAppendFileSync).toHaveBeenCalledOnce();
   });
 
   it("should write debug to file at debug level", () => {
@@ -95,7 +96,7 @@ describe("logger", () => {
     expect(String(lineArg)).toContain("[DEBUG] trace line");
   });
 
-  it("should error to console and file at error level", () => {
+  it("should write error to file without console output at error level", () => {
     // Arrange
     initLogger();
     logger.setLevel("error");
@@ -105,7 +106,7 @@ describe("logger", () => {
     logger.error("fatal event");
 
     // Assert
-    expect(errorSpy).toHaveBeenCalledWith("[la-briguade] fatal event");
+    expect(errorSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).toHaveBeenCalledOnce();
   });
 
@@ -149,7 +150,7 @@ describe("logger", () => {
     expect(logger.getLogFilePath()).toContain("/.local/share/opencode/log/");
   });
 
-  it("should clear logFilePath and warn when mkdirSync throws", () => {
+  it("should clear logFilePath silently when mkdirSync throws", () => {
     // Arrange
     mockMkdirSync.mockImplementationOnce(() => {
       throw new Error("disk full");
@@ -161,9 +162,7 @@ describe("logger", () => {
 
     // Assert
     expect(logger.getLogFilePath()).toBeUndefined();
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[la-briguade] Could not create log directory: disk full",
-    );
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it("should use XDG_DATA_HOME when available", () => {

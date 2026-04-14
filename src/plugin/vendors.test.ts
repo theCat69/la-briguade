@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 
 import { loadVendorPrompts } from "./vendors.js";
 import { collectFiles } from "../utils/content-merge.js";
+import { logger } from "../utils/logger.js";
 
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockCollectFiles = vi.mocked(collectFiles);
@@ -71,7 +72,7 @@ describe("loadVendorPrompts", () => {
 
   it("should warn and skip file when readFileSync throws", () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(new Map([["gpt", "/content/vendor-prompts/gpt.md"]]));
     mockReadFileSync.mockImplementation(() => {
       throw new Error("EACCES");

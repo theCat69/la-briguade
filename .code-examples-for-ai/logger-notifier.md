@@ -5,7 +5,7 @@
 // Demonstrates:
 //   1. Two-phase logger initialization: init early, setLevel after config resolves
 //   2. Session log path at XDG_DATA_HOME (or ~/.local/share) with timestamped filename
-//   3. Level-gated console behavior (warn/error to console + file, info/debug file only)
+//   3. All log levels write to file only — no console output
 //   4. UI toast notifier that safely uses undocumented ctx.client?.tui?.showToast
 //   5. Guaranteed fallback to logger for non-UI contexts
 
@@ -27,8 +27,7 @@ export const logger = {
   },
   warn(message: string): void {
     if (level === "off") return;
-    console.warn(`[la-briguade] ${message}`);
-    // appendFileSync(logFilePath, `[ISO] [WARN] ${message}\n`)
+    appendFileSync(logFilePath, `[ISO] [WARN] ${message}\n`);
   },
 };
 

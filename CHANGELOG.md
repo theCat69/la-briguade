@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retain the original warn-and-substitute behaviour.
 - **Issue #10**: `la-briguade doctor` cache-ctrl availability check no longer requires `exit 0`,
   fixing a false-positive failure for tools that exit non-zero for `--version` (such as Bun-based CLIs).
+- **Issue #12**: Logger no longer writes to `console.warn`/`console.error` — all output goes to the per-session log file only. Log lines are newline-sanitized and the log file is created with mode `0o600`.
