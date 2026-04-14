@@ -13,6 +13,7 @@ import {
 } from "./mcp/index.js";
 
 import type { Config } from "../types/plugin.js";
+import { logger } from "../utils/logger.js";
 import { isRecord } from "../utils/type-guards.js";
 import type {
   SkillAgentIndex,
@@ -212,6 +213,46 @@ describe("collectSkillMcps", () => {
     expect(skillMcpIndex).toEqual({
       "local-env-map": [{ id: "playwright", permission: { "playwright_*": "allow" } }],
     });
+  });
+
+  it("should omit local MCP environment entry when referenced env var is missing", () => {
+    // Arrange
+    vi.stubEnv("LA_BRIGUADE_TEST_OPTIONAL_API_KEY", undefined);
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
+    const skillDir = "/skills/local-missing-env-map";
+    mockReadFileSync.mockReturnValue(
+      [
+        "---",
+        "mcp:",
+        "  playwright:",
+        "    type: local",
+        '    command: ["npx", "-y", "playwright-mcp-latest"]',
+        "    environment:",
+        '      OPTIONAL_API_KEY: "{env:LA_BRIGUADE_TEST_OPTIONAL_API_KEY}"',
+        "---",
+        "Body",
+      ].join("\n"),
+    );
+
+    // Act
+    const { mcpMap, skillMcpIndex } = collectSkillMcps([skillDir]);
+
+    // Assert
+    expect(mcpMap).toEqual({
+      playwright: {
+        type: "local",
+        command: ["npx", "-y", "playwright-mcp-latest"],
+      },
+    });
+    expect(skillMcpIndex).toEqual({
+      "local-missing-env-map": [{ id: "playwright", permission: { "playwright_*": "allow" } }],
+    });
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(debugSpy).toHaveBeenCalledWith(
+      "MCP server 'playwright': env var(s) 'LA_BRIGUADE_TEST_OPTIONAL_API_KEY' referenced in " +
+        "environment is not set",
+    );
   });
 
   it("should resolve {env:VAR} tokens in remote MCP header values", () => {

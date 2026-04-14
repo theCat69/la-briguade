@@ -19,7 +19,7 @@ mcp:
       "*": allow
       "resolve-library-id": allow
     # {env:CONTEXT7_API_KEY} is resolved from process.env at startup.
-    # If the variable is unset, la-briguade warns and passes an empty string.
+    # Unset in command/header values → "" + warn; in environment values → key omitted (debug log only).
     command: ["npx", "-y", "@upstash/context7-mcp@2.1.7", "--api-key", "{env:CONTEXT7_API_KEY}"]
 
   docs:
@@ -65,7 +65,8 @@ agents:
 // resolveEnvTokens() is applied to: command elements, environment record values, header values.
 // Behaviour:
 //   - Trims the var name before lookup (e.g. {env: FOO } → process.env["FOO"]).
-//   - Unset variable → empty string + console.warn.
+//   - Unset variable in environment value → entry omitted + debug log.
+//   - Unset variable in command/header value → empty string + console.warn.
 //   - After substitution in a command element, if the resolved value contains
      //     disallowed shell metacharacters (; | & ` < > ! $) the element is
 //     replaced with "" and a warning is emitted. This prevents command injection

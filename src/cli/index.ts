@@ -325,7 +325,7 @@ program
     let cacheCtrlOk = false;
     try {
       const result = spawnSync("cache-ctrl", ["--version"], { stdio: "pipe" });
-      cacheCtrlOk = result.error == null && result.status === 0;
+      cacheCtrlOk = result.error == null;
     } catch {
       // spawnSync itself never throws; catch guards unexpected runtime failures.
       cacheCtrlOk = false;
@@ -336,7 +336,7 @@ program
       ok: cacheCtrlOk,
       detail: cacheCtrlOk
         ? "cache-ctrl CLI available"
-        : "cache-ctrl unavailable (not in PATH or exited non-zero)",
+        : "cache-ctrl not found in PATH or failed to spawn",
     });
 
     // Print summary table

@@ -44,7 +44,8 @@ All YAML frontmatter from `.md` files is **untrusted input**:
 
 Skill frontmatter supports `{env:VAR_NAME}` tokens in MCP `command` elements, `environment` values, and `headers` values. The `resolveEnvTokens()` helper in `src/plugin/mcp/collect.ts` enforces the following security constraints:
 
-- **Unset variable** → resolves to `""` and emits `console.warn`. Never throws — avoids startup failures from missing optional keys.
+- **Unset variable in `environment` value** → entry is omitted and `logger.debug` is emitted. Never throws — avoids startup failures from missing optional keys.
+- **Unset variable in `command`/`headers` value** → resolves to `""` and emits `logger.warn`. Never throws — avoids startup failures from missing optional keys.
 - **Post-substitution command validation** — after substituting the env value into a command element, the resolved string is checked against `DISALLOWED_COMMAND_CHARS` (`/[;|&$\`<>!]/`). Note: `/` and `\` are **not** disallowed (needed for npm scoped packages like `@scope/pkg`). If it matches, the element is replaced with `""` and a warning is logged. This prevents command injection via a compromised or maliciously-set environment variable.
 - **Never put secrets in `.md` content files** — always use `{env:VAR}` references. Content files in `content/skills/` are committed to source control.
 - **Var name trimming** — the var name is `.trim()`-ed before lookup (e.g. `{env: FOO }` looks up `process.env["FOO"]`). Do not rely on whitespace tolerance in names.

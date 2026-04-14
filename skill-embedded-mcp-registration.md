@@ -53,7 +53,8 @@ Agents that already have a matching permission key are never overridden.
 
 Use `{env:VAR_NAME}` in `command` elements, `environment` values, and `headers` values to inject environment variables at startup. Behaviour:
 
-- Unset variable → empty string + `logger.warn`.
+- Unset variable in `environment` value → entry omitted + `logger.debug`.
+- Unset variable in `command`/`headers` value → empty string + `logger.warn`.
 - Resolved `command` element that contains shell metacharacters (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$`) → replaced with `""` + `logger.warn`. This prevents command injection via a compromised env var. `/` and `\` are **allowed** (needed for scoped packages like `@scope/pkg`).
 
 ## Bash Permissions — `permission.bash`
