@@ -1,10 +1,14 @@
 import type { Config } from "../../types/plugin.js";
+import { logger } from "../../utils/logger.js";
 import { isRecord } from "../../utils/type-guards.js";
 
 import {
+  type SkillAgentIndex,
   type SkillBashPermIndex,
   type SkillMcpIndex,
 } from "./types.js";
+
+export type AgentConfig = Pick<Config, "agent">;
 
 function resolveSkillPermission(
   rawSkillPerms: Record<string, unknown>,
@@ -28,7 +32,7 @@ function resolveSkillPermission(
 }
 
 function forEachAgentWithSkillPermission(
-  input: Config,
+  input: AgentConfig,
   callback: (
     rawPermission: Record<string, unknown>,
     rawSkillPerms: Record<string, unknown>,
@@ -60,7 +64,7 @@ function forEachAgentWithSkillPermission(
 }
 
 export function injectSkillBashPermissions(
-  input: Config,
+  input: AgentConfig,
   skillBashPermIndex: SkillBashPermIndex,
 ): void {
   forEachAgentWithSkillPermission(input, (rawPermission, rawSkillPerms) => {
@@ -94,7 +98,10 @@ export function injectSkillBashPermissions(
   });
 }
 
-export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcpIndex): void {
+export function injectSkillMcpPermissions(
+  input: AgentConfig,
+  skillMcpIndex: SkillMcpIndex,
+): void {
   forEachAgentWithSkillPermission(input, (rawPermission, rawSkillPerms) => {
     for (const [skillName, bindings] of Object.entries(skillMcpIndex)) {
       if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
@@ -113,4 +120,63 @@ export function injectSkillMcpPermissions(input: Config, skillMcpIndex: SkillMcp
       }
     }
   });
+}
+
+export function injectSkillAgentPermissions(
+  input: AgentConfig,
+  skillAgentIndex: SkillAgentIndex,
+): void {
+  if (!isRecord(input.agent)) {
+    return;
+  }
+
+  for (const [skillName, agentNames] of Object.entries(skillAgentIndex)) {
+    for (const agentName of agentNames) {
+      const agentConfig = input.agent[agentName];
+      if (!isRecord(agentConfig)) {
+        logger.warn(
+          `Could not inject skill permission: unknown agent "${agentName}" for skill "${skillName}"`,
+        );
+        continue;
+      }
+
+      const existingPermission = agentConfig["permission"];
+      if (existingPermission !== undefined && existingPermission !== null && !isRecord(existingPermission)) {
+        logger.warn(
+          `Unexpected permission type for agent "${agentName}"; ` +
+            "skipping skill injection",
+        );
+        continue;
+      }
+
+      let permissionSection: Record<string, unknown> | undefined = isRecord(existingPermission)
+        ? existingPermission
+        : undefined;
+      if (permissionSection === undefined) {
+        permissionSection = {};
+        agentConfig["permission"] = permissionSection;
+      }
+
+      const existingSkill = permissionSection["skill"];
+      if (existingSkill !== undefined && existingSkill !== null && !isRecord(existingSkill)) {
+        logger.warn(
+          `Unexpected permission type for agent "${agentName}"; ` +
+            "skipping skill injection",
+        );
+        continue;
+      }
+
+      let skillSection: Record<string, unknown> | undefined = isRecord(existingSkill)
+        ? existingSkill
+        : undefined;
+      if (skillSection === undefined) {
+        skillSection = {};
+        permissionSection["skill"] = skillSection;
+      }
+
+      if (skillSection[skillName] === undefined) {
+        skillSection[skillName] = "allow";
+      }
+    }
+  }
 }

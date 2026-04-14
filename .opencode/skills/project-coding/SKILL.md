@@ -96,7 +96,8 @@ Hooks are registered via `createHooks(ctx)` returning `Partial<HooksResult>`. Th
 Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. At startup, `collectSkillMcps()` reads all skill dirs, validates the frontmatter with `SkillMcpMapSchema`, and converts each entry via `toSdkMcpEntry()`.
 
 **`{env:VAR_NAME}` tokens** are supported in `command` elements, `environment` values, and `headers` values. They are resolved via `resolveEnvTokens()` at startup:
-- Unset var → `""` + `logger.warn`
+- Unset var in `environment` value → entry omitted + `logger.debug`
+- Unset var in `command`/`headers` value → `""` + `logger.warn`
 - Resolved command element containing `DISALLOWED_COMMAND_CHARS` (`;`, `|`, `&`, `` ` ``, `<`, `>`, `!`, `$`) → `""` + `logger.warn` (injection guard). `/` and `\` are **allowed** (needed for scoped packages like `@scope/pkg`).
 
 `collectSkillMcps()` returns `{ mcpMap, skillMcpIndex }`. The `skillMcpIndex` maps each skill dir basename to its prefixed tool permission map. A skill entry with no `permission:` block defaults to `{ "<id>_*": "allow" }`; a custom `permission:` block pre-prefixes each key (e.g. `"resolve-library-id"` → `"<id>_resolve-library-id"`). `injectSkillMcpPermissions(input, skillMcpIndex)` is called from the `config()` callback and adds missing prefixed entries to agents that opt in to a skill — without overwriting any key the agent already declares.
@@ -110,6 +111,16 @@ SKILL.md files can also declare bash command permissions under `permission.bash`
 `collectSkillBashPermissions(skillDirs)` reads `permission.bash` from each SKILL.md and returns a `SkillBashPermIndex` (`Record<skillName, Record<string, string>>`). `injectSkillBashPermissions(input, skillBashPermIndex)` injects missing patterns into `agent.permission.bash` for agents that opt into the skill via `permission.skill`. Injection rules mirror MCP: deny in skill permission → skip; deny value in bash block → skip; existing agent pattern → not overwritten; `permission.bash` is lazily initialised (only created when a non-deny pattern is injected).
 
 Keys in `permission.bash` may contain spaces and glob patterns (e.g. `"playwright-cli *": "allow"`). They are validated with `isSafePermissionSubKey` (blocks prototype pollution names, allows all other characters).
+
+### Skill-Directed Agent Opt-In — `agents:`
+
+SKILL.md files can declare which agents should automatically receive `permission.skill["<skillName>"] = "allow"` at startup. This runs before MCP and bash permission injection, so any MCP tools or bash patterns the skill declares are subsequently injected into those agents as well.
+
+`collectSkillAgents(skillDirs)` reads the optional `agents:` string array from each SKILL.md and returns a `SkillAgentIndex` (`Record<skillName, string[]>`). `injectSkillAgentPermissions(input, skillAgentIndex)` iterates the index and writes the skill's name into each listed agent's `permission.skill` block — without overwriting an existing entry (non-overwrite policy). Unknown agent names (not present in `input.agent`) produce a `logger.warn`. Agent names are validated with `isSafePermissionSubKey` plus a control-character check to guard against log injection.
+
+**Call order in `config()` callback**: `collectSkillAgents` → `injectSkillAgentPermissions` → `collectSkillMcps` → `mergeSkillMcps` → `injectSkillMcpPermissions` → `collectSkillBashPermissions` → `injectSkillBashPermissions`. The agent opt-in step must come first so that agents are already opted-in when MCP/bash injection checks `permission.skill`.
+
+**Design note**: this couples a skill to project-specific agent names; it is intended for first-party project skills, not portable community skills.
 
 ### No Classes
 Prefer plain functions and type aliases over classes. Stateful configuration lives in the `input` config object passed to `config()`.

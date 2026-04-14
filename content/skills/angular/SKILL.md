@@ -1,6 +1,16 @@
 ---
 name: angular
 description: Angular-specific coding guidelines — standalone components, OnPush, signals, reactive forms, and testing conventions
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # Angular Skill

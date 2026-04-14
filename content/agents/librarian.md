@@ -20,7 +20,6 @@ permission:
   "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
-    "git-diff-review": "allow"
     "project-documentation": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"

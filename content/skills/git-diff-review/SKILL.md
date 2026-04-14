@@ -9,6 +9,10 @@ tags:
   - git
   - diff
   - review
+agents:
+  - reviewer
+  - security-reviewer
+  - librarian
 ---
 
 # Git Diff Review Skill

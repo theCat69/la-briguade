@@ -1,6 +1,10 @@
 ---
 name: context7
 description: Fetch up-to-date, version-specific library/framework documentation and code examples via the Context7 MCP server.
+agents:
+  - external-context-gatherer
+  - ask
+  - builder
 mcp:
   context7:
     type: local

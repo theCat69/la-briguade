@@ -37,8 +37,8 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
-| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations |
-| `agent-permissions.md` | Agent frontmatter `tools` defaults merged with per-agent user config overrides |
+| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations, and skill-directed agent opt-in via `agents:` |
+| `agent-permissions.md` | Agent `permission.skill` declarations and skill-side `agents:` opt-in pattern |
 | `content-override-merge.md` | Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()` |
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
@@ -56,10 +56,10 @@ src/
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
     mcp/
       index.ts       ← barrel re-export
-      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() — reads mcp: and permission.bash from SKILL.md files
+      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() — reads mcp:, permission.bash, and agents: from SKILL.md files
       merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
-      permissions.ts ← injectSkillMcpPermissions() / injectSkillBashPermissions() — injects prefixed MCP and bash permissions into agents
-      types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, etc.)
+      permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
+      types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs

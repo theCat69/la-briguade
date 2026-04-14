@@ -8,6 +8,9 @@ category: development
 tags:
   - git
   - commit
+agents:
+  - builder
+  - orchestrator
 ---
 
 # Git commit Skill

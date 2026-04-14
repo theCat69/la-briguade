@@ -16,16 +16,8 @@ permission:
   "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
-    "git-diff-review": "allow"
     "project-coding": "allow"
-    "general-coding": "allow"
-    "typescript": "allow"
-    "java": "allow"
-    "rust": "allow"
-    "angular": "allow"
-    "quarkus": "allow"
     "cache-ctrl-caller": "allow"
-    "unslop-reviewer": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"

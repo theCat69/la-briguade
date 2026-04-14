@@ -13,8 +13,10 @@ import type { AgentSectionsEntry } from "./hooks/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerCommands } from "./plugin/commands.js";
 import {
+  collectSkillAgents,
   collectSkillBashPermissions,
   collectSkillMcps,
+  injectSkillAgentPermissions,
   injectSkillBashPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
@@ -73,6 +75,8 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         input,
         [builtinSkillsDir, ...userSkillRoots],
       );
+      const skillAgentIndex = collectSkillAgents(skillDirs);
+      injectSkillAgentPermissions(input, skillAgentIndex);
       const { mcpMap, skillMcpIndex } = collectSkillMcps(skillDirs);
       mergeSkillMcps(input, mcpMap);
       injectSkillMcpPermissions(input, skillMcpIndex);

@@ -1,6 +1,16 @@
 ---
 name: typescript
 description: TypeScript-specific coding guidelines — strict typing, runtime validation, discriminated unions, and error patterns
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # TypeScript Skill

@@ -287,6 +287,98 @@ describe("cli install/uninstall/doctor/update commands", () => {
     expect(process.exitCode).toBeUndefined();
   });
 
+  it("should pass doctor when cache-ctrl returns non-zero without spawn error", async () => {
+    // Arrange
+    vi.doMock("la-briguade", () => ({}), { virtual: true });
+    mockSpawnSync.mockReturnValueOnce({
+      status: 1,
+      signal: null,
+      error: undefined,
+    } as ReturnType<typeof spawnSync>);
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockResolveUserConfig.mockReturnValue({ log_level: "info" });
+    mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
+    mockExistsSync.mockImplementation((path) => {
+      const value = String(path);
+      return (
+        value === GLOBAL_CONFIG_PATH ||
+        value.endsWith("/content") ||
+        value.endsWith("/content/agents") ||
+        value.endsWith("/content/skills") ||
+        value.endsWith("/content/commands")
+      );
+    });
+    configureConfigRead('{\n  "plugin": ["la-briguade@latest"]\n}\n');
+    mockReaddirSync.mockImplementation((dirPath) => {
+      const value = String(dirPath);
+      if (value.endsWith("/content/agents")) return ["coder.md"] as never;
+      if (value.endsWith("/content/commands")) return ["fix.md"] as never;
+      if (value.endsWith("/content/skills")) return ["typescript"] as never;
+      return [] as never;
+    });
+    mockStatSync.mockImplementation((filePath) => ({
+      isDirectory: () => String(filePath).includes("/content/skills/"),
+    }) as never);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    process.cwd = vi.fn(() => "/workspace") as never;
+
+    // Act
+    await runCliCommand("doctor");
+    await vi.waitFor(() => {
+      expect(mockResolveUserConfig.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    // Assert
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it("should fail doctor when cache-ctrl spawn result has error", async () => {
+    // Arrange
+    vi.doMock("la-briguade", () => ({}), { virtual: true });
+    mockSpawnSync.mockReturnValueOnce({
+      status: null,
+      signal: null,
+      error: new Error("spawn ENOENT"),
+    } as ReturnType<typeof spawnSync>);
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockResolveUserConfig.mockReturnValue({ log_level: "info" });
+    mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
+    mockExistsSync.mockImplementation((path) => {
+      const value = String(path);
+      return (
+        value === GLOBAL_CONFIG_PATH ||
+        value.endsWith("/content") ||
+        value.endsWith("/content/agents") ||
+        value.endsWith("/content/skills") ||
+        value.endsWith("/content/commands")
+      );
+    });
+    configureConfigRead('{\n  "plugin": ["la-briguade@latest"]\n}\n');
+    mockReaddirSync.mockImplementation((dirPath) => {
+      const value = String(dirPath);
+      if (value.endsWith("/content/agents")) return ["coder.md"] as never;
+      if (value.endsWith("/content/commands")) return ["fix.md"] as never;
+      if (value.endsWith("/content/skills")) return ["typescript"] as never;
+      return [] as never;
+    });
+    mockStatSync.mockImplementation((filePath) => ({
+      isDirectory: () => String(filePath).includes("/content/skills/"),
+    }) as never);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    process.cwd = vi.fn(() => "/workspace") as never;
+
+    // Act
+    await runCliCommand("doctor");
+    await vi.waitFor(() => {
+      expect(process.exitCode).toBe(1);
+    });
+
+    // Assert
+    expect(process.exitCode).toBe(1);
+  });
+
   it("should set exitCode when doctor reports failures", async () => {
     // Arrange
     mockSpawnSync.mockReturnValueOnce({

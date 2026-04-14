@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
+import { z } from "zod";
 
+import { isSafePermissionSubKey } from "../../config/schema.js";
 import { parseFrontmatter } from "../../utils/frontmatter.js";
 import { isNodeError } from "../../utils/type-guards.js";
 import { logger } from "../../utils/logger.js";
@@ -10,6 +12,7 @@ import {
   SkillMcpMapSchema,
   SkillPermissionFrontmatterSchema,
   buildPrefixedPermissionMap,
+  type SkillAgentIndex,
   type SkillBashPermIndex,
   type SkillMcpIndex,
   type SkillMcpMap,
@@ -67,6 +70,14 @@ function forEachSkillDir(
   callback: (fileData: SkillFileData) => void,
 ): void {
   for (const skillDir of skillDirs) {
+    const skillName = basename(skillDir);
+    if (!isSafePermissionSubKey(skillName)) {
+      logger.warn(
+        `Skill directory name "${skillName}" is unsafe; skipping`,
+      );
+      continue;
+    }
+
     const fileDataResult = readSkillFileData(skillDir);
     if (!fileDataResult.ok) {
       if (fileDataResult.error.kind === "read-error") {
@@ -150,4 +161,53 @@ export function collectSkillBashPermissions(skillDirs: string[]): SkillBashPermI
   });
 
   return skillBashPermIndex;
+}
+
+export function collectSkillAgents(skillDirs: string[]): SkillAgentIndex {
+  const skillAgentIndex: SkillAgentIndex = {};
+  const agentsSchema = z.array(z.string()).optional();
+
+  forEachSkillDir(skillDirs, ({ attributes, skillName, skillFilePath }) => {
+    const agentsAttributes = attributes["agents"];
+    if (agentsAttributes === undefined) {
+      return;
+    }
+
+    const parsedAgents = agentsSchema.safeParse(agentsAttributes);
+    if (!parsedAgents.success) {
+      logger.warn(`Invalid skill agents frontmatter in: ${skillFilePath}`);
+      return;
+    }
+
+    const rawAgents = parsedAgents.data;
+    if (rawAgents === undefined) {
+      return;
+    }
+
+    const safeAgents = rawAgents.filter((agentName: string) => {
+      if (!isSafePermissionSubKey(agentName)) {
+        logger.warn(
+          `Invalid skill agent name "${agentName}" in: ${skillFilePath}; ` +
+            "skipping entry",
+        );
+        return false;
+      }
+
+      // Reject control characters (log injection guard)
+      if (/[\x00-\x1f\x7f]/.test(agentName)) {
+        logger.warn(
+          `[la-briguade] Skill agent name "${agentName}" contains control characters; skipping`,
+        );
+        return false;
+      }
+
+      return true;
+    });
+
+    if (safeAgents.length > 0) {
+      skillAgentIndex[skillName] = safeAgents;
+    }
+  });
+
+  return skillAgentIndex;
 }

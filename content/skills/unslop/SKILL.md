@@ -1,6 +1,8 @@
 ---
 name: unslop
 description: Clean AI-generated code slop in sequential bounded passes scoped to changed files only
+agents:
+  - builder
 ---
 
 # Unslop — AI Slop Cleanup

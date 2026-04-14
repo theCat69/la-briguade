@@ -65,12 +65,19 @@ export function toSdkMcpEntry(key: string, entry: SkillMcpEntry): McpLocalConfig
     };
 
     if (entry.environment !== undefined) {
-      normalized.environment = Object.fromEntries(
-        Object.entries(entry.environment).map(([envKey, envValue]) => [
-          envKey,
-          resolveEnvValue(envValue, key, "environment"),
-        ]),
-      );
+      const entries = Object.entries(entry.environment).flatMap(([envKey, envValue]) => {
+        const resolved = resolveEnvTokens(envValue, key, "environment");
+        if (resolved.issue !== undefined) {
+          logger.debug(resolved.issue);
+          return [];
+        }
+
+        return [[envKey, resolved.value] as const];
+      });
+
+      if (entries.length > 0) {
+        normalized.environment = Object.fromEntries(entries);
+      }
     }
     if (entry.enabled !== undefined) {
       normalized.enabled = entry.enabled;
