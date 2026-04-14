@@ -18,14 +18,8 @@ permission:
     "git branch *": "allow"
   skill:
     "*": "deny"
-    "general-coding": "allow"
     "project-coding": "allow"
     "cache-ctrl-caller": "allow"
-    "typescript": "allow"
-    "java": "allow"
-    "rust": "allow"
-    "angular": "allow"
-    "quarkus": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"

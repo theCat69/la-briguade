@@ -19,7 +19,6 @@ permission:
   "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
-    "git-diff-review": "allow"
     "project-security": "allow"
     "cache-ctrl-caller": "allow"
   task:

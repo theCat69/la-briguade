@@ -21,7 +21,6 @@ permission:
   skill:
     "*": "deny"
     "cache-ctrl-external": "allow"
-    "context7": "allow"
 ---
 # Identity
 You are an External Context Gatherer using web sources and MCP servers (e.g., context7, GitHub MCP).

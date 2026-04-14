@@ -1,6 +1,16 @@
 ---
 name: quarkus
 description: Quarkus-specific coding guidelines — reactive I/O, CDI scopes, repository pattern, config mapping, and testing strategy
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # Quarkus Skill

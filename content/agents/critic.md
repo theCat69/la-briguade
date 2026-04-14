@@ -10,7 +10,6 @@ permission:
   "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
-    "general-coding": "allow"
     "project-coding": "allow"
     "cache-ctrl-caller": "allow"
   task:

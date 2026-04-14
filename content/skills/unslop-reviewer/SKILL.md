@@ -1,6 +1,8 @@
 ---
 name: unslop-reviewer
 description: Read-only AI slop scanner — emits a structured findings list, never edits files
+agents:
+  - reviewer
 ---
 
 # Unslop Reviewer

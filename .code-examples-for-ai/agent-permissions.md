@@ -53,3 +53,17 @@ function gateSkillAccess(agentName: string, requestedSkill: string): boolean {
   return perms[requestedSkill] === "allow" || perms[requestedSkill] === "ask";
 }
 ```
+
+### Complementary skill-side `agents:` opt-in pattern
+
+```yaml
+---
+name: playwright-cli
+description: Browser automation tooling
+agents: [coder, reviewer]
+---
+```
+
+When a skill declares `agents:` like this, listed agents are auto-opted into that skill at
+startup. Those agents no longer need explicit `permission.skill` entries for that specific
+skill in their own frontmatter.

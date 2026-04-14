@@ -1,6 +1,8 @@
 ---
 name: unslop-coder
 description: Applies a pre-computed unslop findings list — targeted edits only, no scanning
+agents:
+  - coder
 ---
 
 # Unslop Coder

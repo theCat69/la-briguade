@@ -1,6 +1,10 @@
 ---
 name: deep-interview
 description: Socratic requirements gathering with mathematical ambiguity scoring — proceed only when ambiguity < 20%
+agents:
+  - planner
+  - builder
+  - orchestrator
 ---
 
 # Deep Interview — Requirements Clarification

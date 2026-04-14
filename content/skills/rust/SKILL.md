@@ -1,6 +1,16 @@
 ---
 name: rust
 description: Rust-specific coding guidelines — ownership, error handling, traits, async, testing, Cargo, and safety conventions
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # Rust Skill

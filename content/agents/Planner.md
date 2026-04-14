@@ -12,16 +12,9 @@ permission:
   "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
-    "general-coding": "allow"
-    "typescript": "allow"
-    "java": "allow"
-    "rust": "allow"
-    "angular": "allow"
-    "quarkus": "allow"
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
-    "deep-interview": "allow"
   task: 
     "*": "deny"
     "local-context-gatherer": "allow"

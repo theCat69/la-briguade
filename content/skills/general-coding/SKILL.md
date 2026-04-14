@@ -1,6 +1,17 @@
 ---
 name: general-coding
 description: Universal coding best practices — naming, testing philosophy, comments, design principles
+agents:
+  - coder
+  - reviewer
+  - architect
+  - critic
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # General Coding Guidelines

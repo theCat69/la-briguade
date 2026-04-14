@@ -1,6 +1,9 @@
 ---
 name: frontend
 description: Frontend verification workflow — HTML semantics, CSS architecture decisions, and browser-based verification using playwright-cli.
+agents:
+  - coder
+  - builder
 ---
 
 # Frontend Development Guidelines

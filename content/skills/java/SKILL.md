@@ -1,6 +1,16 @@
 ---
 name: java
 description: Java-specific coding guidelines — records, sealed classes, Optional, virtual threads, and stream-based data handling
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 
 # Java Skill
