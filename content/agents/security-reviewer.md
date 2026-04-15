@@ -16,7 +16,7 @@ permission:
     "git remote -v": "allow"
     "git branch *": "allow"
     "git diff *": "allow"
-  "cache_ctrl_*": "allow"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-security": "allow"

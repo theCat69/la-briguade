@@ -10,7 +10,6 @@ permission:
   todowrite: "allow"
   todoread: "allow"
   question: "allow"
-  "cache_ctrl_*": "allow"
   write:
     "*": "deny"
     ".ai/**": "allow"
@@ -30,6 +29,7 @@ permission:
     "git status *": "allow" 
     "git diff *": "allow"
     "git ls-files *": "allow"
+    "cache-ctrl *": "allow"
   task: 
     "*": "deny"
     "local-context-gatherer": "allow"

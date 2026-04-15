@@ -10,7 +10,6 @@ permission:
   glob: "allow"
   edit: "allow"
   bash: "allow"
-  "cache_ctrl_*": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"

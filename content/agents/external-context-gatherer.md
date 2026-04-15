@@ -5,7 +5,6 @@ model: "github-copilot/gpt-5.4-mini"
 permission:
   "*": "deny"
   "github_*": "allow"
-  "cache_ctrl_*": "allow"
   webfetch: "allow"
   websearch: "allow"
   edit: "allow"
@@ -16,6 +15,7 @@ permission:
     "*": "deny"
     "git remote -v": "allow"
     "git status *": "allow"
+    "cache-ctrl *": "allow"
   task:
     "*": "deny"
   skill:

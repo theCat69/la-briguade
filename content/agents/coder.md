@@ -1,19 +1,18 @@
 ---
-model: github-copilot/gpt-5.3-codex
-variant: medium
 description: "Writes production-grade code from curated snapshot for live production systems"
+model: "github-copilot/gpt-5.3-codex"
+variant: medium
 mode: subagent
 temperature: 0.1
 permission:
   "*": "deny"
   edit: "allow"
-  bash: "allow"
   read: "allow"
   glob: "allow"
   grep: "allow"
   lsp: "allow"
-  "cache_ctrl_*": "allow"
   "angular-cli_*": "allow"
+  bash: "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"

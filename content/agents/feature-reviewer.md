@@ -8,7 +8,9 @@ permission:
   read: "allow"
   grep: "allow"
   glob: "allow"
-  "cache_ctrl_*": "allow"
+  bash:
+    "*": "deny"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
