@@ -13,7 +13,6 @@ permission:
   todowrite: "allow"
   todoread: "allow"
   question: "allow"
-  "cache_ctrl_*": "allow"
   "angular-cli_*": "allow"
   skill:
     "*": "deny"

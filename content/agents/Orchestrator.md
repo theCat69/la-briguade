@@ -16,6 +16,7 @@ permission:
     "wc *": "allow"
     "mkdir -p .ai/context-snapshots": "allow"
     "mkdir -p .ai/context-snapshots/*": "allow"
+    "cache-ctrl *": "allow"
   edit: 
     "*": "deny"
     ".ai/context-snapshots/current.json": "allow"
@@ -30,7 +31,6 @@ permission:
   read: "allow"
   glob: "allow"
   grep: "allow"
-  "cache_ctrl_*": "allow"
   task:
     "*": "deny"
     "coder": "allow"

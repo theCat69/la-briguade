@@ -9,13 +9,13 @@ permission:
   glob: "allow"
   grep: "allow"
   question: "allow"
-  "cache_ctrl_*": "allow"
   bash:
     "*": "deny"
     "git log *": "allow"
     "git diff *": "allow"
     "git status *": "allow"
     "git branch *": "allow"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"

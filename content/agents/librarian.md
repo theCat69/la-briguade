@@ -17,7 +17,7 @@ permission:
     "git diff *": "allow"
     "mv *": "allow"
     "mkdir -p features/*": "allow"
-  "cache_ctrl_*": "allow"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-documentation": "allow"

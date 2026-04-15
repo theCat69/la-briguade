@@ -13,7 +13,7 @@ permission:
     "git status *": "allow"
     "git branch *": "allow"
     "git diff *": "allow"
-  "cache_ctrl_*": "allow"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"

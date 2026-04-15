@@ -12,8 +12,10 @@ permission:
   glob: "allow"
   grep: "allow"
   lsp: "allow"
-  "cache_ctrl_*": "allow"
   "angular-cli_*": "allow"
+  bash:
+    "*": "deny"
+    "cache-ctrl *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
