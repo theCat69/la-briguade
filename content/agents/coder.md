@@ -12,9 +12,7 @@ permission:
   grep: "allow"
   lsp: "allow"
   "angular-cli_*": "allow"
-  bash:
-    "*": "deny"
-    "cache-ctrl *": "allow"
+  bash: "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
