@@ -193,122 +193,6 @@ describe("registerAgents", () => {
     expect(coder?.["prompt"]).toBe("Project override prompt");
   });
 
-  it("should warn and skip unsafe permission.skill keys like __proto__", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadContentFile.mockReturnValue(
-      [
-        "---",
-        "permission:",
-        "  skill:",
-        '    "*": "deny"',
-        '    __proto__: "allow"',
-        "---",
-        "Body",
-      ].join("\n"),
-    );
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('permission.skill key "__proto__" is unsafe'),
-    );
-  });
-
-  it("should warn and skip unrecognized permission.skill values like 'invalid'", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadContentFile.mockReturnValue(
-      [
-        "---",
-        "permission:",
-        "  skill:",
-        '    "*": "invalid"',
-        "---",
-        "Body",
-      ].join("\n"),
-    );
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('permission.skill entry "*" has unrecognized value "invalid"'),
-    );
-  });
-
-  it("should warn and skip permission.skill values with wrong case like 'DENY'", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadContentFile.mockReturnValue(
-      ["---", "permission:", "  skill:", '    "*": "DENY"', "---", "Body"].join("\n"),
-    );
-    const config = makeConfig();
-
-    // Act
-    registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('permission.skill entry "*" value "DENY" must be lowercase'),
-    );
-  });
-
-  it("should warn and skip non-string permission.skill values", () => {
-    // Arrange
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadContentFile.mockReturnValue(
-      ["---", "permission:", "  skill:", "    typescript: true", "---", "Body"].join("\n"),
-    );
-    const config = makeConfig();
-
-    // Act
-    const result = registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'permission.skill entry "typescript" has non-string value (boolean)',
-      ),
-    );
-    expect(result.agentSkillPerms.get("coder")).toBeUndefined();
-  });
-
-  it("should accept ask in permission.skill and include it in agentSkillPerms", () => {
-    // Arrange
-    mockCollectFiles.mockReturnValue(new Map([["Coder", "/builtin/agents/Coder.md"]]));
-    mockReadContentFile.mockReturnValue(
-      [
-        "---",
-        "permission:",
-        "  skill:",
-        '    "*": "deny"',
-        '    typescript: "ask"',
-        "---",
-        "Body",
-      ].join("\n"),
-    );
-    const config = makeConfig();
-
-    // Act
-    const result = registerAgents(config, ["/builtin/agents"]);
-
-    // Assert
-    expect(result.agentSkillPerms.get("coder")).toEqual({
-      "*": "deny",
-      typescript: "ask",
-    });
-  });
-
   it("should return early and keep config unchanged when no agent files are found", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map());
@@ -320,7 +204,6 @@ describe("registerAgents", () => {
 
     // Assert
     expect(result.agentSections.size).toBe(0);
-    expect(result.agentSkillPerms.size).toBe(0);
     expect(config).toEqual(initialConfig);
   });
 });

@@ -57,15 +57,14 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
   const agentSections = new Map<string, AgentSectionsEntry>();
-  const agentSkillPerms = new Map<string, Record<string, string>>();
 
-  const hooks = createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms);
+  const hooks = createHooks(ctx, agentSections, vendorPrompts);
 
   return {
     config: async (input) => {
       const userConfig = resolveUserConfig(ctx.directory);
       logger.setLevel(userConfig.log_level ?? "warn");
-      const { agentSections: sections, agentSkillPerms: skillPerms } = registerAgents(
+      const { agentSections: sections } = registerAgents(
         input,
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
@@ -84,9 +83,6 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       injectSkillBashPermissions(input, skillBashPermIndex);
       for (const [agentName, entry] of sections) {
         agentSections.set(agentName, entry);
-      }
-      for (const [agentName, perms] of skillPerms) {
-        agentSkillPerms.set(agentName, perms);
       }
     },
     ...hooks,

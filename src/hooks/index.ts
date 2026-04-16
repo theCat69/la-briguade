@@ -1,7 +1,6 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
 import { resolveModelSection, KNOWN_FAMILIES } from "../utils/model-sections.js";
 import type { ModelSegment } from "../utils/model-sections.js";
-import { logger } from "../utils/logger.js";
 import { initNotifier, notifier } from "../utils/notifier.js";
 import { isRecord } from "../utils/type-guards.js";
 
@@ -36,27 +35,15 @@ export type AgentSectionsEntry = {
  *   same Plugin call, so population always precedes hook execution.
  * @param vendorPrompts - Global vendor prompts keyed by model-family name (claude, gpt, etc.).
  *   Applied to ALL agents after any per-agent model section.
- * @param agentSkillPerms - Per-agent skill permission map extracted from frontmatter
- *   permission.skill blocks.
  */
 export function createHooks(
   ctx: PluginInput,
   agentSections: ReadonlyMap<string, AgentSectionsEntry>,
   vendorPrompts: ReadonlyMap<string, string>,
-  agentSkillPerms: ReadonlyMap<string, Record<string, string>>,
 ): Partial<HooksResult> {
   initNotifier(ctx);
-  const sessionAgentMap = new Map<string, string>();
 
   return {
-    "chat.params": async (input) => {
-      sessionAgentMap.set(input.sessionID, input.agent);
-    },
-
-    "tool.execute.before": async (input, output) => {
-      gateSkillToolExecution(input, output, sessionAgentMap, agentSkillPerms);
-    },
-
     "tool.execute.after": async (input, output) => {
       truncateLargeOutput(output);
       appendEditErrorHint(input.tool, output);
@@ -64,7 +51,6 @@ export function createHooks(
 
     event: async ({ event }) => {
       detectEmptyResponse(event);
-      cleanupDeletedSession(event, sessionAgentMap);
     },
 
     "experimental.chat.system.transform": async (input, output) => {
@@ -74,66 +60,6 @@ export function createHooks(
       injectVendorPrompts(agentSections, vendorPrompts, modelId, output.system);
     },
   };
-}
-
-/** Gates skill tool execution per agent permission.skill["*"] deny-mode policy. Mutates output.args.name to "" to block. */
-function gateSkillToolExecution(
-  input: { tool: string; sessionID: string },
-  output: { args: unknown },
-  sessionAgentMap: ReadonlyMap<string, string>,
-  agentSkillPerms: ReadonlyMap<string, Record<string, string>>,
-): void {
-  if (input.tool !== "skill") return;
-
-  const agentName = sessionAgentMap.get(input.sessionID);
-  if (agentName === undefined) return;
-
-  const perms = agentSkillPerms.get(agentName);
-  if (perms === undefined) return;
-  if (perms["*"] !== "deny") return;
-
-  const args = output.args;
-  if (!isRecord(args)) {
-    logger.warn(
-      `[skill-gate] Unexpected non-record args for skill tool call (session: ${input.sessionID})`,
-    );
-    output.args = { name: "" };
-    return;
-  }
-
-  const requestedSkillName = args["name"];
-  if (typeof requestedSkillName !== "string") {
-    return;
-  }
-
-  if (requestedSkillName === "") {
-    logger.warn(
-      `[skill-gate] Empty skill name in deny-mode for agent "${agentName}" (session: ${input.sessionID}); blocking`,
-    );
-    return;
-  }
-
-  const permission = perms[requestedSkillName];
-  if (permission === "allow" || permission === "ask") return;
-
-  output.args = { ...args, name: "" };
-}
-
-/** Removes the session→agent mapping when a session is deleted to prevent memory leaks. */
-function cleanupDeletedSession(
-  event: { type: string; properties?: unknown },
-  sessionAgentMap: Map<string, string>,
-): void {
-  if (event.type !== "session.deleted") return;
-  if (!isRecord(event.properties)) return;
-
-  const sessionInfo = event.properties["info"];
-  if (!isRecord(sessionInfo)) return;
-
-  const sessionID = sessionInfo["id"];
-  if (typeof sessionID !== "string") return;
-
-  sessionAgentMap.delete(sessionID);
 }
 
 /**

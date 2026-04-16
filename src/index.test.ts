@@ -97,7 +97,6 @@ describe("LaBriguadePlugin", () => {
     mockResolveUserConfig.mockReturnValue({});
     mockRegisterAgents.mockReturnValue({
       agentSections: new Map(),
-      agentSkillPerms: new Map(),
     });
     mockRegisterSkills.mockReturnValue({ dirs: [] });
     mockCollectSkillAgents.mockReturnValue({});
@@ -123,23 +122,19 @@ describe("LaBriguadePlugin", () => {
 
     const sharedSection = {
       base: "Base prompt",
-      segments: [{ target: "claude", text: "Claude section" }],
+      segments: [{ target: "claude" as const, text: "Claude section" }],
     };
-    const sharedPerms = { "*": "deny", typescript: "allow" };
     mockRegisterAgents.mockReturnValue({
       agentSections: new Map([["coder", sharedSection]]),
-      agentSkillPerms: new Map([["coder", sharedPerms]]),
     });
     mockRegisterSkills.mockReturnValue({ dirs: ["/skills/typescript"] });
     mockCollectSkillAgents.mockReturnValue({ typescript: ["coder"] });
-    mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} }, skillMcpIndex: { coder: [] } });
+    mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} as never }, skillMcpIndex: { coder: [] } });
     mockCollectSkillBashPermissions.mockReturnValue({ coder: { "npm *": "allow" } });
 
     let capturedSections: ReadonlyMap<string, AgentSectionsEntry> | undefined;
-    let capturedPerms: ReadonlyMap<string, Record<string, string>> | undefined;
-    mockCreateHooks.mockImplementation((_, agentSections, __, agentSkillPerms) => {
+    mockCreateHooks.mockImplementation((_, agentSections) => {
       capturedSections = agentSections;
-      capturedPerms = agentSkillPerms;
       return { event: vi.fn() };
     });
 
@@ -164,7 +159,6 @@ describe("LaBriguadePlugin", () => {
       coder: { "npm *": "allow" },
     });
     expect(capturedSections?.get("coder")).toEqual(sharedSection);
-    expect(capturedPerms?.get("coder")).toEqual(sharedPerms);
   });
 
   it('should default logger level to "warn" when log_level is missing', async () => {
@@ -176,7 +170,6 @@ describe("LaBriguadePlugin", () => {
     mockCreateHooks.mockReturnValue({});
     mockRegisterAgents.mockReturnValue({
       agentSections: new Map(),
-      agentSkillPerms: new Map(),
     });
     mockRegisterSkills.mockReturnValue({ dirs: [] });
     mockCollectSkillAgents.mockReturnValue({});
