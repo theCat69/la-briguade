@@ -1,5 +1,5 @@
 ---
-model: github-copilot/claude-opus-4.6
+model: github-copilot/gpt-5.4
 variant: high
 description: "Code structure analyst — maps module boundaries, dependency graphs, and produces before/after architecture blueprints for refactoring and restructuring"
 mode: subagent
