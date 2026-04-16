@@ -56,11 +56,13 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(resolveOpencodeConfigDir(), "skills"),
     join(globalDir, "content", "skills"),
     join(projectDir, ".opencode", "skills"),
+    join(projectDir, "la-briguade", "skills"),
     join(projectDir, "content", "skills"),
   ];
   const userAutoInjectRoots = [
     join(globalDir, "content", "auto-inject-skills"),
     join(projectDir, ".opencode", "auto-inject-skills"),
+    join(projectDir, "la-briguade", "skills"),
     join(projectDir, "content", "auto-inject-skills"),
   ];
   const userVendorDirs = [
