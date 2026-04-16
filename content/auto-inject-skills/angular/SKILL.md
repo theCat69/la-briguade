@@ -1,6 +1,9 @@
 ---
 name: angular
 description: Angular-specific coding guidelines — standalone components, OnPush, signals, reactive forms, and testing conventions
+detect:
+  files:
+    - angular.json
 agents:
   - coder
   - reviewer

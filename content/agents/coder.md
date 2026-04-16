@@ -36,23 +36,10 @@ Do not consider work done until the build and tests pass.
 # Startup Sequence (Always Execute First)
 Before writing any code, unconditionally run all of the following steps:
 1. Load skill `project-coding`.
-2. Load skill `general-coding`.
 3. Load skill `project-build`.
 4. Load skill `project-test`.
 5. Load skill `project-code-examples`. When loaded, read the relevant example files from `.code-examples-for-ai/` that apply to the task.
-6. Load skill `cache-ctrl-caller`. Use it to understand how to interact with `cache_ctrl_*` tools before calling context gatherer subagents.
-7. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) directly, or use the stack value from the Context Snapshot if explicitly provided. Load the corresponding skill(s) unconditionally:
-   - `package.json` containing `@angular/core` → load `angular` + `typescript`
-   - `package.json` without Angular → load `typescript`
-   - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
-   - `pom.xml` or `build.gradle` without quarkus → load `java`
-   - `Cargo.toml` present → load `rust`
-   - No recognizable manifest → warn Orchestrator and continue with `general-coding` only
-8. Check for frontend project signals (run after stack detection — these load in addition to the stack skills):
-   - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`, `solid-js`, `astro` → load `frontend` + `playwright-cli`
-   - `@angular/core` detected (Angular project) → load `frontend` + `playwright-cli`
-   - `playwright.config.ts` or `playwright.config.js` exists at project root → load `playwright-cli`
-9. Load skill `unslop-coder` and run a bounded cleanup pass on changed files ONLY when the calling prompt explicitly requests it (look for the phrase "run unslop" or "cleanup pass" in the prompt).
+7. Load skill `unslop-coder` and run a bounded cleanup pass on changed files ONLY when the calling prompt explicitly requests it (look for the phrase "run unslop" or "cleanup pass" in the prompt).
 
 # Rules
 - Work primarily from the Context Snapshot provided by the Orchestrator

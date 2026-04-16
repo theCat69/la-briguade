@@ -32,15 +32,7 @@ Review code for correctness, maintainability, and performance to production stan
 # Startup Sequence (Always Execute First)
 Before reviewing any code, unconditionally run all of the following steps:
 1. Load skill `project-coding`.
-2. Load skill `general-coding`.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
-4. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) directly, or use the stack value from the calling prompt if explicitly provided. Load the corresponding skill(s) unconditionally:
-   - `package.json` containing `@angular/core` → load `angular` + `typescript`
-   - `package.json` without Angular → load `typescript`
-   - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
-   - `pom.xml` or `build.gradle` without quarkus → load `java`
-   - `Cargo.toml` present → load `rust`
-   - No recognizable manifest → warn caller and continue with `general-coding` only
+2. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Review Mode
 Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REVIEW"**.

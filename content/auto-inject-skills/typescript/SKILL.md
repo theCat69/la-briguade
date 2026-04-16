@@ -1,6 +1,9 @@
 ---
 name: typescript
 description: TypeScript-specific coding guidelines — strict typing, runtime validation, discriminated unions, and error patterns
+detect:
+  files:
+    - tsconfig.json
 agents:
   - coder
   - reviewer

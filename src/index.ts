@@ -22,6 +22,12 @@ import {
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
+import {
+  collectAutoInjectSkills,
+  injectAutoInjectSkills,
+  resolveActiveSkills,
+} from "./plugin/auto-inject.js";
+import { collectDirs } from "./utils/content-merge.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
 import { initLogger, logger } from "./utils/logger.js";
 
@@ -31,6 +37,7 @@ const contentDir = join(__dirname, "..", "content");
 const builtinAgentsDir = join(contentDir, "agents");
 const builtinCommandsDir = join(contentDir, "commands");
 const builtinSkillsDir = join(contentDir, "skills");
+const builtinAutoInjectRoot = join(contentDir, "auto-inject-skills");
 const builtinVendorDir = join(contentDir, "vendor-prompts");
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
@@ -50,6 +57,11 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(globalDir, "content", "skills"),
     join(projectDir, ".opencode", "skills"),
     join(projectDir, "content", "skills"),
+  ];
+  const userAutoInjectRoots = [
+    join(globalDir, "content", "auto-inject-skills"),
+    join(projectDir, ".opencode", "auto-inject-skills"),
+    join(projectDir, "content", "auto-inject-skills"),
   ];
   const userVendorDirs = [
     join(globalDir, "content", "vendor-prompts"),
@@ -81,6 +93,11 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       injectSkillMcpPermissions(input, skillMcpIndex);
       const skillBashPermIndex = collectSkillBashPermissions(skillDirs);
       injectSkillBashPermissions(input, skillBashPermIndex);
+      const autoInjectDirMap = collectDirs([builtinAutoInjectRoot, ...userAutoInjectRoots]);
+      const autoInjectDirs = [...autoInjectDirMap.values()];
+      const autoInjectEntries = collectAutoInjectSkills(autoInjectDirs);
+      const activeSkills = resolveActiveSkills(autoInjectEntries, ctx.directory);
+      injectAutoInjectSkills(input, autoInjectEntries, activeSkills);
       for (const [agentName, entry] of sections) {
         agentSections.set(agentName, entry);
       }

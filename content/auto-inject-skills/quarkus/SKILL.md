@@ -1,6 +1,14 @@
 ---
 name: quarkus
 description: Quarkus-specific coding guidelines — reactive I/O, CDI scopes, repository pattern, config mapping, and testing strategy
+detect:
+  content:
+    - file: pom.xml
+      contains: quarkus
+    - file: build.gradle
+      contains: quarkus
+    - file: build.gradle.kts
+      contains: quarkus
 agents:
   - coder
   - reviewer

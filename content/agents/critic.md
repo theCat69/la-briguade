@@ -29,9 +29,8 @@ Challenge proposed plans, feature specs, and architectural decisions from first 
 
 # Startup Sequence (Always Execute First)
 Before challenging any plan, unconditionally run all of the following steps:
-1. Load skill `general-coding`. Use it to ground every challenge in a named principle (SRP, KISS, DRY, coupling, protected variations, etc.).
-2. Load skill `project-coding`. Use it to ground challenges in real project conventions and patterns.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `project-coding`. Use it to ground challenges in real project conventions and patterns.
+2. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Context Gathering
 - If you need local repo context to ground your challenges in real code, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.
