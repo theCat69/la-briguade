@@ -36,9 +36,7 @@ Update README.md, AGENTS.md, documentation files, and `.code-examples-for-ai/` e
 
 # Startup Sequence (Always Execute First)
 Before doing any documentation work, unconditionally run all of the following steps:
-1. Load skill `project-documentation`.
-2. Load skill `project-code-examples`.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Context Gathering
 After determining scope, gather context using the following rules:

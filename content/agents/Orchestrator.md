@@ -53,8 +53,7 @@ Safely transform user requests into production-ready code for production systems
 
 # Startup Sequence (Always Execute First)
 Before starting any workflow step, unconditionally run all of the following steps:
-1. Load skill `project-coding`.
-2. Load skill `cache-ctrl-caller`.
+1. Load skill `cache-ctrl-caller`.
 
 # Critical Rules
 - Only you may call subagents.

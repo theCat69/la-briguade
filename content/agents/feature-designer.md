@@ -28,9 +28,7 @@ Transform normalized context into concrete, technically implementable feature de
 
 # Startup Sequence (Always Execute First)
 Before designing any feature, unconditionally run all of the following steps:
-1. Load skill `project-coding`. Use it to align feature tasks with project-specific conventions: Lua/Zsh/TypeScript style rules, naming conventions, module patterns, and commit format.
-2. Load skill `project-code-examples`. Reference existing patterns when describing implementation tasks so features are grounded in real project code.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Context Gathering
 - If you need local repo context (structure, patterns, constraints) to design a well-grounded feature, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.

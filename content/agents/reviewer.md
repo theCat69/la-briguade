@@ -31,8 +31,7 @@ Review code for correctness, maintainability, and performance to production stan
 
 # Startup Sequence (Always Execute First)
 Before reviewing any code, unconditionally run all of the following steps:
-1. Load skill `project-coding`.
-2. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Review Mode
 Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REVIEW"**.

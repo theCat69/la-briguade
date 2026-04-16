@@ -66,7 +66,7 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
       if (!isNodeError(error) || error.code !== "ENOENT") {
         logger.warn(
           `Could not read auto-inject skill file: ${skillFilePath} ` +
-            `(${error instanceof Error ? error.message : String(error)})`,
+          `(${error instanceof Error ? error.message : String(error)})`,
         );
       }
       continue;

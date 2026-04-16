@@ -35,11 +35,7 @@ Do not consider work done until the build and tests pass.
 
 # Startup Sequence (Always Execute First)
 Before writing any code, unconditionally run all of the following steps:
-1. Load skill `project-coding`.
-3. Load skill `project-build`.
-4. Load skill `project-test`.
-5. Load skill `project-code-examples`. When loaded, read the relevant example files from `.code-examples-for-ai/` that apply to the task.
-7. Load skill `unslop-coder` and run a bounded cleanup pass on changed files ONLY when the calling prompt explicitly requests it (look for the phrase "run unslop" or "cleanup pass" in the prompt).
+1. Load skill `unslop-coder` and run a bounded cleanup pass on changed files ONLY when the calling prompt explicitly requests it (look for the phrase "run unslop" or "cleanup pass" in the prompt).
 
 # Rules
 - Work primarily from the Context Snapshot provided by the Orchestrator

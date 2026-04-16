@@ -29,9 +29,7 @@ Review feature specs for clarity, feasibility, testability, scope control, and p
 
 # Startup Sequence (Always Execute First)
 Before reviewing any feature spec, unconditionally run all of the following steps:
-1. Load skill `project-coding`. Use it to verify that feature specs are consistent with project conventions (Lua module pattern, Zsh safety rules, TypeScript strict mode, naming, commit format). Flag specs that contradict these conventions.
-2. Load skill `project-code-examples`. Use it to verify that proposed implementations reference real project patterns rather than inventing new ones unnecessarily.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
 
 # Context Gathering
 - If you need local repo context (patterns, conventions) to assess spec alignment with the codebase, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.

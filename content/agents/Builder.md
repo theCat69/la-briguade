@@ -39,19 +39,7 @@ Transform user requests into working, production-quality code. You write all cod
 
 # Startup Sequence (Always Execute First)
 Before selecting mode or writing any code, unconditionally run all of the following steps:
-1. Load skill `project-coding`.
-3. Load skill `cache-ctrl-caller`.
-4. Detect the project stack by reading manifest files (`package.json`, `pom.xml`, `build.gradle`) in the repo root. Load the corresponding skill(s) unconditionally:
-   - `package.json` containing `@angular/core` → load `angular` + `typescript`
-   - `package.json` without Angular → load `typescript`
-   - `pom.xml` or `build.gradle` containing `quarkus` → load `quarkus` + `java`
-   - `pom.xml` or `build.gradle` without quarkus → load `java`
-   - `Cargo.toml` present → load `rust`
-   - No recognizable manifest → warn the user and continue with `general-coding` only
-5. Check for frontend project signals (run after stack detection — these load in addition to the stack skills):
-   - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`, `solid-js`, `astro` → load `frontend` + `playwright-cli`
-   - `@angular/core` detected (Angular project) → load `frontend` + `playwright-cli`
-   - `playwright.config.ts` or `playwright.config.js` exists at project root → load `playwright-cli`
+1. Load skill `cache-ctrl-caller`.
 
 # Critical Rules
 - ALWAYS write code yourself — you are the sole author. Never use a coder subagent.

@@ -36,9 +36,7 @@ Turn vague ideas or complete specs into concrete, technically implementable soft
 
 # Startup Sequence (Always Execute First)
 Before starting any workflow step, unconditionally run all of the following steps:
-1. Load skill `project-coding`. Reference its project-specific conventions (TypeScript patterns, naming conventions, commit format) when evaluating feature proposals for fit with the existing codebase.
-2. Load skill `project-code-examples`. Reference it to point to existing code patterns when clarifying implementation expectations.
-3. Load skill `cache-ctrl-caller`. Use it to check cache state before calling local-context-gatherer or external-context-gatherer.
+1. Load skill `cache-ctrl-caller`. Use it to check cache state before calling local-context-gatherer or external-context-gatherer.
 
 Stack skills are loaded in Workflow step 3b after stack detection.
 
