@@ -17,7 +17,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `global-prompts-loader.md` — Loading shared global prompt content from a directory, keyed by lowercased filename stem, with per-file error resilience
 - `skill-embedded-mcp.md` — Declaring local/remote MCP servers in SKILL.md frontmatter, including `{env:VAR_NAME}` token resolution and command-injection guard, and non-MCP `permission.bash` declarations
 - `agent-permissions.md` — Agent permission allow/ask/deny visibility model with `permission.skill` gating and the skill-side `agents:` opt-in counterpart
-- `content-override-merge.md` — Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()`
+- `content-override-merge.md` — Priority-based merge of layered content directories — builtin < opencode global < global user < opencode project < project user — using `collectFiles()` / `collectDirs()`
 - `load-content-helper.md` — Shared `loadContentFiles()` wrapper that centralizes collectFiles + warn-and-skip parsing
 - `logger-notifier.md` — Logger singleton with two-phase init and notifier toast fallback integration
 - `skill-access-gating.md` — Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup

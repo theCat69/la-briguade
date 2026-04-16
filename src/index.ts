@@ -44,34 +44,33 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
 
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
-  // Agents: builtin < old global < new global < old project < new project (last-wins)
+  // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/la_briguade/agents/) — last-wins
   const userAgentsDirs = [
-    join(globalDir, "agents"),                   // canonical: ~/la_briguade/agents
-    join(projectDir, "la_briguade", "agents"),   // canonical: <root>/la_briguade/agents
+    join(globalDir, "agents"),                   // global: ~/la_briguade/agents
+    join(projectDir, "la_briguade", "agents"),   // project: <root>/la_briguade/agents
   ];
-  // Commands: same layering as agents
+  // Commands: builtin < global (~/la_briguade/commands/) < project (<root>/la_briguade/commands/) — last-wins
   const userCommandsDirs = [
-    join(globalDir, "commands"),                 // canonical: ~/la_briguade/commands
-    join(projectDir, "la_briguade", "commands"), // canonical: <root>/la_briguade/commands
+    join(globalDir, "commands"),                 // global: ~/la_briguade/commands
+    join(projectDir, "la_briguade", "commands"), // project: <root>/la_briguade/commands
   ];
-  // Skills: opencode layout < old global < new global < opencode project < old project < new project
+  // Skills: opencode (~/.config/opencode/skills/) < global (~/la_briguade/skills/) < opencode project (<root>/.opencode/skills/) < project (<root>/la_briguade/skills/) — last-wins
   const userSkillRoots = [
-    join(resolveOpencodeConfigDir(), "skills"),   // opencode: ~/.config/opencode/skills
-    join(globalDir, "skills"),                    // canonical: ~/la_briguade/skills
-    join(projectDir, ".opencode", "skills"),      // opencode: <root>/.opencode/skills
-    join(projectDir, "la_briguade", "skills"),    // canonical: <root>/la_briguade/skills
+    join(resolveOpencodeConfigDir(), "skills"),   // opencode global: ~/.config/opencode/skills
+    join(globalDir, "skills"),                    // global: ~/la_briguade/skills
+    join(projectDir, ".opencode", "skills"),      // opencode project: <root>/.opencode/skills
+    join(projectDir, "la_briguade", "skills"),    // project: <root>/la_briguade/skills
   ];
-  // Auto-inject: mirrors skill roots plus dedicated auto-inject-skills dirs
+  // Auto-inject: builtin < global auto-inject < global skills < project skills — last-wins
   const userAutoInjectRoots = [
-    join(globalDir, "auto-inject-skills"),             // canonical: ~/la_briguade/auto-inject-skills
+    join(globalDir, "auto-inject-skills"),             // global: ~/la_briguade/auto-inject-skills
     join(globalDir, "skills"),                         // global skills with agents: frontmatter
-    join(projectDir, "content", "auto-inject-skills"), // legacy: <root>/content/auto-inject-skills
-    join(projectDir, "la_briguade", "skills"),         // canonical: <root>/la_briguade/skills
+    join(projectDir, "la_briguade", "skills"),         // project: <root>/la_briguade/skills
   ];
-  // Vendor prompts: same layering as agents
+  // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/la_briguade/vendor-prompts/) — last-wins
   const userVendorDirs = [
-    join(globalDir, "vendor-prompts"),                 // canonical: ~/la_briguade/vendor-prompts
-    join(projectDir, "la_briguade", "vendor-prompts"), // canonical: <root>/la_briguade/vendor-prompts
+    join(globalDir, "vendor-prompts"),                 // global: ~/la_briguade/vendor-prompts
+    join(projectDir, "la_briguade", "vendor-prompts"), // project: <root>/la_briguade/vendor-prompts
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
   const agentSections = new Map<string, AgentSectionsEntry>();
