@@ -93,7 +93,7 @@ The plugin registers six built-in hooks that run automatically:
 
 4. **Model Section Injector** — At chat time, inspects the active model ID and appends the matching model-family section from the agent body to its system prompt (see [Model-Specific Prompt Sections](#model-specific-prompt-sections) below).
 
-5. **Vendor Prompt Injector** — After the model section, appends the global vendor prompt for the matched model family (loaded from the built-in `content/vendor-prompts/` and any user overrides in `~/la_briguade/vendor-prompts/` or `<project_root>/la_briguade/vendor-prompts/`) to every agent system prompt. Unlike model sections, vendor prompts live in separate files and apply uniformly to all agents — no per-agent markup needed. No fallback is applied; if no family matches the active model, nothing is injected.
+5. **Vendor Prompt Injector** — After the model section, appends the global vendor prompt for the matched model family (loaded from the built-in `content/vendor-prompts/` and any user overrides in `~/la_briguade/vendor-prompts/` or `<project_root>/.la_briguade/vendor-prompts/`) to every agent system prompt. Unlike model sections, vendor prompts live in separate files and apply uniformly to all agents — no per-agent markup needed. No fallback is applied; if no family matches the active model, nothing is injected.
 
 6. **Skill Access Gate** — Enforces `permission.skill` declarations from agent frontmatter. Uses `chat.params` to track which agent is active per session, then gates every `skill` tool call in `tool.execute.before`: if an agent declares `permission.skill["*"]: "deny"`, only explicitly allow-listed skill names pass through. Session state is cleaned up on `session.deleted` to prevent memory leaks.
 
@@ -170,10 +170,10 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 
 | Content type | Global user | Project user |
 |---|---|---|
-| Agents | `~/la_briguade/agents/` | `<project_root>/la_briguade/agents/` |
-| Commands | `~/la_briguade/commands/` | `<project_root>/la_briguade/commands/` |
-| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/la_briguade/skills/` |
-| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<project_root>/la_briguade/vendor-prompts/` |
+| Agents | `~/la_briguade/agents/` | `<project_root>/.la_briguade/agents/` |
+| Commands | `~/la_briguade/commands/` | `<project_root>/.la_briguade/commands/` |
+| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/.la_briguade/skills/` |
+| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<project_root>/.la_briguade/vendor-prompts/` |
 
 **Full priority chain** (lowest → highest, last-wins):
 
@@ -181,23 +181,23 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 2. **OpenCode global skills** — `~/.config/opencode/skills/` _(skills only)_
 3. **Global user** — `~/la_briguade/{agents,commands,skills,vendor-prompts}/`
 4. **OpenCode project skills** — `<project_root>/.opencode/skills/` _(skills only)_
-5. **Project user** — `<project_root>/la_briguade/{agents,commands,skills,vendor-prompts}/`
+5. **Project user** — `<project_root>/.la_briguade/{agents,commands,skills,vendor-prompts}/`
 
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 
 Any skill already installed at the opencode level (`~/.config/opencode/skills/` or `<project_root>/.opencode/skills/`) is automatically available to la-briguade agents without any extra configuration.
 
 > **Security / Trust Boundary**
-> Content placed in `~/la_briguade/` or project-level `la_briguade/` directories can override built-in agents, skills, commands, and vendor prompts.
+> Content placed in `~/la_briguade/` or project-level `.la_briguade/` directories can override built-in agents, skills, commands, and vendor prompts.
 > Only place files from trusted sources in these override directories.
 
-**Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/agents/coder.md` (applies globally) or `<project_root>/la_briguade/agents/coder.md` (applies to that project only).
+**Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/agents/coder.md` (applies globally) or `<project_root>/.la_briguade/agents/coder.md` (applies to that project only).
 
 Content files have a maximum size of 50,000 characters — files exceeding this limit are skipped with a warning.
 
 ### Agent
 
-Create a `.md` file in `~/la_briguade/agents/` (global) or `<project_root>/la_briguade/agents/` (project) with YAML frontmatter and a markdown body (the agent prompt):
+Create a `.md` file in `~/la_briguade/agents/` (global) or `<project_root>/.la_briguade/agents/` (project) with YAML frontmatter and a markdown body (the agent prompt):
 
 ```yaml
 ---
@@ -225,7 +225,7 @@ The optional `permission.skill` block controls which skills the agent may load v
 
 ### Skill
 
-Create a directory in `~/la_briguade/skills/{name}/` (global) or `<project_root>/la_briguade/skills/{name}/` (project) with a `SKILL.md` file:
+Create a directory in `~/la_briguade/skills/{name}/` (global) or `<project_root>/.la_briguade/skills/{name}/` (project) with a `SKILL.md` file:
 
 ```yaml
 ---
@@ -276,7 +276,7 @@ Use `{env:VAR_NAME}` in `command` elements, `environment` values, and `headers` 
 
 ### Command
 
-Create a `.md` file in `~/la_briguade/commands/` (global) or `<project_root>/la_briguade/commands/` (project) with YAML frontmatter:
+Create a `.md` file in `~/la_briguade/commands/` (global) or `<project_root>/.la_briguade/commands/` (project) with YAML frontmatter:
 
 ```yaml
 ---
@@ -338,7 +338,7 @@ In this example, a Claude model receives the `CLAUDE` and `ALL` sections; a GPT 
 
 ### Vendor Prompts
 
-**Vendor prompts** are global instructions applied to **all agents** when the active model matches a known family. They live in `content/vendor-prompts/` as plain Markdown files named after the family (`claude.md`, `gpt.md`, `gemini.md`, `grok.md`). You can override or extend them by placing same-named files in `~/la_briguade/vendor-prompts/` (globally) or `<project_root>/la_briguade/vendor-prompts/` (per-project).
+**Vendor prompts** are global instructions applied to **all agents** when the active model matches a known family. They live in `content/vendor-prompts/` as plain Markdown files named after the family (`claude.md`, `gpt.md`, `gemini.md`, `grok.md`). You can override or extend them by placing same-named files in `~/la_briguade/vendor-prompts/` (globally) or `<project_root>/.la_briguade/vendor-prompts/` (per-project).
 
 At chat time the vendor prompt is appended after any per-agent model section. No per-agent markup is required — the file's existence is enough. If no family matches the active model, nothing is injected (no fallback).
 

@@ -55,33 +55,33 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
 
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
-  // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/la_briguade/agents/) — last-wins
+  // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/.la_briguade/agents/) — last-wins
   const userAgentsDirs = [
-    join(globalDir, agentsDir),                   // global: ~/la_briguade/agents
-    join(projectDir, laBriguadeProjectDir, agentsDir),   // project: <root>/la_briguade/agents
+    join(globalDir, agentsDir),                              // global: ~/la_briguade/agents
+    join(projectDir, laBriguadeProjectDir, agentsDir),       // project: <root>/.la_briguade/agents
   ];
-  // Commands: builtin < global (~/la_briguade/commands/) < project (<root>/la_briguade/commands/) — last-wins
+  // Commands: builtin < global (~/la_briguade/commands/) < project (<root>/.la_briguade/commands/) — last-wins
   const userCommandsDirs = [
-    join(globalDir, commandsDir),                 // global: ~/la_briguade/commands
-    join(projectDir, laBriguadeProjectDir, commandsDir), // project: <root>/la_briguade/commands
+    join(globalDir, commandsDir),                            // global: ~/la_briguade/commands
+    join(projectDir, laBriguadeProjectDir, commandsDir),     // project: <root>/.la_briguade/commands
   ];
-  // Skills: opencode (~/.config/opencode/skills/) < global (~/la_briguade/skills/) < opencode project (<root>/.opencode/skills/) < project (<root>/la_briguade/skills/) — last-wins
+  // Skills: opencode (~/.config/opencode/skills/) < global (~/la_briguade/skills/) < opencode project (<root>/.opencode/skills/) < project (<root>/.la_briguade/skills/) — last-wins
   const userSkillRoots = [
-    join(resolveOpencodeConfigDir(), skillsDir),   // opencode global: ~/.config/opencode/skills
-    join(globalDir, skillsDir),                    // global: ~/la_briguade/skills
-    join(projectDir, opencodeProjectDir, skillsDir),      // opencode project: <root>/.opencode/skills
-    join(projectDir, laBriguadeProjectDir, skillsDir),    // project: <root>/la_briguade/skills
+    join(resolveOpencodeConfigDir(), skillsDir),             // opencode global: ~/.config/opencode/skills
+    join(globalDir, skillsDir),                              // global: ~/la_briguade/skills
+    join(projectDir, opencodeProjectDir, skillsDir),         // opencode project: <root>/.opencode/skills
+    join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
   ];
   // Auto-inject: builtin < global auto-inject < global skills < project skills — last-wins
   const userAutoInjectRoots = [
-    join(globalDir, autoInjectSkillsDir),             // global: ~/la_briguade/auto-inject-skills
-    join(globalDir, skillsDir),                         // global skills with agents: frontmatter
-    join(projectDir, laBriguadeProjectDir, skillsDir),         // project: <root>/la_briguade/skills
+    join(globalDir, autoInjectSkillsDir),                    // global: ~/la_briguade/auto-inject-skills
+    join(globalDir, skillsDir),                              // global skills with agents: frontmatter
+    join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
   ];
-  // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/la_briguade/vendor-prompts/) — last-wins
+  // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/.la_briguade/vendor-prompts/) — last-wins
   const userVendorDirs = [
-    join(globalDir, vendorPromptsDir),                 // global: ~/la_briguade/vendor-prompts
-    join(projectDir, laBriguadeProjectDir, vendorPromptsDir), // project: <root>/la_briguade/vendor-prompts
+    join(globalDir, vendorPromptsDir),                       // global: ~/la_briguade/vendor-prompts
+    join(projectDir, laBriguadeProjectDir, vendorPromptsDir), // project: <root>/.la_briguade/vendor-prompts
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
   const agentSections = new Map<string, AgentSectionsEntry>();

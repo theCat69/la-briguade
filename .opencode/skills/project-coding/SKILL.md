@@ -77,12 +77,12 @@ Agents, skills, and commands are loaded from `.md` files resolved across ordered
 
 | Content type | Global user | Project user |
 |---|---|---|
-| Agents | `~/la_briguade/agents/` | `<root>/la_briguade/agents/` |
-| Commands | `~/la_briguade/commands/` | `<root>/la_briguade/commands/` |
-| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/la_briguade/skills/` |
-| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/la_briguade/vendor-prompts/` |
+| Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
+| Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
+| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
+| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
 
-Full priority chain for skills: builtin < opencode global (`~/.config/opencode/skills/`) < global (`~/la_briguade/skills/`) < opencode project (`<root>/.opencode/skills/`) < project (`<root>/la_briguade/skills/`). For all other content types: builtin < global < project.
+Full priority chain for skills: builtin < opencode global (`~/.config/opencode/skills/`) < global (`~/la_briguade/skills/`) < opencode project (`<root>/.opencode/skills/`) < project (`<root>/.la_briguade/skills/`). For all other content types: builtin < global < project.
 Agents, commands, and vendor prompts are loaded via `loadContentFiles(dirs, '.md', parseFn)` from `src/utils/load-content.ts` — this centralizes the `collectFiles` → warn-and-skip → parse cycle. Each loader provides its own `parseFn` callback.
 
 ### Frontmatter Parsing

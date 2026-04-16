@@ -60,7 +60,7 @@ src/
       merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
       permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
-    vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/la_briguade/vendor-prompts/
+    vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/.la_briguade/vendor-prompts/
     auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs
@@ -106,16 +106,14 @@ Users can override or extend built-in agents, commands, skills, and vendor promp
 
 | Content type | Global user | Project user |
 |---|---|---|
-| Agents | `~/la_briguade/agents/` | `<root>/la_briguade/agents/` |
-| Commands | `~/la_briguade/commands/` | `<root>/la_briguade/commands/` |
-| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/la_briguade/skills/` |
-| Auto-inject skills | `~/la_briguade/auto-inject-skills/` + `~/la_briguade/skills/` | `<root>/la_briguade/skills/` |
-| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/la_briguade/vendor-prompts/` |
+| Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
+| Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
+| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` + `~/la_briguade/skills/` | `<root>/.la_briguade/skills/` |
+| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
 
 **Full priority chain** (builtin → project, last-wins):
-`content/` (builtin) < `~/.config/opencode/skills/` (opencode global, skills only) < `~/la_briguade/` (global user) < `<root>/.opencode/skills/` (opencode project, skills only) < `<root>/la_briguade/` (project user)
-
-> **Note:** `userAutoInjectRoots` in `src/index.ts` currently includes a leftover `<root>/content/auto-inject-skills` entry (marked `// TODO: remove — leftover from content/ migration`). This entry is inert for any project not using the old content layout and is scheduled for removal.
+`content/` (builtin) < `~/.config/opencode/skills/` (opencode global, skills only) < `~/la_briguade/` (global user) < `<root>/.opencode/skills/` (opencode project, skills only) < `<root>/.la_briguade/` (project user)
 
 ---
 

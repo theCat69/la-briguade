@@ -9,10 +9,10 @@
 //
 // Caller example (src/index.ts) — actual priority chain (last-wins):
 //   Agents/Commands/Vendors:
-//     [builtinDir, ~/la_briguade/<type>/, <root>/la_briguade/<type>/]
+//     [builtinDir, ~/la_briguade/<type>/, <root>/.la_briguade/<type>/]
 //   Skills:
 //     [builtinSkillsDir, ~/.config/opencode/skills/, ~/la_briguade/skills/,
-//      <root>/.opencode/skills/, <root>/la_briguade/skills/]
+//      <root>/.opencode/skills/, <root>/.la_briguade/skills/]
 
 import { statSync } from "node:fs";
 import { basename, join } from "node:path";
