@@ -31,14 +31,25 @@ import { collectDirs } from "./utils/content-merge.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
 import { initLogger, logger } from "./utils/logger.js";
 
+const agentsDir = "agents";
+const commandsDir = "commands";
+const skillsDir = "skills";
+const vendorPromptsDir = "vendor-prompts"
+const autoInjectSkillsDir = "auto-inject-skills";
+const laBriguadeUserDir = "la_briguade"
+const laBriguadeProjectDir = "." + laBriguadeUserDir;
+const opencodeUserDir = "opencode";
+const opencodeProjectDir = "." + opencodeUserDir;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const contentDir = join(__dirname, "..", "content");
-const builtinAgentsDir = join(contentDir, "agents");
-const builtinCommandsDir = join(contentDir, "commands");
-const builtinSkillsDir = join(contentDir, "skills");
-const builtinAutoInjectRoot = join(contentDir, "auto-inject-skills");
-const builtinVendorDir = join(contentDir, "vendor-prompts");
+const builtinAgentsDir = join(contentDir, agentsDir);
+const builtinCommandsDir = join(contentDir, commandsDir);
+const builtinSkillsDir = join(contentDir, skillsDir);
+const builtinAutoInjectRoot = join(contentDir, autoInjectSkillsDir);
+const builtinVendorDir = join(contentDir, vendorPromptsDir);
+
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
@@ -46,31 +57,31 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
   // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/la_briguade/agents/) — last-wins
   const userAgentsDirs = [
-    join(globalDir, "agents"),                   // global: ~/la_briguade/agents
-    join(projectDir, "la_briguade", "agents"),   // project: <root>/la_briguade/agents
+    join(globalDir, agentsDir),                   // global: ~/la_briguade/agents
+    join(projectDir, laBriguadeProjectDir, agentsDir),   // project: <root>/la_briguade/agents
   ];
   // Commands: builtin < global (~/la_briguade/commands/) < project (<root>/la_briguade/commands/) — last-wins
   const userCommandsDirs = [
-    join(globalDir, "commands"),                 // global: ~/la_briguade/commands
-    join(projectDir, "la_briguade", "commands"), // project: <root>/la_briguade/commands
+    join(globalDir, commandsDir),                 // global: ~/la_briguade/commands
+    join(projectDir, laBriguadeProjectDir, commandsDir), // project: <root>/la_briguade/commands
   ];
   // Skills: opencode (~/.config/opencode/skills/) < global (~/la_briguade/skills/) < opencode project (<root>/.opencode/skills/) < project (<root>/la_briguade/skills/) — last-wins
   const userSkillRoots = [
-    join(resolveOpencodeConfigDir(), "skills"),   // opencode global: ~/.config/opencode/skills
-    join(globalDir, "skills"),                    // global: ~/la_briguade/skills
-    join(projectDir, ".opencode", "skills"),      // opencode project: <root>/.opencode/skills
-    join(projectDir, "la_briguade", "skills"),    // project: <root>/la_briguade/skills
+    join(resolveOpencodeConfigDir(), skillsDir),   // opencode global: ~/.config/opencode/skills
+    join(globalDir, skillsDir),                    // global: ~/la_briguade/skills
+    join(projectDir, opencodeProjectDir, skillsDir),      // opencode project: <root>/.opencode/skills
+    join(projectDir, laBriguadeProjectDir, skillsDir),    // project: <root>/la_briguade/skills
   ];
   // Auto-inject: builtin < global auto-inject < global skills < project skills — last-wins
   const userAutoInjectRoots = [
-    join(globalDir, "auto-inject-skills"),             // global: ~/la_briguade/auto-inject-skills
-    join(globalDir, "skills"),                         // global skills with agents: frontmatter
-    join(projectDir, "la_briguade", "skills"),         // project: <root>/la_briguade/skills
+    join(globalDir, autoInjectSkillsDir),             // global: ~/la_briguade/auto-inject-skills
+    join(globalDir, skillsDir),                         // global skills with agents: frontmatter
+    join(projectDir, laBriguadeProjectDir, skillsDir),         // project: <root>/la_briguade/skills
   ];
   // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/la_briguade/vendor-prompts/) — last-wins
   const userVendorDirs = [
-    join(globalDir, "vendor-prompts"),                 // global: ~/la_briguade/vendor-prompts
-    join(projectDir, "la_briguade", "vendor-prompts"), // project: <root>/la_briguade/vendor-prompts
+    join(globalDir, vendorPromptsDir),                 // global: ~/la_briguade/vendor-prompts
+    join(projectDir, laBriguadeProjectDir, vendorPromptsDir), // project: <root>/la_briguade/vendor-prompts
   ];
   const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
   const agentSections = new Map<string, AgentSectionsEntry>();
