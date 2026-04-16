@@ -3,9 +3,16 @@
 ```typescript
 // src/utils/content-merge.ts — Shared helper used by agents/commands/vendors/skills loaders.
 // Key points:
-//   1. Input directories are ordered by precedence (builtin, global user, project user)
+//   1. Input directories are ordered by precedence — builtin first, user overrides last
 //   2. Later directories override earlier ones by key (filename stem or subdir name)
 //   3. Missing/unreadable roots are skipped safely using readDirSafe()
+//
+// Caller example (src/index.ts) — actual priority chain (last-wins):
+//   Agents/Commands/Vendors:
+//     [builtinDir, ~/la_briguade/<type>/, <root>/.la_briguade/<type>/]
+//   Skills:
+//     [builtinSkillsDir, ~/.config/opencode/skills/, ~/la_briguade/skills/,
+//      <root>/.opencode/skills/, <root>/.la_briguade/skills/]
 
 import { statSync } from "node:fs";
 import { basename, join } from "node:path";

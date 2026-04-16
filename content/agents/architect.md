@@ -37,14 +37,7 @@ Analyse the specified code area and produce a structured architecture blueprint 
 
 # Startup Sequence (Always Execute First)
 Before analysing any code area, unconditionally run all of the following steps:
-1. Load skill `general-coding`. Use its principles (SRP, DRY, coupling, cohesion, protected variations) to name every finding precisely.
-2. Load skill `project-coding`. Use it to ground structural analysis in real project conventions and patterns.
-3. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context-gatherer subagents.
-4. If the calling prompt indicates the stack, load the corresponding skill(s):
-   - Stack includes TypeScript → load skill `typescript`
-   - Stack includes Angular → load skill `angular`
-   - Stack includes Java → load skill `java`
-   - Stack includes Quarkus → load skill `quarkus`
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context-gatherer subagents.
 
 # Context Gathering
 - If you need local repo context to map the current structure, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.

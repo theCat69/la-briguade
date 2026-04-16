@@ -1,0 +1,10 @@
+{
+  "$schema": "https://thecatmaincave.com/la-briguade-dev/la-briguade.schema.json",
+  "log_level": "debug",
+  "opus_enabled": false,
+  "agents": {
+    "local-context-gatherer": {
+      "model": "github-copilot/gpt-5-mini"
+    }
+  }
+}

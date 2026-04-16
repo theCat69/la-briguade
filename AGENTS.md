@@ -39,7 +39,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
 | `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations, and skill-directed agent opt-in via `agents:` |
 | `agent-permissions.md` | Agent `permission.skill` declarations and skill-side `agents:` opt-in pattern |
-| `content-override-merge.md` | Priority-based merge of layered content directories — built-in < global user < project user — using `collectFiles()` / `collectDirs()` |
+| `content-override-merge.md` | Priority-based merge of layered content directories — builtin < opencode global < global user < opencode project < project user — using `collectFiles()` / `collectDirs()` |
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
 
@@ -60,7 +60,8 @@ src/
       merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
       permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
-    vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles()
+    vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/.la_briguade/vendor-prompts/
+    auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
@@ -85,6 +86,7 @@ src/
 content/
   agents/            ← Agent .md files (YAML frontmatter + system prompt body)
   skills/            ← Skill directories, each with SKILL.md
+  auto-inject-skills/ ← Auto-inject skill directories (detect: frontmatter triggers project-level activation)
   commands/          ← Slash command .md files
   vendor-prompts/    ← Global vendor prompt files (claude.md, gpt.md, gemini.md, grok.md) — appended to all agent system prompts at chat time
 
@@ -97,6 +99,21 @@ schemas/
 bin/
   la-briguade.js     ← CLI shebang entry → dist/cli/index.js
 ```
+
+### User Content Override Layout
+
+Users can override or extend built-in agents, commands, skills, and vendor prompts by placing files in the following directories. All directories are optional — missing paths are silently skipped. Priority is **last-wins**:
+
+| Content type | Global user | Project user |
+|---|---|---|
+| Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
+| Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
+| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` + `~/la_briguade/skills/` | `<root>/.la_briguade/skills/` |
+| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
+
+**Full priority chain** (builtin → project, last-wins):
+`content/` (builtin) < `~/.config/opencode/skills/` (opencode global, skills only) < `~/la_briguade/` (global user) < `<root>/.opencode/skills/` (opencode project, skills only) < `<root>/.la_briguade/` (project user)
 
 ---
 

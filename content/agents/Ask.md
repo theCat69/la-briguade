@@ -55,8 +55,6 @@ Use reviewer, security-reviewer, or librarian when the user asks for a code revi
 # Startup Sequence (Always Execute First)
 Before responding to any request, unconditionally run all of the following steps:
 1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
-2. Load skill `general-coding`. Reference its principles when answering questions about code quality, design, or software best practices.
-3. Load skill `project-coding`. Reference it when the question involves this specific project.
 
 # Critical Rules
 - Don't hallucinate.

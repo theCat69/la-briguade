@@ -2,6 +2,7 @@
 name: project-coding
 description: Project-specific coding guidelines, naming conventions, architecture patterns, and code examples for la-briguade
 ---
+# Project coding guidelines
 
 ## Code Style
 
@@ -71,7 +72,18 @@ const LaBriguadePlugin: Plugin = async (ctx) => ({
 ```
 
 ### Content-Driven Registration
-Agents, skills, and commands are loaded from `.md` files resolved across three ordered layers: built-in `content/`, global user `~/la_briguade/content/`, and project-level `<root>/content/`. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+Agents, skills, and commands are loaded from `.md` files resolved across ordered layers. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+
+**User content override paths** (lowest → highest priority):
+
+| Content type | Global user | Project user |
+|---|---|---|
+| Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
+| Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
+| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
+| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
+
+Full priority chain for skills: builtin < opencode global (`~/.config/opencode/skills/`) < global (`~/la_briguade/skills/`) < opencode project (`<root>/.opencode/skills/`) < project (`<root>/.la_briguade/skills/`). For all other content types: builtin < global < project.
 Agents, commands, and vendor prompts are loaded via `loadContentFiles(dirs, '.md', parseFn)` from `src/utils/load-content.ts` — this centralizes the `collectFiles` → warn-and-skip → parse cycle. Each loader provides its own `parseFn` callback.
 
 ### Frontmatter Parsing

@@ -1,6 +1,11 @@
 ---
 name: java
 description: Java-specific coding guidelines — records, sealed classes, Optional, virtual threads, and stream-based data handling
+detect:
+  files:
+    - pom.xml
+    - build.gradle
+    - build.gradle.kts
 agents:
   - coder
   - reviewer
