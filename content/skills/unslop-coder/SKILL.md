@@ -74,6 +74,19 @@ When not active: skip pass-4 implementation. Report those findings as deferred g
 
 ---
 
+## Orchestrator Validation Contract
+
+When called from `/unslop-loop` Orchestrator mode with a validation rule, this skill must:
+
+1. Detect test runner using the caller-provided order and set `test_cmd`.
+2. If a runner is available, execute `test_cmd` after edits.
+3. Report `tests: pass` or `tests: fail`.
+4. When `tests: fail`, include failing test names in output.
+
+If no runner is available, report `test_cmd: none`.
+
+---
+
 ## Output (≤ 300 tokens)
 
 - **Files touched** — list modified files
@@ -82,3 +95,4 @@ When not active: skip pass-4 implementation. Report those findings as deferred g
   unsafe change, etc.)
 - **Pass-4 gaps** — when override is not active, list deferred pass-4 findings
 - **Risks** — remaining risk areas that could not be safely cleaned in-scope
+- **Validation status** — `test_cmd: <command|none>` and `tests: pass|fail`; include failing test names when status is fail

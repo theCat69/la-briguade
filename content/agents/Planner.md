@@ -27,6 +27,7 @@ permission:
     "security-reviewer": "allow"
     "librarian": "allow"
     "critic": "allow"
+    "architect": "allow"
 ---
 # Identity
 You are a Feature Planning Orchestrator for a software project.

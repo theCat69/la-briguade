@@ -12,6 +12,7 @@ permission:
     "git log *": "allow" 
     "git status *": "allow" 
     "git diff *": "allow"
+    "git checkout -- *": "allow"
     "git ls-files *": "allow"
     "wc *": "allow"
     "mkdir -p .ai/context-snapshots": "allow"
@@ -22,6 +23,7 @@ permission:
     ".ai/context-snapshots/current.json": "allow"
   skill: 
     "*": "deny"
+    "git-commit": "allow"
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
