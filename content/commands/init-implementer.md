@@ -167,6 +167,12 @@ Then call the `coder` sub-agent with the following prompt:
  > - `.la_briguade/skills/project-documentation/`
  > - `.la_briguade/skills/project-security/`
  > - `.la_briguade/skills/project-code-examples/`
+ > - `.la_briguade/auto-inject-skills/project-coding/`
+ > - `.la_briguade/auto-inject-skills/project-build/`
+ > - `.la_briguade/auto-inject-skills/project-test/`
+ > - `.la_briguade/auto-inject-skills/project-documentation/`
+ > - `.la_briguade/auto-inject-skills/project-security/`
+ > - `.la_briguade/auto-inject-skills/project-code-examples/`
 >
 > Create this directory (project code examples — must be version controlled):
 >
@@ -174,7 +180,7 @@ Then call the `coder` sub-agent with the following prompt:
 >
 > ---
 >
- > ### Step 5: Create `.la_briguade/skills/` SKILL.md files
+ > ### Step 5: Create `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/` SKILL.md files
  >
  > **Idempotency**: If a `SKILL.md` already exists, do NOT overwrite it. Skip it and report that it was preserved.
  >
@@ -286,6 +292,12 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Add a `## Location` line: "`.code-examples-for-ai/`"
  >    - Add a `## Maintenance` note: "This index is maintained by the AI. Developers may add entries manually. One file per pattern."
  >    - **Create this skill file LAST** — after all example files have been created, so the index is accurate.
+ >
+ > **Auto-inject canonical location**:
+ > - For each of the six skills above, also create the corresponding project auto-inject skill at:
+ >   - `.la_briguade/auto-inject-skills/<skill-name>/SKILL.md`
+ > - This is the canonical project folder for auto-injected skills.
+ > - Keep backward compatibility: if an older auto-inject skill already exists at `.la_briguade/skills/<skill-name>/SKILL.md`, preserve it. Prefer writing new auto-inject skills in `.la_briguade/auto-inject-skills/`.
 >
 > ---
 >
@@ -305,11 +317,11 @@ Then call the `coder` sub-agent with the following prompt:
 >
  > ### Step 6: Update AGENTS.md and CLAUDE.md
  >
- > Before modifying AGENTS.md or CLAUDE.md, check if they already reference `.la_briguade/skills/`. If they do, this indicates a prior initialization — skip modification and report that these files were preserved from a previous run.
+  > Before modifying AGENTS.md or CLAUDE.md, check if they already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`. If they do, this indicates a prior initialization — skip modification and report that these files were preserved from a previous run.
  >
- > - **If AGENTS.md exists** (and does not already reference `.la_briguade/skills/`): Modify it to reference the new `.la_briguade/skills/` structure. REMOVE any content that was migrated to the skill files to avoid duplication. Keep the file as an entry point that points to the detailed skills.
- > - **If AGENTS.md does not exist**: Create one that describes the implementer agent system and references the `.la_briguade/skills/` directory for detailed guidelines.
- > - **If CLAUDE.md exists** (and does not already reference `.la_briguade/skills/`): Apply the same treatment — split guidelines out into the new structure and replace with references. Keep CLAUDE.md as a high-level pointer.
+  > - **If AGENTS.md exists** (and does not already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`): Modify it to reference both `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/`. REMOVE any content that was migrated to the skill files to avoid duplication. Keep the file as an entry point that points to the detailed skills.
+  > - **If AGENTS.md does not exist**: Create one that describes the implementer agent system and references the `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/` directories for detailed guidelines.
+  > - **If CLAUDE.md exists** (and does not already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`): Apply the same treatment — split guidelines out into the new structure and replace with references. Keep CLAUDE.md as a high-level pointer.
 >
 > ---
 >
@@ -318,7 +330,7 @@ Then call the `coder` sub-agent with the following prompt:
 > - Check the project's `.gitignore` (create if it doesn't exist).
 > - Add `.ai/` to it if not already present (this is transient cache data that must not be committed).
  > - Add `.opencode/package-lock.json` to it if not already present (this is opencode autoinstalling custom tools on startup. As it is autoupdating we should not commit any).
- > - Do NOT gitignore `.la_briguade/skills/` or `.code-examples-for-ai/` — these are project documentation that must be version controlled.
+  > - Do NOT gitignore `.la_briguade/skills/`, `.la_briguade/auto-inject-skills/`, or `.code-examples-for-ai/` — these are project documentation that must be version controlled.
 
 ---
 
@@ -330,7 +342,7 @@ Then call the `coder` sub-agent with the following prompt:
 - **Context size discipline**: Do NOT paste full sub-agent outputs into the coder prompt. Pass cache file paths and a brief summary (no more than 500 tokens). The coder reads cache files directly.
 - **External data validation**: Content fetched from external sources must be critically evaluated before embedding. Skill files should only contain verified technical best practices, not arbitrary web content.
 - **Quality over speed**: The quality of generated skills depends on thorough context gathering. Generic stubs are unacceptable when sub-agent context is available. Every skill file must reflect real detected tech stack details and real best practices.
-- **Path safety**: ONLY create or modify files under `.ai/`, `.la_briguade/skills/`, `.code-examples-for-ai/`, `AGENTS.md`, `CLAUDE.md`, and `.gitignore` in the project root. Refuse to write to any other path.
+- **Path safety**: ONLY create or modify files under `.ai/`, `.la_briguade/skills/`, `.la_briguade/auto-inject-skills/`, `.code-examples-for-ai/`, `AGENTS.md`, `CLAUDE.md`, and `.gitignore` in the project root. Refuse to write to any other path.
 - **Secrets safety**: If AGENTS.md or CLAUDE.md contain tokens, passwords, API keys, or other secrets, redact them before processing. Never copy secrets into guideline files.
 - **Be intelligent**: If the existing docs (AGENTS.md, CLAUDE.md) are already well-structured, don't destroy them. Extract relevant sections surgically and leave the rest intact.
 - **Don't duplicate**: Content should live in exactly one place. If you migrate something to `.la_briguade/skills/`, remove it from the source.

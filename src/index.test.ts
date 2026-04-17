@@ -17,9 +17,15 @@ import {
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
+import {
+  collectAutoInjectSkills,
+  injectAutoInjectSkills,
+  resolveActiveSkills,
+} from "./plugin/auto-inject.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
 import { initLogger, logger } from "./utils/logger.js";
 import { startCacheCtrlWatch } from "./utils/cache-ctrl-watch.js";
+import { collectDirs } from "./utils/content-merge.js";
 
 vi.mock("./config/index.js", () => ({
   resolveConfigBaseDirs: vi.fn(),
@@ -47,6 +53,12 @@ vi.mock("./plugin/vendors.js", () => ({
   loadVendorPrompts: vi.fn(),
 }));
 
+vi.mock("./plugin/auto-inject.js", () => ({
+  collectAutoInjectSkills: vi.fn(),
+  injectAutoInjectSkills: vi.fn(),
+  resolveActiveSkills: vi.fn(),
+}));
+
 vi.mock("./plugin/mcp/index.js", () => ({
   collectSkillAgents: vi.fn(),
   collectSkillBashPermissions: vi.fn(),
@@ -68,6 +80,10 @@ vi.mock("./utils/cache-ctrl-watch.js", () => ({
   startCacheCtrlWatch: vi.fn(),
 }));
 
+vi.mock("./utils/content-merge.js", () => ({
+  collectDirs: vi.fn(),
+}));
+
 const mockResolveConfigBaseDirs = vi.mocked(resolveConfigBaseDirs);
 const mockResolveOpencodeConfigDir = vi.mocked(resolveOpencodeConfigDir);
 const mockResolveUserConfig = vi.mocked(resolveUserConfig);
@@ -76,6 +92,9 @@ const mockRegisterAgents = vi.mocked(registerAgents);
 const mockRegisterCommands = vi.mocked(registerCommands);
 const mockRegisterSkills = vi.mocked(registerSkills);
 const mockLoadVendorPrompts = vi.mocked(loadVendorPrompts);
+const mockCollectAutoInjectSkills = vi.mocked(collectAutoInjectSkills);
+const mockInjectAutoInjectSkills = vi.mocked(injectAutoInjectSkills);
+const mockResolveActiveSkills = vi.mocked(resolveActiveSkills);
 const mockCollectSkillAgents = vi.mocked(collectSkillAgents);
 const mockCollectSkillBashPermissions = vi.mocked(collectSkillBashPermissions);
 const mockCollectSkillMcps = vi.mocked(collectSkillMcps);
@@ -86,6 +105,7 @@ const mockMergeSkillMcps = vi.mocked(mergeSkillMcps);
 const mockInitLogger = vi.mocked(initLogger);
 const mockStartCacheCtrlWatch = vi.mocked(startCacheCtrlWatch);
 const mockSetLevel = vi.mocked(logger.setLevel);
+const mockCollectDirs = vi.mocked(collectDirs);
 
 describe("LaBriguadePlugin", () => {
   afterEach(() => {
@@ -108,6 +128,9 @@ describe("LaBriguadePlugin", () => {
     mockCollectSkillAgents.mockReturnValue({});
     mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
     mockCollectSkillBashPermissions.mockReturnValue({});
+    mockCollectAutoInjectSkills.mockReturnValue(new Map());
+    mockResolveActiveSkills.mockReturnValue(new Set());
+    mockCollectDirs.mockReturnValue(new Map());
 
     // Act
     const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
@@ -139,6 +162,12 @@ describe("LaBriguadePlugin", () => {
     mockCollectSkillAgents.mockReturnValue({ typescript: ["coder"] });
     mockCollectSkillMcps.mockReturnValue({ mcpMap: { context7: {} as never }, skillMcpIndex: { coder: [] } });
     mockCollectSkillBashPermissions.mockReturnValue({ coder: { "npm *": "allow" } });
+    mockCollectAutoInjectSkills.mockReturnValue(new Map());
+    mockResolveActiveSkills.mockReturnValue(new Set());
+    const autoInjectDirMap = new Map([
+      ["typescript", "/project/.la_briguade/auto-inject-skills/typescript"],
+    ]);
+    mockCollectDirs.mockReturnValue(autoInjectDirMap);
 
     let capturedSections: ReadonlyMap<string, AgentSectionsEntry> | undefined;
     mockCreateHooks.mockImplementation((_, agentSections) => {
@@ -166,7 +195,62 @@ describe("LaBriguadePlugin", () => {
     expect(mockInjectSkillBashPermissions).toHaveBeenCalledWith(input, {
       coder: { "npm *": "allow" },
     });
+    expect(mockCollectAutoInjectSkills).toHaveBeenCalledOnce();
+    expect(mockCollectAutoInjectSkills).toHaveBeenCalledWith([
+      "/project/.la_briguade/auto-inject-skills/typescript",
+    ]);
+    expect(mockResolveActiveSkills).toHaveBeenCalledWith(new Map(), "/project");
+    expect(mockInjectAutoInjectSkills).toHaveBeenCalledWith(input, new Map(), new Set());
     expect(capturedSections?.get("coder")).toEqual(sharedSection);
+  });
+
+  it("should include canonical and legacy project auto-inject roots", async () => {
+    // Arrange
+    mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
+    mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
+    mockResolveUserConfig.mockReturnValue({});
+    mockLoadVendorPrompts.mockReturnValue(new Map());
+    mockCreateHooks.mockReturnValue({});
+    mockRegisterAgents.mockReturnValue({ agentSections: new Map() });
+    mockRegisterSkills.mockReturnValue({ dirs: [] });
+    mockCollectSkillAgents.mockReturnValue({});
+    mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
+    mockCollectSkillBashPermissions.mockReturnValue({});
+    const autoInjectEntries = new Map();
+    const activeSkills = new Set<string>();
+    const autoInjectDirMap = new Map([
+      ["typescript", "/project/.la_briguade/auto-inject-skills/typescript"],
+      ["legacy", "/project/.la_briguade/skills/typescript"],
+    ]);
+    mockCollectDirs.mockReturnValue(autoInjectDirMap);
+    mockCollectAutoInjectSkills.mockReturnValue(autoInjectEntries);
+    mockResolveActiveSkills.mockReturnValue(activeSkills);
+
+    // Act
+    const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
+    await plugin.config?.({} as never);
+
+    // Assert
+    const autoInjectRoots = mockCollectDirs.mock.calls[0]?.[0] ?? [];
+    expect(autoInjectRoots).toContain("/project/.la_briguade/skills");
+    expect(autoInjectRoots).toContain("/project/.la_briguade/auto-inject-skills");
+    expect(autoInjectRoots.indexOf("/project/.la_briguade/skills")).toBeLessThan(
+      autoInjectRoots.indexOf("/project/.la_briguade/auto-inject-skills"),
+    );
+
+    const autoInjectSkillDirs = mockCollectAutoInjectSkills.mock.calls[0]?.[0] ?? [];
+    expect(autoInjectSkillDirs).toContain(
+      "/project/.la_briguade/auto-inject-skills/typescript",
+    );
+    expect(autoInjectSkillDirs).toContain(
+      "/project/.la_briguade/skills/typescript",
+    );
+    expect(mockResolveActiveSkills).toHaveBeenCalledWith(autoInjectEntries, "/project");
+    expect(mockInjectAutoInjectSkills).toHaveBeenCalledWith(
+      {} as never,
+      autoInjectEntries,
+      activeSkills,
+    );
   });
 
   it('should default logger level to "warn" when log_level is missing', async () => {
@@ -183,6 +267,9 @@ describe("LaBriguadePlugin", () => {
     mockCollectSkillAgents.mockReturnValue({});
     mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
     mockCollectSkillBashPermissions.mockReturnValue({});
+    mockCollectAutoInjectSkills.mockReturnValue(new Map());
+    mockResolveActiveSkills.mockReturnValue(new Set());
+    mockCollectDirs.mockReturnValue(new Map());
 
     // Act
     const plugin = await LaBriguadePlugin({ directory: "/project" } as never);

@@ -74,11 +74,16 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(projectDir, opencodeProjectDir, skillsDir),         // opencode project: <root>/.opencode/skills
     join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
   ];
-  // Auto-inject: builtin < global auto-inject < global skills < project skills — last-wins
+  // Auto-inject: builtin < global auto-inject < global skills < project legacy skills < project auto-inject — last-wins
   const userAutoInjectRoots = [
     join(globalDir, autoInjectSkillsDir),                    // global: ~/la_briguade/auto-inject-skills
     join(globalDir, skillsDir),                              // global skills with agents: frontmatter
-    join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
+    join(projectDir, laBriguadeProjectDir, skillsDir),       // project legacy: <root>/.la_briguade/skills
+    join(
+      projectDir,
+      laBriguadeProjectDir,
+      autoInjectSkillsDir,
+    ), // project: <root>/.la_briguade/auto-inject-skills
   ];
   // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/.la_briguade/vendor-prompts/) — last-wins
   const userVendorDirs = [

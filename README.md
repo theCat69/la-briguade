@@ -172,7 +172,8 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 |---|---|---|
 | Agents | `~/la_briguade/agents/` | `<project_root>/.la_briguade/agents/` |
 | Commands | `~/la_briguade/commands/` | `<project_root>/.la_briguade/commands/` |
-| Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/.la_briguade/skills/` |
+| Skills (regular) | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/.la_briguade/skills/` |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<project_root>/.la_briguade/auto-inject-skills/` _(canonical)_; `<project_root>/.la_briguade/skills/` _(legacy-compatible)_ |
 | Vendor prompts | `~/la_briguade/vendor-prompts/` | `<project_root>/.la_briguade/vendor-prompts/` |
 
 **Full priority chain** (lowest → highest, last-wins):
@@ -181,7 +182,7 @@ All agents, skills, and commands are plain Markdown files with YAML frontmatter.
 2. **OpenCode global skills** — `~/.config/opencode/skills/` _(skills only)_
 3. **Global user** — `~/la_briguade/{agents,commands,skills,vendor-prompts}/`
 4. **OpenCode project skills** — `<project_root>/.opencode/skills/` _(skills only)_
-5. **Project user** — `<project_root>/.la_briguade/{agents,commands,skills,vendor-prompts}/`
+5. **Project user** — `<project_root>/.la_briguade/{agents,commands,skills,auto-inject-skills,vendor-prompts}/`
 
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 
