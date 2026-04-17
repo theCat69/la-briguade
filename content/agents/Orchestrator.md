@@ -90,7 +90,7 @@ Before starting any workflow step, unconditionally run all of the following step
 - ALWAYS follow the Cache-First Protocol before calling any context-gathering subagent.
   Skipping the cache check is a protocol violation.
 - NEVER call `local-context-gatherer` or `external-context-gatherer` without first checking
-  cache freshness via `cache_ctrl_*` tools.
+  cache freshness via `cache-ctrl` bash command.
 
 # Anti-Bloat Rules (Critical)
 - Never store raw logs, diffs, docs, or web pages in chat context.

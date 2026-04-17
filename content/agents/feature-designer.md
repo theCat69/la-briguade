@@ -28,7 +28,7 @@ Transform normalized context into concrete, technically implementable feature de
 
 # Startup Sequence (Always Execute First)
 Before designing any feature, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before calling context gatherer subagents.
 
 # Critical Rules
 - Do not write production code.

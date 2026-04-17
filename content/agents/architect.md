@@ -37,7 +37,7 @@ Analyse the specified code area and produce a structured architecture blueprint 
 
 # Startup Sequence (Always Execute First)
 Before analysing any code area, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context-gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before calling context-gatherer subagents.
 
 # Context Gathering
 - If you need local repo context to map the current structure, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.

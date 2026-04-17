@@ -33,7 +33,7 @@ in production.
 
 # Startup Sequence (Always Execute First)
 Before reviewing any code, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before
    calling context gatherer subagents.
 
 # Review Mode

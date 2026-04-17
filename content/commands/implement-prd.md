@@ -155,7 +155,7 @@ Options:
 3. If implementing, run the full implementation pipeline for this task:
 
    (b) Run the full implementation pipeline:
-   1. Follow the Cache-First Protocol: call `cache_ctrl_check_files`, then conditionally call `local-context-gatherer` for a delta scan if files have changed (pass `changed_files` and `new_files` lists).
+   1. Follow the Cache-First Protocol: run `cache-ctrl check-files`, then conditionally call `local-context-gatherer` for a delta scan if files have changed (pass `changed_files` and `new_files` lists).
    2. Call `coder` with the task description, acceptance criteria, and spec summary as context.
    3. Call `reviewer` with the diff.
    4. Call `security-reviewer` with the diff.

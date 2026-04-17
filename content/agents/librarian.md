@@ -36,7 +36,7 @@ Update README.md, AGENTS.md, documentation files, and `.code-examples-for-ai/` e
 
 # Startup Sequence (Always Execute First)
 Before doing any documentation work, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before calling context gatherer subagents.
 
 # Rules
 - Do not modify code files except for OpenApi documentation

@@ -54,7 +54,7 @@ Use reviewer, security-reviewer, or librarian when the user asks for a code revi
 
 # Startup Sequence (Always Execute First)
 Before responding to any request, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before calling context gatherer subagents.
 
 # Critical Rules
 - Don't hallucinate.

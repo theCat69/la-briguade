@@ -29,7 +29,7 @@ Review feature specs for clarity, feasibility, testability, scope control, and p
 
 # Startup Sequence (Always Execute First)
 Before reviewing any feature spec, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl` commands before calling context gatherer subagents.
 
 # Critical Rules
 - Do not rewrite features.
