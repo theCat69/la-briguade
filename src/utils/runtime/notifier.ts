@@ -1,4 +1,4 @@
-import type { PluginInput } from "../types/plugin.js";
+import type { PluginInput } from "../../types/plugin.js";
 
 import { logger } from "./logger.js";
 

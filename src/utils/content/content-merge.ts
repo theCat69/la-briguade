@@ -1,9 +1,9 @@
 import { statSync } from "node:fs";
 import { basename, join } from "node:path";
 
+import { logger } from "../runtime/logger.js";
+import { isNodeError } from "../support/type-guards.js";
 import { readDirSafe } from "./read-dir.js";
-import { isNodeError } from "./type-guards.js";
-import { logger } from "./logger.js";
 
 /**
  * Collects files matching `extension` from each dir in `dirs` (in order).

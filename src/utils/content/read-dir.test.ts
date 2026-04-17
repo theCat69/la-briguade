@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { readdirSync } from "node:fs";
 
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
 import { readDirSafe } from "./read-dir.js";
 
 vi.mock("node:fs", () => ({
   readdirSync: vi.fn(),
 }));
 
-vi.mock("./logger.js", () => ({
+vi.mock("../runtime/logger.js", () => ({
   logger: {
     warn: vi.fn(),
   },
@@ -26,7 +26,7 @@ describe("readDirSafe", () => {
 
   it("should return directory entries on happy path", () => {
     // Arrange
-    mockReaddirSync.mockReturnValue(["a.md", "b.md"]);
+    mockReaddirSync.mockReturnValue(["a.md", "b.md"] as unknown as ReturnType<typeof readdirSync>);
 
     // Act
     const result = readDirSafe("/content/agents", "agents");

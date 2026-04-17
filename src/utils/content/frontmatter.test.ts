@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { parseFrontmatter } from "./frontmatter.js";
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
 
-vi.mock("./logger.js", () => ({
+vi.mock("../runtime/logger.js", () => ({
   logger: {
     warn: vi.fn(),
   },

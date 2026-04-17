@@ -13,8 +13,8 @@ description: Testing guidelines, Vitest conventions, patterns, and coverage requ
 ## Test Location & File Naming
 
 - **Co-located tests alongside source**: place test files next to the module they test
-  - `src/utils/frontmatter.test.ts`
-  - `src/utils/read-dir.test.ts`
+  - `src/utils/content/frontmatter.test.ts`
+  - `src/utils/content/read-dir.test.ts`
   - `src/plugin/agents.test.ts`
   - `src/plugin/commands.test.ts`
   - `src/hooks/index.test.ts`
@@ -108,7 +108,7 @@ export default defineConfig({
         functions: 80,
         branches: 75,
       },
-      include: ["src/utils/**", "src/plugin/**"],
+      include: ["src/utils/**/*.ts", "src/plugin/**"],
     },
   },
 });

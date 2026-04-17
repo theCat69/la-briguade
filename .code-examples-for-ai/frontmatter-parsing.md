@@ -1,7 +1,7 @@
 <!-- Pattern: frontmatter-parsing — Safe YAML frontmatter extraction from .md files with error handling and prototype pollution guard -->
 
 ```typescript
-// src/utils/frontmatter.ts — Parse YAML frontmatter delimited by --- fences.
+// src/utils/content/frontmatter.ts — Parse YAML frontmatter delimited by --- fences.
 // Key points to imitate:
 //   1. Use yaml library's parse() — not JSON.parse, not custom regex
 //   2. Always validate parsed value before casting to Record<string, unknown>
@@ -11,8 +11,8 @@
 
 import { parse as parseYaml } from "yaml";
 
-import { isRecord } from "./type-guards.js";
-import { logger } from "./logger.js";
+import { isRecord } from "../support/type-guards.js";
+import { logger } from "../runtime/logger.js";
 
 const FRONTMATTER_FENCE = "---";
 

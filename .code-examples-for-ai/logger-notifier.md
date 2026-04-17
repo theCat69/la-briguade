@@ -1,7 +1,7 @@
 <!-- Pattern: logger-notifier — Process-wide logger singleton with two-phase init and notifier fallback to logger -->
 
 ```typescript
-// src/utils/logger.ts + src/utils/notifier.ts
+// src/utils/runtime/logger.ts + src/utils/runtime/notifier.ts
 // Demonstrates:
 //   1. Two-phase logger initialization: init early, setLevel after config resolves
 //   2. Session log path at XDG_DATA_HOME (or ~/.local/share) with timestamped filename

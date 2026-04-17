@@ -1,7 +1,7 @@
 <!-- Pattern: safe-dir-read — Defensive directory reading that returns undefined on failure with a labelled warning -->
 
 ```typescript
-// src/utils/read-dir.ts — Wrap readdirSync in a try-catch that warns and returns undefined.
+// src/utils/content/read-dir.ts — Wrap readdirSync in a try-catch that warns and returns undefined.
 // Key points to imitate:
 //   1. Return undefined (not []) on failure — callers must handle the missing-dir case explicitly
 //   2. Always include a label parameter so the warning identifies the context

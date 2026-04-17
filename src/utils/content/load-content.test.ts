@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { collectFiles } from "./content-merge.js";
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
 import { loadContentFiles } from "./load-content.js";
 
 vi.mock("./content-merge.js");
-vi.mock("./logger.js", () => ({
+vi.mock("../runtime/logger.js", () => ({
   logger: {
     warn: vi.fn(),
   },

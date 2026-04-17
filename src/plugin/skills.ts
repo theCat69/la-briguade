@@ -1,6 +1,6 @@
 import type { Config } from "../types/plugin.js";
-import { collectDirs } from "../utils/content-merge.js";
-import { isRecord } from "../utils/type-guards.js";
+import { collectDirs } from "../utils/content/content-merge.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 /**
  * Register the plugin's bundled skills directory into the config.

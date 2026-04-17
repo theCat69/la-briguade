@@ -1,7 +1,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
-import { isRecord } from "../utils/type-guards.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 /**
  * Swap a `claude-opus-*` model string to the equivalent `claude-sonnet-*`.

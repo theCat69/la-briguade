@@ -3,9 +3,9 @@ import { basename, resolve } from "node:path";
 import { z } from "zod";
 
 import { isSafePermissionSubKey } from "../../config/schema.js";
-import { parseFrontmatter } from "../../utils/frontmatter.js";
-import { isNodeError } from "../../utils/type-guards.js";
-import { logger } from "../../utils/logger.js";
+import { parseFrontmatter } from "../../utils/content/frontmatter.js";
+import { logger } from "../../utils/runtime/logger.js";
+import { isNodeError } from "../../utils/support/type-guards.js";
 
 import { toSdkMcpEntry } from "./merge.js";
 import {

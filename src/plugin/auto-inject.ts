@@ -3,9 +3,9 @@ import { basename, join } from "node:path";
 
 import { z } from "zod";
 
-import { parseFrontmatter } from "../utils/frontmatter.js";
-import { isNodeError, isRecord } from "../utils/type-guards.js";
-import { logger } from "../utils/logger.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isNodeError, isRecord } from "../utils/support/type-guards.js";
 import type { Config } from "../types/plugin.js";
 
 // ─── Schemas ────────────────────────────────────────────────────────────────

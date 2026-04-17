@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs");
-vi.mock("../utils/content-merge.js");
+vi.mock("../utils/content/content-merge.js");
 
 import { readFileSync } from "node:fs";
 
 import { loadVendorPrompts } from "./vendors.js";
-import { collectFiles } from "../utils/content-merge.js";
-import { logger } from "../utils/logger.js";
+import { collectFiles } from "../utils/content/content-merge.js";
+import { logger } from "../utils/runtime/logger.js";
 
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockCollectFiles = vi.mocked(collectFiles);

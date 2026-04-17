@@ -1,7 +1,7 @@
 import { parse as parseYaml } from "yaml";
 
-import { isRecord } from "./type-guards.js";
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
+import { isRecord } from "../support/type-guards.js";
 
 const FRONTMATTER_FENCE = "---";
 const POISON_KEYS = new Set(["__proto__", "constructor", "prototype"]);

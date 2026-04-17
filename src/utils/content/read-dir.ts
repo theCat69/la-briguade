@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 
-import { isNodeError } from "./type-guards.js";
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
+import { isNodeError } from "../support/type-guards.js";
 
 /**
  * Read a directory's entries, returning undefined on failure.

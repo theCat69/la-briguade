@@ -5,7 +5,7 @@ vi.mock("node:fs", () => ({
   readFileSync: vi.fn(),
 }));
 
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../utils/runtime/logger.js", () => ({
   logger: {
     warn: vi.fn(),
   },
@@ -13,7 +13,7 @@ vi.mock("../utils/logger.js", () => ({
 
 import { existsSync, readFileSync } from "node:fs";
 
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/runtime/logger.js";
 import {
   collectAutoInjectSkills,
   injectAutoInjectSkills,

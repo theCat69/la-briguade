@@ -1,5 +1,6 @@
+import { logger } from "../runtime/logger.js";
+import { toSanitizedParseFailureReason } from "../support/error-message.js";
 import { collectFiles } from "./content-merge.js";
-import { logger } from "./logger.js";
 
 export function loadContentFiles<T>(
   dirs: string[],
@@ -18,10 +19,7 @@ export function loadContentFiles<T>(
       }
       loaded.set(stem, parsed);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "unknown parse error";
-      const sanitizedReason = reason
-        .replace(/[^\x20-\x7E]/g, "?")
-        .slice(0, 200);
+      const sanitizedReason = toSanitizedParseFailureReason(error, 200);
       logger.warn(`skipping ${filePath}: ${sanitizedReason}`);
     }
   }

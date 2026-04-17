@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createHooks, type AgentSectionsEntry } from "./index.js";
-import { notifier } from "../utils/notifier.js";
+import { notifier } from "../utils/runtime/notifier.js";
 
 import type { PluginInput } from "../types/plugin.js";
 

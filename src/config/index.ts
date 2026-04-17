@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { loadConfig } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/runtime/logger.js";
 
 export function resolveConfigBaseDirs(projectDir: string): {
   globalDir: string;

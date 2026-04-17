@@ -1,5 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 
+import { sanitizeControlCharacters, toErrorMessage } from "../support/error-message.js";
 import { logger } from "./logger.js";
 
 const CACHE_CTRL_VERSION_CHECK_TIMEOUT_MS = 500;
@@ -12,8 +13,7 @@ interface WorkspaceWatchState {
 const watchStateByWorkspace = new Map<string, WorkspaceWatchState>();
 
 function toSafeErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.replace(/[\x00-\x1F\x7F]/g, "?");
+  return sanitizeControlCharacters(toErrorMessage(error));
 }
 
 function isCacheCtrlAvailable(): boolean {

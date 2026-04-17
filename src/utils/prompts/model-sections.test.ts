@@ -2,9 +2,9 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 import { MAX_SEGMENTS, parseModelSections, resolveModelSection } from "./model-sections.js";
 import type { ModelSegment } from "./model-sections.js";
-import { logger } from "./logger.js";
+import { logger } from "../runtime/logger.js";
 
-vi.mock("./logger.js", () => ({
+vi.mock("../runtime/logger.js", () => ({
   logger: {
     warn: vi.fn(),
   },

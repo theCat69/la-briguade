@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { registerSkills } from "./skills.js";
 
 import type { Config } from "../types/plugin.js";
-import { collectDirs } from "../utils/content-merge.js";
+import { collectDirs } from "../utils/content/content-merge.js";
 
-vi.mock("../utils/content-merge.js");
+vi.mock("../utils/content/content-merge.js");
 
 const mockCollectDirs = vi.mocked(collectDirs);
 

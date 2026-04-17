@@ -1,7 +1,7 @@
 <!-- Pattern: content-override-merge — Merge layered content directories with deterministic last-wins precedence -->
 
 ```typescript
-// src/utils/content-merge.ts — Shared helper used by agents/commands/vendors/skills loaders.
+// src/utils/content/content-merge.ts — Shared helper used by agents/commands/vendors/skills loaders.
 // Key points:
 //   1. Input directories are ordered by precedence — builtin first, user overrides last
 //   2. Later directories override earlier ones by key (filename stem or subdir name)

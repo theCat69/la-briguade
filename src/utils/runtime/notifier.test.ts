@@ -8,7 +8,7 @@ vi.mock("./logger.js", () => ({
   },
 }));
 
-import type { PluginInput } from "../types/plugin.js";
+import type { PluginInput } from "../../types/plugin.js";
 
 import { logger } from "./logger.js";
 import { initNotifier, notifier } from "./notifier.js";

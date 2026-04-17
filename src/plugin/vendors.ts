@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { loadContentFiles } from "../utils/load-content.js";
+import { loadContentFiles } from "../utils/content/load-content.js";
 
 const MAX_VENDOR_PROMPT_LENGTH = 4_000; // chars
 

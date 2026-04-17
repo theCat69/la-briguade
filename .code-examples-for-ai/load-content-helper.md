@@ -1,7 +1,7 @@
 <!-- Pattern: load-content-helper — Shared warn-and-skip wrapper for layered content file parsing -->
 
 ```typescript
-// src/utils/load-content.ts
+// src/utils/content/load-content.ts
 import { collectFiles } from "./content-merge.js";
 
 export function loadContentFiles<T>(

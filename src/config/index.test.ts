@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("node:os");
 vi.mock("./loader.js");
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../utils/runtime/logger.js", () => ({
   LOG_LEVELS: ["off", "error", "warn", "info", "debug"] as const,
   logger: {
     warn: vi.fn(),
@@ -18,7 +18,7 @@ import {
 } from "./index.js";
 import type { LaBriguadeConfig } from "./schema.js";
 import type { ConfigLoadResult } from "./loader.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/runtime/logger.js";
 
 const mockHomedir = vi.mocked(homedir);
 const mockLoadConfig = vi.mocked(loadConfig);

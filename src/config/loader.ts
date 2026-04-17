@@ -5,8 +5,8 @@ import { parse as parseJsonc, type ParseError } from "jsonc-parser";
 
 import { LaBriguadeConfigSchema } from "./schema.js";
 import type { LaBriguadeConfig } from "./schema.js";
-import { logger } from "../utils/logger.js";
-import { isNodeError } from "../utils/type-guards.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isNodeError } from "../utils/support/type-guards.js";
 
 /** Discriminated union describing why a config file could not be loaded. */
 export type ConfigLoadError =

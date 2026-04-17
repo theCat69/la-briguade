@@ -72,15 +72,21 @@ src/
   cli/
     index.ts         ← Commander CLI: install / uninstall / doctor / update
   utils/
-    frontmatter.ts   ← YAML frontmatter parser
-    read-dir.ts      ← Safe directory reader
-    content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
-    model-sections.ts ← parseModelSections(), resolveModelSection() — model-family + ALL-target prompt section support (SectionTarget, ModelSegment, ModelSections)
-    type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
-    logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
-    notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
-    cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
-    load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
+    content/
+      frontmatter.ts   ← YAML frontmatter parser
+      read-dir.ts      ← Safe directory reader
+      content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
+      load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
+      read-content-file.ts ← Shared size-limited markdown reader for content loaders
+    prompts/
+      model-sections.ts ← parseModelSections(), resolveModelSection() — model-family + ALL-target prompt section support (SectionTarget, ModelSegment, ModelSections)
+    runtime/
+      logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
+      notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
+      cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
+    support/
+      error-message.ts   ← Shared safe error-message normalization/sanitization helper used by warnings and logging paths
+      type-guards.ts     ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 

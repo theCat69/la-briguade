@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 
 import { resolveOpencodeConfigDir, resolveUserConfig } from "../config/index.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/runtime/logger.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("../config/index.js", () => ({
   resolveUserConfig: vi.fn(),
 }));
 
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../utils/runtime/logger.js", () => ({
   logger: {
     getLogFilePath: vi.fn(),
     setLevel: vi.fn(),

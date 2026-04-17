@@ -352,7 +352,7 @@ This is the recommended place for cross-cutting, model-specific instructions tha
 
 ## Architecture
 
-The plugin resolves content from three ordered layers (built-in package, global user `~/la_briguade/`, project `<root>/`) using a last-wins merge by filename stem. All content loaders use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts`. No files are copied to your system — agents, skills, and commands are registered in-memory at runtime.
+The plugin resolves content from three ordered layers (built-in package, global user `~/la_briguade/`, project `<root>/`) using a last-wins merge by filename stem. Content loaders use `collectFiles()` / `collectDirs()` from `src/utils/content/content-merge.ts`, with related parsing helpers grouped under `src/utils/content/`, runtime services under `src/utils/runtime/`, prompt logic under `src/utils/prompts/`, and shared pure helpers under `src/utils/support/`. No files are copied to your system — agents, skills, and commands are registered in-memory at runtime.
 
 ## License
 
