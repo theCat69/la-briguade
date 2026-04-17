@@ -297,7 +297,7 @@ Then call the `coder` sub-agent with the following prompt:
  > - For each of the six skills above, also create the corresponding project auto-inject skill at:
  >   - `.la_briguade/auto-inject-skills/<skill-name>/SKILL.md`
  > - This is the canonical project folder for auto-injected skills.
- > - Keep backward compatibility: if an older auto-inject skill already exists at `.la_briguade/skills/<skill-name>/SKILL.md`, preserve it. Prefer writing new auto-inject skills in `.la_briguade/auto-inject-skills/`.
+ > - `.la_briguade/skills/` remains regular-skills-only. Do not use it as an auto-inject source.
 >
 > ---
 >

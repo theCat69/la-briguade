@@ -110,7 +110,7 @@ Users can override or extend built-in agents, commands, skills, and vendor promp
 | Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
 | Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
 | Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
-| Auto-inject skills | `~/la_briguade/auto-inject-skills/` + `~/la_briguade/skills/` | `<root>/.la_briguade/auto-inject-skills/` (canonical) + `<root>/.la_briguade/skills/` (legacy compatibility) |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<root>/.la_briguade/auto-inject-skills/` |
 | Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
 
 **Full priority chain** (builtin → project, last-wins):

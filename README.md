@@ -166,23 +166,23 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 
 ## Adding Custom Content
 
-All agents, skills, and commands are plain Markdown files with YAML frontmatter. You can add your own without modifying the package by placing files in user content directories. The plugin resolves content in priority order (last-wins):
+All agents, skills, commands, vendor prompts, and auto-inject skills are plain Markdown files with YAML frontmatter. You can add your own without modifying the package by placing files in user content directories. The plugin resolves content in priority order (last-wins):
 
 | Content type | Global user | Project user |
 |---|---|---|
 | Agents | `~/la_briguade/agents/` | `<project_root>/.la_briguade/agents/` |
 | Commands | `~/la_briguade/commands/` | `<project_root>/.la_briguade/commands/` |
 | Skills (regular) | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/.la_briguade/skills/` |
-| Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<project_root>/.la_briguade/auto-inject-skills/` _(canonical)_; `<project_root>/.la_briguade/skills/` _(legacy-compatible)_ |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<project_root>/.la_briguade/auto-inject-skills/` |
 | Vendor prompts | `~/la_briguade/vendor-prompts/` | `<project_root>/.la_briguade/vendor-prompts/` |
 
-**Full priority chain** (lowest → highest, last-wins):
+**Priority chain by content type** (lowest → highest, last-wins):
 
-1. **Built-in** — bundled inside the npm package (`content/` directory)
-2. **OpenCode global skills** — `~/.config/opencode/skills/` _(skills only)_
-3. **Global user** — `~/la_briguade/{agents,commands,skills,vendor-prompts}/`
-4. **OpenCode project skills** — `<project_root>/.opencode/skills/` _(skills only)_
-5. **Project user** — `<project_root>/.la_briguade/{agents,commands,skills,auto-inject-skills,vendor-prompts}/`
+- **Agents / Commands / Vendor prompts**: built-in `content/<type>/` → `~/la_briguade/<type>/` → `<project_root>/.la_briguade/<type>/`
+- **Skills (regular)**: built-in `content/skills/` → `~/.config/opencode/skills/` → `~/la_briguade/skills/` → `<project_root>/.opencode/skills/` → `<project_root>/.la_briguade/skills/`
+- **Auto-inject skills**: built-in `content/auto-inject-skills/` → `~/la_briguade/auto-inject-skills/` → `<project_root>/.la_briguade/auto-inject-skills/`
+
+> Note: auto-inject discovery now reads only `auto-inject-skills` roots. Legacy regular `skills/` roots are not scanned for auto-inject entries.
 
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 

@@ -204,7 +204,7 @@ describe("LaBriguadePlugin", () => {
     expect(capturedSections?.get("coder")).toEqual(sharedSection);
   });
 
-  it("should include canonical and legacy project auto-inject roots", async () => {
+  it("should include only canonical project auto-inject root", async () => {
     // Arrange
     mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
     mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
@@ -220,7 +220,6 @@ describe("LaBriguadePlugin", () => {
     const activeSkills = new Set<string>();
     const autoInjectDirMap = new Map([
       ["typescript", "/project/.la_briguade/auto-inject-skills/typescript"],
-      ["legacy", "/project/.la_briguade/skills/typescript"],
     ]);
     mockCollectDirs.mockReturnValue(autoInjectDirMap);
     mockCollectAutoInjectSkills.mockReturnValue(autoInjectEntries);
@@ -232,19 +231,18 @@ describe("LaBriguadePlugin", () => {
 
     // Assert
     const autoInjectRoots = mockCollectDirs.mock.calls[0]?.[0] ?? [];
-    expect(autoInjectRoots).toContain("/project/.la_briguade/skills");
     expect(autoInjectRoots).toContain("/project/.la_briguade/auto-inject-skills");
-    expect(autoInjectRoots.indexOf("/project/.la_briguade/skills")).toBeLessThan(
-      autoInjectRoots.indexOf("/project/.la_briguade/auto-inject-skills"),
-    );
+    expect(autoInjectRoots).toContain("/global/auto-inject-skills");
+    expect(autoInjectRoots).not.toContain("/config/opencode/skills");
+    expect(autoInjectRoots).not.toContain("/global/skills");
+    expect(autoInjectRoots).not.toContain("/project/.opencode/skills");
+    expect(autoInjectRoots).not.toContain("/project/.la_briguade/skills");
 
     const autoInjectSkillDirs = mockCollectAutoInjectSkills.mock.calls[0]?.[0] ?? [];
     expect(autoInjectSkillDirs).toContain(
       "/project/.la_briguade/auto-inject-skills/typescript",
     );
-    expect(autoInjectSkillDirs).toContain(
-      "/project/.la_briguade/skills/typescript",
-    );
+    expect(autoInjectSkillDirs).not.toContain("/project/.la_briguade/skills/typescript");
     expect(mockResolveActiveSkills).toHaveBeenCalledWith(autoInjectEntries, "/project");
     expect(mockInjectAutoInjectSkills).toHaveBeenCalledWith(
       {} as never,
