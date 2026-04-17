@@ -29,6 +29,7 @@ import {
 } from "./plugin/auto-inject.js";
 import { collectDirs } from "./utils/content-merge.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
+import { startCacheCtrlWatch } from "./utils/cache-ctrl-watch.js";
 import { initLogger, logger } from "./utils/logger.js";
 
 const agentsDir = "agents";
@@ -53,6 +54,7 @@ const builtinVendorDir = join(contentDir, vendorPromptsDir);
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
+  startCacheCtrlWatch(ctx.directory);
 
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
   // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/.la_briguade/agents/) — last-wins
