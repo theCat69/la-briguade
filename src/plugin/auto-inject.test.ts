@@ -200,6 +200,22 @@ describe("collectAutoInjectSkills", () => {
     expect(result.get("general-coding")?.body).toBe("General body.");
     expect(result.get("typescript")?.body).toBe("TypeScript body.");
   });
+
+  it("should use canonical project auto-inject dir only", () => {
+    // Arrange
+    mockReadFileSync.mockReturnValue(
+      makeSkillMd({ agents: ["coder"], body: "Canonical auto-inject skill body." }),
+    );
+
+    // Act
+    const result = collectAutoInjectSkills([
+      "/project/.la_briguade/auto-inject-skills/typescript",
+    ]);
+
+    // Assert
+    expect(result.size).toBe(1);
+    expect(result.get("typescript")?.body).toBe("Canonical auto-inject skill body.");
+  });
 });
 
 // ─── resolveActiveSkills ──────────────────────────────────────────────────────

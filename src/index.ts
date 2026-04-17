@@ -29,6 +29,7 @@ import {
 } from "./plugin/auto-inject.js";
 import { collectDirs } from "./utils/content-merge.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
+import { startCacheCtrlWatch } from "./utils/cache-ctrl-watch.js";
 import { initLogger, logger } from "./utils/logger.js";
 
 const agentsDir = "agents";
@@ -53,6 +54,7 @@ const builtinVendorDir = join(contentDir, vendorPromptsDir);
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
+  startCacheCtrlWatch(ctx.directory);
 
   const { globalDir, projectDir } = resolveConfigBaseDirs(ctx.directory);
   // Agents: builtin < global (~/la_briguade/agents/) < project (<root>/.la_briguade/agents/) — last-wins
@@ -72,11 +74,14 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
     join(projectDir, opencodeProjectDir, skillsDir),         // opencode project: <root>/.opencode/skills
     join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
   ];
-  // Auto-inject: builtin < global auto-inject < global skills < project skills — last-wins
+  // Auto-inject: builtin < global auto-inject < project auto-inject — last-wins
   const userAutoInjectRoots = [
     join(globalDir, autoInjectSkillsDir),                    // global: ~/la_briguade/auto-inject-skills
-    join(globalDir, skillsDir),                              // global skills with agents: frontmatter
-    join(projectDir, laBriguadeProjectDir, skillsDir),       // project: <root>/.la_briguade/skills
+    join(
+      projectDir,
+      laBriguadeProjectDir,
+      autoInjectSkillsDir,
+    ), // project: <root>/.la_briguade/auto-inject-skills
   ];
   // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/.la_briguade/vendor-prompts/) — last-wins
   const userVendorDirs = [

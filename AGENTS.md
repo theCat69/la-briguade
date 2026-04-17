@@ -79,6 +79,7 @@ src/
     type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
     logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
     notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
+    cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
     load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
@@ -109,7 +110,7 @@ Users can override or extend built-in agents, commands, skills, and vendor promp
 | Agents | `~/la_briguade/agents/` | `<root>/.la_briguade/agents/` |
 | Commands | `~/la_briguade/commands/` | `<root>/.la_briguade/commands/` |
 | Skills | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<root>/.opencode/skills/` or `<root>/.la_briguade/skills/` |
-| Auto-inject skills | `~/la_briguade/auto-inject-skills/` + `~/la_briguade/skills/` | `<root>/.la_briguade/skills/` |
+| Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<root>/.la_briguade/auto-inject-skills/` |
 | Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
 
 **Full priority chain** (builtin → project, last-wins):
