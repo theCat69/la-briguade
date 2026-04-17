@@ -1,14 +1,14 @@
 ---
-model: github-copilot/claude-sonnet-4.6
+model: github-copilot/gpt-5.4
 variant: high
 description: "Security-focused code reviewer for production systems"
-mode: subagent 
+mode: subagent
 permission:
   "*": "deny"
   "github_*": "allow"
   read: "allow"
   glob: "allow"
-  grep: "allow" 
+  grep: "allow"
   bash:
     "*": "deny"
     "git log *": "allow"
@@ -96,7 +96,7 @@ After determining scope, gather context using the following rules:
    external-context-gatherer** protocol in skill `cache-ctrl-caller`.
 8. Compile findings with severity ratings.
 
-====== GEMINI ======
+====== GPT ======
 # Workflow
 For this agent, stay in security-review mode only. Do NOT drift into general code
 review, refactoring advice, or implementation planning.
