@@ -67,8 +67,8 @@ Before starting any workflow step, unconditionally run all of the following step
   External context.
 - Ask user when requirements are incomplete.
 - You control cache invalidation.
-- Prioritize quality. Make coder implement all relevant improvements from reviewer and
-  security-reviewer.
+- Prioritize quality. Make coder implement all relevant improvements from reviewer and (when
+  explicitly requested by the user) security-reviewer.
 - Reviewer and security-reviewer findings can be false positives. Before acting on any finding,
   reason about whether it is genuinely applicable in the current context. If you can confidently
   determine it is a false positive (e.g. flagging an intentional permission grant as "dead
@@ -214,11 +214,10 @@ protocol violation.
 6. **Delegate to `reviewer`** with snapshot path + git diff summary. Do NOT review the diff
    yourself. Reviewer may autonomously call external-context-gatherer for fresh best practices
    on external libraries or non-trivial patterns.
-7. **Delegate to `security-reviewer`** with snapshot path + git diff summary. Do NOT perform
-   security analysis yourself. Security-reviewer will check the GitHub Advisory Database for
-   CVEs in dependencies (works for all projects), and additionally check Dependabot alerts if
-   the project is hosted on GitHub.
-8. **Security triage — re-verification loop.** For each finding from step 7 that is not clearly
+7. **Delegate to `security-reviewer` only when the user explicitly requests security review**
+   (for example: "run security review", "security audit", "check vulnerabilities") with snapshot
+   path + git diff summary. Do NOT perform security analysis yourself.
+8. **Security triage — re-verification loop (only if step 7 ran).** For each finding from step 7 that is not clearly
    Critical or High severity with an obvious fix, assess two disqualifying conditions:
    - **Code cost**: would fixing it require adding more than ~5 lines of new code (e.g. custom
      guards, input validators, sanitizer layers)?
@@ -273,9 +272,9 @@ Re-read your Critical Rules and Delegation Map before step 5 and again before st
    include raw logs, diffs, or web pages in the snapshot.
 10. Call `coder` with the snapshot path and a brief summary. Never write code yourself.
 11. Call `reviewer` with the snapshot path and git diff. Never analyse the diff yourself.
-12. Call `security-reviewer` with the snapshot path and git diff. Never perform security
-    analysis yourself.
-13. For each finding from step 12 that is not clearly Critical or High severity with an obvious
+12. Call `security-reviewer` with the snapshot path and git diff only when the user explicitly
+    requested security review. Never perform security analysis yourself.
+13. If step 12 ran, for each finding from step 12 that is not clearly Critical or High severity with an obvious
     fix, run the re-verification loop:
     - Assess: would the fix require more than ~5 lines of new code, or could it cause a
       performance regression on a hot path?

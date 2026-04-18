@@ -10,16 +10,24 @@ No files are copied to the host system — everything is registered in-memory at
 
 ## Project Guidelines
 
-Detailed, stack-specific guidelines are in `.opencode/skills/`. Load the relevant skill before starting any task.
+This file is a high-level overview. The canonical detailed guideline source is:
+
+- `.la_briguade/auto-inject-skills/*/SKILL.md` (authoritative)
+
+Optional mirror (only when explicitly maintained by project workflows):
+
+- `.la_briguade/skills/*/SKILL.md`
+
+Load the relevant canonical skill before starting any task.
 
 | Skill file | Description |
 |---|---|
-| `.opencode/skills/project-coding/SKILL.md` | TypeScript strict ESM conventions, naming, import order, error handling, architecture patterns (plugin registration, frontmatter, JSONC, hooks) |
-| `.opencode/skills/project-build/SKILL.md` | Build commands (`npm run build/dev/clean`), prerequisites (Node ≥22), release workflow, output structure |
-| `.opencode/skills/project-test/SKILL.md` | Vitest v4 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
-| `.opencode/skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
-| `.opencode/skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
-| `.opencode/skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
+| `.la_briguade/auto-inject-skills/project-coding/SKILL.md` | TypeScript strict ESM conventions, naming, import order, error handling, architecture patterns (plugin registration, frontmatter, JSONC, hooks) |
+| `.la_briguade/auto-inject-skills/project-build/SKILL.md` | Build commands (`npm run build/dev/clean`), prerequisites (Node ≥22), release workflow, output structure |
+| `.la_briguade/auto-inject-skills/project-test/SKILL.md` | Vitest v4 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
+| `.la_briguade/auto-inject-skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
+| `.la_briguade/auto-inject-skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
+| `.la_briguade/auto-inject-skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
 
 ---
 

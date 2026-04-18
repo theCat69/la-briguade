@@ -1,7 +1,48 @@
 ---
 name: project-security
 description: Security guidelines for la-briguade — safe parsing, dependency hygiene, CLI input safety, and secret management
+agents:
+  - coder
+  - reviewer
+  - security-reviewer
 ---
+
+## Scope
+
+- **In scope**: secret handling, untrusted input boundaries, dependency/audit policy,
+  command/path safety, and vulnerability prevention patterns in this plugin.
+- **Out of scope**: unrelated product policy or speculative threat models without repository impact.
+
+## Invariants
+
+- Untrusted content **MUST** be validated at parsing boundaries before use.
+- Secrets **MUST NOT** be committed to source, copied into skills, or written to logs.
+- File paths from variable input **MUST** be sanitized before filesystem joins.
+- Security checks **MUST** fail closed for critical release gates (audit/build/test).
+- Dangerous dynamic execution primitives (`eval`, `new Function`, dynamic `require`) **MUST NOT** be introduced.
+- Permission injection **MUST NOT** overwrite explicit agent permissions.
+
+## Validation Checklist
+
+Run for release-critical verification:
+
+```bash
+npm run build
+npm test
+npm audit
+```
+
+Manually verify for touched security-sensitive areas:
+- frontmatter parsing still validates non-null object shape,
+- permission/path sanitization remains intact,
+- no secrets added to committed markdown/config files.
+
+## Failure Handling
+
+- If validation of untrusted input cannot be guaranteed, block the change and request redesign.
+- If audit reports high/critical vulnerabilities, block release until mitigated or explicitly risk-accepted.
+- If a potential secret leak is detected, redact immediately and rotate compromised credential if applicable.
+- If command/path safety checks fail, stop execution path and emit actionable warning/error context.
 
 ## Secrets Management
 

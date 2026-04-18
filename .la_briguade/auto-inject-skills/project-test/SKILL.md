@@ -1,7 +1,45 @@
 ---
 name: project-test
 description: Testing guidelines, Vitest conventions, patterns, and coverage requirements for la-briguade
+agents:
+  - coder
+  - reviewer
+  - builder
 ---
+
+## Scope
+
+- **In scope**: test framework conventions, file placement/naming, behavior-first test design,
+  mocking discipline, and coverage expectations.
+- **Out of scope**: production implementation details and non-deterministic test behavior.
+
+## Invariants
+
+- Tests **MUST** verify observable behavior, not private implementation details.
+- New tests **MUST** use `.test.ts` and be co-located with the target module.
+- Test cases **MUST** follow Arrange → Act → Assert.
+- Mocks/spies **MUST** be restored after each test.
+- The suite **MUST** run in `node` environment (never `jsdom` for this project).
+- Failing tests **MUST** block completion of the task.
+
+## Validation Checklist
+
+```bash
+npm test
+npx vitest run --coverage
+```
+
+Confirm:
+- coverage targets are met for modules under active change,
+- no flaky/non-deterministic assertions were introduced,
+- no mock leakage across test boundaries.
+
+## Failure Handling
+
+- If tests fail, fix root causes before continuing.
+- If coverage regresses below thresholds in touched areas, add or improve tests.
+- If an assertion is flaky, replace timing-sensitive checks with deterministic behavior checks.
+- If a required test command is unavailable, report the missing prerequisite and stop.
 
 ## Test Framework
 

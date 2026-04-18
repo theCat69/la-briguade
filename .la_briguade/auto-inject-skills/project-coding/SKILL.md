@@ -1,8 +1,52 @@
 ---
 name: project-coding
 description: Project-specific coding guidelines, naming conventions, architecture patterns, and code examples for la-briguade
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 # Project coding guidelines
+
+## Scope
+
+- **In scope**: production TypeScript coding standards, architecture patterns, dependency policy,
+  and repository-specific implementation constraints.
+- **Out of scope**: release logistics, test-only policy details, and non-code documentation process.
+
+## Invariants
+
+- Changes **MUST** compile under strict TypeScript configuration.
+- External or user-provided data **MUST** be validated at runtime boundaries.
+- Error handling **MUST** be explicit and actionable; silent failure paths are disallowed.
+- Patterns **MUST** preserve content override precedence and non-overwrite permission semantics.
+- Code **MUST NOT** introduce placeholder logic, dead/commented-out production paths, or unsafe type assertions.
+- Build/test validation **MUST** pass before work is considered complete.
+
+## Validation Checklist
+
+```bash
+npm run build
+npm test
+```
+
+For touched config/schema boundaries, also validate:
+
+```bash
+npm run generate-schema
+```
+
+## Failure Handling
+
+- If local context is insufficient, stop and request missing context rather than inventing APIs.
+- If validation fails, fix root cause first; do not bypass checks.
+- If constraints conflict, preserve stronger safety/contract wording and document the resolved decision.
 
 ## Code Style
 

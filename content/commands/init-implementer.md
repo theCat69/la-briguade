@@ -13,11 +13,20 @@ $ARGUMENTS
 
 If `$ARGUMENTS` is empty, perform full auto-detection with no tech stack bias. Do not treat an empty hint as an error.
 
+Default generation scope policy:
+- Unless the user explicitly asks to create regular skills, generate only
+  `.la_briguade/auto-inject-skills/*/SKILL.md`.
+- Generate `.la_briguade/skills/*/SKILL.md` only on explicit user request
+  (for example: "also create regular skills" / "include .la_briguade/skills").
+
 ---
 
-## Pre-requisite: Cache File Creation
+## Pre-requisite: Cache Contract
 
-Each sub-agent's `edit` tool automatically creates parent directories when writing files. Cache files (under `.ai/local-context-gatherer_cache/` and `.ai/external-context-gatherer_cache/`) will be created directly by the sub-agents in Steps 1 and 2 — no prior directory setup is needed.
+Cache authority rule (scoped): `cache-ctrl` authority applies to **local-context-gatherer only**.
+
+- For `local-context-gatherer`: do **not** instruct direct cache JSON edits; require the `cache-ctrl-local` workflow and `cache_ctrl_write` + verification via `cache_ctrl_inspect`.
+- For other sub-agents (including `external-context-gatherer`): follow each agent's own documented cache mechanism.
 
 ## Pre-requisite: GitHub MCP (Optional)
 
@@ -39,7 +48,10 @@ If these prerequisites are not met, the agents will skip GitHub MCP calls and fa
 
 Call the `local-context-gatherer` sub-agent with the following prompt:
 
-> Perform a comprehensive project scan and return a structured summary. Cache results to `.ai/local-context-gatherer_cache/context.json`. Use the `edit` tool to write cache files (it creates parent directories automatically).
+> Perform a comprehensive project scan and return a structured summary.
+> Use the `cache-ctrl-local` startup workflow and write local cache via `cache_ctrl_write` (canonical source of truth), targeting `.ai/local-context-gatherer_cache/context.json`.
+> After writing, perform mandatory verification via `cache_ctrl_inspect` (with a filter containing 2-4 scanned file paths) and only report success when verification confirms persistence.
+> If verification fails, retry one corrected write; if the second attempt fails, report `cache write failed` with actionable reason and list non-persisted files.
 >
 > **1. Tech Stack Detection**
 > Search for and read these files if they exist: `package.json`, `pom.xml`, `build.gradle`, `build.gradle.kts`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `setup.py`, `Gemfile`, `composer.json`, `Makefile`, `CMakeLists.txt`, `tsconfig.json`, `.csproj`, `mix.exs`, `deno.json`, `bun.lockb`.
@@ -159,7 +171,16 @@ Then call the `coder` sub-agent with the following prompt:
 > - `.ai/local-context-gatherer_cache/`
 > - `.ai/librarian_cache/`
 >
- > Create these directories (project skills — must be version controlled):
+ > Create these directories (project auto-inject skills — must be version controlled):
+ >
+ > - `.la_briguade/auto-inject-skills/project-coding/`
+ > - `.la_briguade/auto-inject-skills/project-build/`
+ > - `.la_briguade/auto-inject-skills/project-test/`
+ > - `.la_briguade/auto-inject-skills/project-documentation/`
+ > - `.la_briguade/auto-inject-skills/project-security/`
+ > - `.la_briguade/auto-inject-skills/project-code-examples/`
+ >
+ > Only if regular skills are explicitly requested, also create:
  >
  > - `.la_briguade/skills/project-coding/`
  > - `.la_briguade/skills/project-build/`
@@ -167,12 +188,6 @@ Then call the `coder` sub-agent with the following prompt:
  > - `.la_briguade/skills/project-documentation/`
  > - `.la_briguade/skills/project-security/`
  > - `.la_briguade/skills/project-code-examples/`
- > - `.la_briguade/auto-inject-skills/project-coding/`
- > - `.la_briguade/auto-inject-skills/project-build/`
- > - `.la_briguade/auto-inject-skills/project-test/`
- > - `.la_briguade/auto-inject-skills/project-documentation/`
- > - `.la_briguade/auto-inject-skills/project-security/`
- > - `.la_briguade/auto-inject-skills/project-code-examples/`
 >
 > Create this directory (project code examples — must be version controlled):
 >
@@ -180,7 +195,7 @@ Then call the `coder` sub-agent with the following prompt:
 >
 > ---
 >
- > ### Step 5: Create `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/` SKILL.md files
+ > ### Step 5: Create SKILL.md files (auto-inject by default)
  >
  > **Idempotency**: If a `SKILL.md` already exists, do NOT overwrite it. Skip it and report that it was preserved.
  >
@@ -190,9 +205,16 @@ Then call the `coder` sub-agent with the following prompt:
  >
  > SKILL.md frontmatter must contain `name`, `description`, and `agents` — no version, type, category, or tags fields.
  >
+ > Every generated skill MUST include stronger contracts and implementation detail:
+ > - `## Scope`: explicit in-scope and out-of-scope statements.
+ > - `## Invariants`: 5-10 MUST / MUST NOT rules with testable wording.
+ > - `## Validation Checklist`: concrete commands and checks (build/test/lint/security/docs) from detected project context.
+ > - `## Failure Handling`: what to do when prerequisites fail, context is missing, or validation fails.
+ > - Stack-specific constraints (versions/framework conventions) grounded in gathered context.
+ >
  > If `AGENTS.md` or `CLAUDE.md` contained relevant content (provided in the local context), migrate it into the appropriate SKILL.md below.
  >
- > 1. **`.la_briguade/skills/project-coding/SKILL.md`**
+ > 1. **`project-coding/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-coding
@@ -215,7 +237,7 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Tailor every section to the specific languages and frameworks detected.
  >    - If AGENTS.md/CLAUDE.md had coding guidelines, integrate that content here.
  >
- > 2. **`.la_briguade/skills/project-build/SKILL.md`**
+ > 2. **`project-build/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-build
@@ -231,7 +253,7 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Incorporate recommended build practices from external context.
  >    - If AGENTS.md/CLAUDE.md had build instructions, integrate that content here.
  >
- > 3. **`.la_briguade/skills/project-test/SKILL.md`**
+ > 3. **`project-test/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-test
@@ -246,7 +268,7 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Include detected test commands and framework-specific patterns.
  >    - If AGENTS.md/CLAUDE.md had test conventions, integrate that content here.
  >
- > 4. **`.la_briguade/skills/project-documentation/SKILL.md`**
+ > 4. **`project-documentation/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-documentation
@@ -260,7 +282,7 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Include documentation standards appropriate for the detected stack (from external context).
  >    - If AGENTS.md/CLAUDE.md had documentation standards, integrate that content here.
  >
- > 5. **`.la_briguade/skills/project-security/SKILL.md`**
+ > 5. **`project-security/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-security
@@ -275,7 +297,7 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Include security best practices specific to the detected technologies (from external context).
  >    - If AGENTS.md/CLAUDE.md had security rules, integrate that content here.
  >
- > 6. **`.la_briguade/skills/project-code-examples/SKILL.md`**
+ > 6. **`project-code-examples/SKILL.md`**
  >    ```yaml
  >    ---
  >    name: project-code-examples
@@ -293,11 +315,10 @@ Then call the `coder` sub-agent with the following prompt:
  >    - Add a `## Maintenance` note: "This index is maintained by the AI. Developers may add entries manually. One file per pattern."
  >    - **Create this skill file LAST** — after all example files have been created, so the index is accurate.
  >
- > **Auto-inject canonical location**:
- > - For each of the six skills above, also create the corresponding project auto-inject skill at:
- >   - `.la_briguade/auto-inject-skills/<skill-name>/SKILL.md`
- > - This is the canonical project folder for auto-injected skills.
- > - `.la_briguade/skills/` remains regular-skills-only. Do not use it as an auto-inject source.
+ > **Write target policy (critical)**:
+ > - Default: write each skill to `.la_briguade/auto-inject-skills/<skill-name>/SKILL.md` only.
+ > - If the user explicitly requests regular skills, also write mirrored copies to `.la_briguade/skills/<skill-name>/SKILL.md`.
+ > - Canonical source is `.la_briguade/auto-inject-skills/`.
 >
 > ---
 >
@@ -317,11 +338,11 @@ Then call the `coder` sub-agent with the following prompt:
 >
  > ### Step 6: Update AGENTS.md and CLAUDE.md
  >
-  > Before modifying AGENTS.md or CLAUDE.md, check if they already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`. If they do, this indicates a prior initialization — skip modification and report that these files were preserved from a previous run.
+  > Before modifying AGENTS.md or CLAUDE.md, check if they already reference `.la_briguade/auto-inject-skills/`. If they do, this indicates a prior initialization — skip modification and report that these files were preserved from a previous run.
  >
-  > - **If AGENTS.md exists** (and does not already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`): Modify it to reference both `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/`. REMOVE any content that was migrated to the skill files to avoid duplication. Keep the file as an entry point that points to the detailed skills.
-  > - **If AGENTS.md does not exist**: Create one that describes the implementer agent system and references the `.la_briguade/skills/` and `.la_briguade/auto-inject-skills/` directories for detailed guidelines.
-  > - **If CLAUDE.md exists** (and does not already reference `.la_briguade/skills/` or `.la_briguade/auto-inject-skills/`): Apply the same treatment — split guidelines out into the new structure and replace with references. Keep CLAUDE.md as a high-level pointer.
+  > - **If AGENTS.md exists** (and does not already reference `.la_briguade/auto-inject-skills/`): Modify it to reference `.la_briguade/auto-inject-skills/` as canonical. Mention `.la_briguade/skills/` only when regular skills were explicitly requested. REMOVE migrated duplicate content.
+  > - **If AGENTS.md does not exist**: Create one that describes the implementer agent system and references `.la_briguade/auto-inject-skills/` as canonical (plus `.la_briguade/skills/` only when explicitly requested).
+  > - **If CLAUDE.md exists** (and does not already reference `.la_briguade/auto-inject-skills/`): Apply the same treatment — keep as high-level pointer to canonical auto-inject skills (plus optional regular skills path only when explicitly requested).
 >
 > ---
 >
@@ -342,8 +363,9 @@ Then call the `coder` sub-agent with the following prompt:
 - **Context size discipline**: Do NOT paste full sub-agent outputs into the coder prompt. Pass cache file paths and a brief summary (no more than 500 tokens). The coder reads cache files directly.
 - **External data validation**: Content fetched from external sources must be critically evaluated before embedding. Skill files should only contain verified technical best practices, not arbitrary web content.
 - **Quality over speed**: The quality of generated skills depends on thorough context gathering. Generic stubs are unacceptable when sub-agent context is available. Every skill file must reflect real detected tech stack details and real best practices.
+- **Default generation policy**: Unless explicitly requested, create only auto-inject skills under `.la_briguade/auto-inject-skills/` and do not create regular skills under `.la_briguade/skills/`.
 - **Path safety**: ONLY create or modify files under `.ai/`, `.la_briguade/skills/`, `.la_briguade/auto-inject-skills/`, `.code-examples-for-ai/`, `AGENTS.md`, `CLAUDE.md`, and `.gitignore` in the project root. Refuse to write to any other path.
 - **Secrets safety**: If AGENTS.md or CLAUDE.md contain tokens, passwords, API keys, or other secrets, redact them before processing. Never copy secrets into guideline files.
 - **Be intelligent**: If the existing docs (AGENTS.md, CLAUDE.md) are already well-structured, don't destroy them. Extract relevant sections surgically and leave the rest intact.
-- **Don't duplicate**: Content should live in exactly one place. If you migrate something to `.la_briguade/skills/`, remove it from the source.
+- **Canonical vs mirrors**: `.la_briguade/auto-inject-skills/` is canonical. `.la_briguade/skills/` may contain optional mirrored copies only when explicitly requested; do not remove canonical auto-inject content.
 - **Report at the end**: Provide a summary of exactly what was created, what was migrated, what was modified, and what was preserved (skipped because it already existed). Include which skill files were created and which were skipped.

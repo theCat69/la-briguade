@@ -20,13 +20,14 @@ const DetectSchema = z.object({
 
 const AutoInjectFrontmatterSchema = z.object({
   agents: z.array(z.string()).optional(),
+  description: z.string().optional(),
   detect: DetectSchema.optional(),
 });
 
 /** A single auto-inject skill entry, parsed from a SKILL.md file. */
 export type AutoInjectEntry = {
   skillName: string;
-  /** Raw markdown body (after frontmatter) to append to matching agent prompts. */
+  skillDecription: string;
   body: string;
   /** Agent names this skill should be injected into (from `agents:` frontmatter). */
   agents: string[];
@@ -74,10 +75,11 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
       continue;
     }
 
-    const { agents = [], detect } = parsed.data;
+    const { agents = [], description, detect } = parsed.data;
 
     entries.set(skillName, {
       skillName,
+      skillDecription: description ?? "",
       body: body.trim(),
       agents,
       detectFiles: detect?.files ?? [],
@@ -197,7 +199,7 @@ export function injectAutoInjectSkills(
       const existingPrompt = agentConfig["prompt"];
       const promptStr = typeof existingPrompt === "string" ? existingPrompt : "";
       agentConfig["prompt"] = promptStr.length > 0
-        ? `${promptStr}\n\n${entry.body}`
+        ? `${promptStr}\n\n---\n#${entry.skillName}\n${entry.skillDecription}\n${entry.body}\n---`
         : entry.body;
     }
   }

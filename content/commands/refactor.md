@@ -113,7 +113,7 @@ Route to the Orchestrator with the following context pre-loaded:
 > **Design challenges to consider:**
 > [critic output from Step 3]
 >
-> Proceed with the implementation pipeline (coder → reviewer → security-reviewer → librarian).
+> Proceed with the implementation pipeline (coder → reviewer → librarian), and run `security-reviewer` only if the user explicitly requests a security review/audit.
 
 **Adjust the plan**:
 Use the `question` tool to collect the user's adjustments, then re-run from Step 2 with the amended scope/context.

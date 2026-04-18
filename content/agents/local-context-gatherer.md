@@ -34,23 +34,41 @@ Reuse cache if repo files have not changed.
 
 1. Call `check-files` → get `changed_files`, `new_files`, `deleted_git_files`.
 2. If `status: "unchanged"` AND `new_files` is empty → cache hit; return cached context without scanning.
-3. Read the **full file content** of each file in `changed_files` + `new_files`. Do NOT re-read unchanged files, but for files you do read — read them in full, not just the diff. The delta identifies which files changed; the content of the whole file determines what facts to write.
-3b. If the calling prompt explicitly names files to re-read (e.g. "Also re-read: X"), read those files in full regardless of check-files status.
-4. Write: submit only the scanned files in `tracked_files`.
-   - `facts`: `{ "<path>": ["fact", ...] }` for each file you read in this session. Write one fact entry per notable characteristic (purpose, structure, key dependencies, patterns, constraints, entry points) — submitting thin facts for a re-read path **permanently replaces** prior cache, so write as many entries as there are distinct notable properties.
-   - `global_facts`: submit ONLY if a structural file (AGENTS.md, install.sh, opencode.json, package.json, *.toml) was in `changed_files` or `new_files`.
-   - Always re-submit `topic` and `description`.
-   - RULE: every key in `facts` must match a path in submitted `tracked_files`.
-5. Cold start (no cache or empty `tracked_files`): scan all relevant files (git-tracked and untracked non-ignored) before writing.
+3. Cold start rule: if cache is missing/empty (no usable prior `tracked_files`), run a full relevant scan first (git-tracked + untracked non-ignored files) before any write/verification step.
+4. Read the **full file content** of each file in `changed_files` + `new_files`. Do NOT re-read unchanged files, but for files you do read — read them in full, not just the diff. The delta identifies which files changed; the content of the whole file determines what facts to write.
+4b. If the calling prompt explicitly names files to re-read (e.g. "Also re-read: X"), read those files in full regardless of check-files status.
+5. Write: submit only the scanned files in `tracked_files`.
+    - `facts`: `{ "<path>": ["fact", ...] }` for each file you read in this session. Write one fact entry per notable characteristic (purpose, structure, key dependencies, patterns, constraints, entry points) — submitting thin facts for a re-read path **permanently replaces** prior cache, so write as many entries as there are distinct notable properties.
+    - `global_facts`: submit ONLY if a structural file (AGENTS.md, install.sh, opencode.json, package.json, *.toml) was in `changed_files` or `new_files`.
+    - Always re-submit `topic` and `description`.
+    - RULE: every key in `facts` must match a path in submitted `tracked_files`.
+    - Use `cache_ctrl_write` as the canonical write path (cache-ctrl is the source of truth).
+    - Write contract: a write is considered successful only if `cache_ctrl_write` returns success without validation errors.
+6. Post-write verification (mandatory for reliability/observability):
+   - Immediately call `cache_ctrl_inspect` with `agent: "local"` and `filter` containing 2-4 scanned file paths.
+   - Confirm written facts are visible in inspect output.
+   - If verification fails, retry one corrected write (fix payload shape, tracked_files/facts mismatch, or missing topic/description).
+   - If the second attempt fails, report `cache write failed` with actionable reason and include which files were not persisted.
+
+## Write Payload Contract (Strict)
+- `topic`: non-empty string, stable for the task scope.
+- `description`: non-empty string, brief and factual.
+- `tracked_files`: deduplicated relative paths for this write scope only.
+- `facts`: object keyed by file path; each value is a non-empty string array.
+- `global_facts`: include only when structural files changed; otherwise omit.
+- Never send paths outside repository root.
 
 # Critical Rules
 - Do not propose solutions.
 - Do not write code.
 - Do not invent project details.
 - Prefer repo facts over assumptions.
+- Never claim cache success without post-write verification.
 
 # Output (≤ 500 tokens)
 - Cache hit/miss
+- Delta since last run
+- Write status (`written`, `verified`, `retries`)
 - global_facts (repo-level context)
 - Key facts per changed/new file
 - Relevant files _(non-exhaustive: reflects files known at last scan time)_

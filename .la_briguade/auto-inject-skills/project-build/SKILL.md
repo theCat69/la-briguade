@@ -1,7 +1,52 @@
 ---
 name: project-build
 description: Build commands, prerequisites, environment setup, and release workflow for la-briguade
+agents:
+  - coder
+  - builder
+  - orchestrator
 ---
+
+## Scope
+
+- **In scope**: local environment prerequisites, build/test/schema generation commands,
+  CI/release validation steps, and publish-time safeguards.
+- **Out of scope**: product feature behavior, runtime business logic, and content authoring policy.
+
+## Invariants
+
+- You **MUST** validate Node and TypeScript versions before relying on build output.
+- You **MUST** run build/test commands from project root.
+- You **MUST NOT** treat `dist/` as source of truth; generated artifacts are disposable.
+- You **MUST** keep schema generation aligned with current compiled Zod output.
+- You **MUST** fail the workflow when build or test commands fail.
+- You **MUST NOT** publish when security audit reports high/critical vulnerabilities.
+
+## Validation Checklist
+
+Run and verify:
+
+```bash
+npx tsc --version
+node --version
+npm run build
+npm test
+npm run generate-schema
+```
+
+Release gate (before publish):
+
+```bash
+npm run prepublishOnly
+npm audit
+```
+
+## Failure Handling
+
+- If prerequisites are missing or version-mismatched, stop and report the exact mismatch.
+- If build/test fails, do not continue to schema or publish steps; fix root cause first.
+- If schema generation fails, treat release as blocked until regenerated from current source.
+- If audit reports high/critical issues, block release and document mitigation or deferral.
 
 ## Prerequisites
 
