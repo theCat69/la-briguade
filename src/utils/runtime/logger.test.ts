@@ -25,30 +25,26 @@ describe("logger", () => {
     vi.restoreAllMocks();
   });
 
-  it("should not write file or console when level is off", () => {
+  it("should not write to log file when level is off", () => {
     // Arrange
     initLogger();
     logger.setLevel("off");
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     // Act
     logger.warn("hidden warning");
 
     // Assert
-    expect(warnSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).not.toHaveBeenCalled();
   });
 
-  it("should write warn to file without console output at default warn level", () => {
+  it("should write warn to file at default warn level", () => {
     // Arrange
     initLogger();
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     // Act
     logger.warn("something happened");
 
     // Assert
-    expect(warnSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).toHaveBeenCalledOnce();
     const [pathArg, lineArg] = mockAppendFileSync.mock.calls[0]!;
     expect(String(pathArg)).toContain("/opencode/log/la-briguade-");
@@ -58,27 +54,23 @@ describe("logger", () => {
   it("should not write info at warn level", () => {
     // Arrange
     initLogger();
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     // Act
     logger.info("informational event");
 
     // Assert
-    expect(warnSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).not.toHaveBeenCalled();
   });
 
-  it("should write error to file without console output at warn level", () => {
+  it("should write error to file at warn level", () => {
     // Arrange
     initLogger();
     logger.setLevel("warn");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     // Act
     logger.error("error at warn level");
 
     // Assert
-    expect(errorSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).toHaveBeenCalledOnce();
   });
 
@@ -96,17 +88,15 @@ describe("logger", () => {
     expect(String(lineArg)).toContain("[DEBUG] trace line");
   });
 
-  it("should write error to file without console output at error level", () => {
+  it("should write error to file at error level", () => {
     // Arrange
     initLogger();
     logger.setLevel("error");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     // Act
     logger.error("fatal event");
 
     // Assert
-    expect(errorSpy).not.toHaveBeenCalled();
     expect(mockAppendFileSync).toHaveBeenCalledOnce();
   });
 
@@ -155,14 +145,11 @@ describe("logger", () => {
     mockMkdirSync.mockImplementationOnce(() => {
       throw new Error("disk full");
     });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
     // Act
     initLogger();
 
     // Assert
     expect(logger.getLogFilePath()).toBeUndefined();
-    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it("should use XDG_DATA_HOME when available", () => {

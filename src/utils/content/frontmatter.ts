@@ -6,13 +6,6 @@ import { isRecord } from "../support/type-guards.js";
 const FRONTMATTER_FENCE = "---";
 const POISON_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
-interface ParsedFrontmatter {
-  /** Parsed YAML attributes (empty object if no frontmatter found) */
-  attributes: Record<string, unknown>;
-  /** Markdown body after the frontmatter block */
-  body: string;
-}
-
 /**
  * Parse YAML frontmatter from a markdown string.
  *
@@ -30,7 +23,12 @@ interface ParsedFrontmatter {
  * @param content - Raw markdown file content (string)
  * @returns Parsed frontmatter attributes and the remaining body
  */
-export function parseFrontmatter(content: string): ParsedFrontmatter {
+export function parseFrontmatter(content: string): {
+  /** Parsed YAML attributes (empty object if no frontmatter found) */
+  attributes: Record<string, unknown>;
+  /** Markdown body after the frontmatter block */
+  body: string;
+} {
   const trimmed = content.trimStart();
 
   if (!trimmed.startsWith(FRONTMATTER_FENCE)) {

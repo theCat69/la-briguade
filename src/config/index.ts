@@ -15,8 +15,6 @@ export function resolveConfigBaseDirs(projectDir: string): {
   };
 }
 
-// Mirrors opencode's own resolution strategy: homedir()/.config/opencode.
-// No XDG_CONFIG_HOME or APPDATA — intentional; opencode does not use them.
 export function resolveOpencodeConfigDir(): string {
   return join(homedir(), ".config", "opencode");
 }
@@ -55,7 +53,6 @@ export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
     logger.warn(`Project config error: ${projectResult.error.message}`);
   }
 
-  // Structured narrowing — each branch returns a fully typed LaBriguadeConfig
   if (globalConfig === undefined) {
     if (projectConfig === undefined) return {};
     return projectConfig;
@@ -83,7 +80,6 @@ function mergeConfigs(
     if (existing === undefined) {
       mergedAgents[agentId] = projectOverride;
     } else {
-      // Chain systemPromptSuffix: global suffix first, then project suffix
       const chainedSuffix =
         [existing.systemPromptSuffix, projectOverride.systemPromptSuffix]
           .filter(Boolean)

@@ -65,7 +65,7 @@ src/
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
-    merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
+    merge.ts         ← resolveAgentConfig() and swapOpusModel() — layered config merge and model swap helper
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
     index.ts         ← createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection, skill access gating

@@ -48,26 +48,6 @@ function writeLogLine(level: Exclude<LogLevel, "off">, message: string): void {
   appendFileSync(logFilePath, line, { encoding: "utf-8", mode: 0o600 });
 }
 
-function logWarn(message: string): void {
-  if (!isEnabledFor("warn")) return;
-  writeLogLine("warn", message);
-}
-
-function logError(message: string): void {
-  if (!isEnabledFor("error")) return;
-  writeLogLine("error", message);
-}
-
-function logInfo(message: string): void {
-  if (!isEnabledFor("info")) return;
-  writeLogLine("info", message);
-}
-
-function logDebug(message: string): void {
-  if (!isEnabledFor("debug")) return;
-  writeLogLine("debug", message);
-}
-
 function setLevel(level: LogLevel): void {
   currentLevel = level;
 }
@@ -97,10 +77,10 @@ export function resetLogger(): void {
 }
 
 export const logger = {
-  warn: logWarn,
-  error: logError,
-  info: logInfo,
-  debug: logDebug,
+  warn: (message: string) => writeLogLine("warn", message),
+  error: (message: string) => writeLogLine("error", message),
+  info: (message: string) => writeLogLine("info", message),
+  debug: (message: string) => writeLogLine("debug", message),
   setLevel,
   getLogFilePath,
 };
