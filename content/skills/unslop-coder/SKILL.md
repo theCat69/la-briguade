@@ -14,20 +14,8 @@ It is not a scanning skill.
 
 ## What You'll Be Fixing
 
-Findings target one of these slop categories:
-
-1. **Dead code** — unreachable branches, unused exports/variables/functions, stale
-   feature flags, commented-out blocks, and debug leftovers (`console.log`, `print`,
-   `debugger`, shipped TODOs).
-2. **Duplication** — copy-paste logic, near-identical functions that differ only by a
-   constant, repeated config blocks, or redundant helpers doing the same work.
-3. **Needless abstraction** — pass-through wrappers with no logic, single-use layers,
-   speculative indirection, or premature generalization with only one real call site.
-4. **Boundary violations** — hidden coupling across modules, misplaced
-   responsibilities (business logic in a view layer, I/O in pure logic), or cross-layer
-   leakage.
-5. **Weak test coverage** — touched behavior not locked by tests, assertions that only
-   check "no error thrown", and missing edge cases on modified paths.
+Apply only the categories and priorities provided by `unslop-reviewer`; treat that
+review output as the canonical slop taxonomy for each run.
 
 ## Input Format
 

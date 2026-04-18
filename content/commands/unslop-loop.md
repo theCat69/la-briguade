@@ -19,7 +19,7 @@ Parse `$ARGUMENTS` to extract:
 
 - A bare integer (e.g., `3`) → sets `max_commits = 3`; the loop stops after 3 commits total (default: unlimited)
 - `--full` flag → sets scope to **entire codebase** instead of the git diff
-- `--reduce` flag → sets `cleanup_objective = reduce`; prioritize net codebase-size reduction via safe refactors, duplication removal, and useless comment deletion
+- `--reduce` flag → sets `cleanup_objective = reduce` (see **Cleanup Objective**)
 - Any remaining text after stripping recognized arguments → treated as **explicit file path(s) or glob(s)** to target directly
 
 Combination matrix:
