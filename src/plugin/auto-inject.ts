@@ -8,8 +8,6 @@ import { logger } from "../utils/runtime/logger.js";
 import { isNodeError, isRecord } from "../utils/support/type-guards.js";
 import type { Config } from "../types/plugin.js";
 
-// ─── Schemas ────────────────────────────────────────────────────────────────
-
 const DetectContentEntrySchema = z.object({
   file: z.string(),
   contains: z.string(),
@@ -25,8 +23,6 @@ const AutoInjectFrontmatterSchema = z.object({
   detect: DetectSchema.optional(),
 });
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 /** A single auto-inject skill entry, parsed from a SKILL.md file. */
 export type AutoInjectEntry = {
   skillName: string;
@@ -39,8 +35,6 @@ export type AutoInjectEntry = {
   /** File+content pairs that activate the skill when matched (OR logic). */
   detectContent: Array<{ file: string; contains: string }>;
 };
-
-// ─── Collect ─────────────────────────────────────────────────────────────────
 
 /**
  * Read each auto-inject skill directory, parse its SKILL.md frontmatter and body,
@@ -94,8 +88,6 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
   return entries;
 }
 
-// ─── Resolve ─────────────────────────────────────────────────────────────────
-
 /**
  * Determine which auto-inject skills are active for the given project directory.
  *
@@ -114,13 +106,11 @@ export function resolveActiveSkills(
   const active = new Set<string>();
 
   for (const [skillName, entry] of entries) {
-    // No detect constraints → always active
     if (entry.detectFiles.length === 0 && entry.detectContent.length === 0) {
       active.add(skillName);
       continue;
     }
 
-    // detect.files: any matching file existing → active (OR logic)
     for (const file of entry.detectFiles) {
       if (existsSync(join(projectDir, file))) {
         active.add(skillName);
@@ -132,7 +122,6 @@ export function resolveActiveSkills(
       continue;
     }
 
-    // detect.content: any entry whose file exists and contains the substring → active (OR logic)
     for (const { file, contains } of entry.detectContent) {
       const filePath = join(projectDir, file);
       if (!existsSync(filePath)) {
@@ -152,8 +141,6 @@ export function resolveActiveSkills(
 
   return active;
 }
-
-// ─── Inject ──────────────────────────────────────────────────────────────────
 
 /**
  * Append each active auto-inject skill body to matching agent prompts.
@@ -184,7 +171,6 @@ export function injectAutoInjectSkills(
       continue;
     }
 
-    // Resolve explicit skill permissions for this agent (no wildcard)
     const rawPermission: unknown = agentConfig["permission"];
     const rawSkillPerms: Record<string, unknown> =
       isRecord(rawPermission) && isRecord(rawPermission["skill"])
@@ -200,7 +186,6 @@ export function injectAutoInjectSkills(
         continue;
       }
 
-      // Authorize: skill's agents list OR explicit allow/ask (no wildcard)
       const inAgentsList = entry.agents.includes(agentName);
       const explicitPerm = rawSkillPerms[skillName];
       const hasExplicitPermission = explicitPerm === "allow" || explicitPerm === "ask";
