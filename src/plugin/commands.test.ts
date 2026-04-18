@@ -95,4 +95,27 @@ describe("registerCommands", () => {
       template: "Cleanup this file.",
     });
   });
+
+  it("should register unslop-loop description with reduce option guidance", () => {
+    mockCollectFiles.mockReturnValue(
+      new Map([["unslop-loop", "/builtin/commands/unslop-loop.md"]]),
+    );
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "description: Run AI slop cleanup in a loop — supports --reduce",
+        "---",
+        "Use --reduce to focus on codebase-size reduction.",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    registerCommands(config, ["/builtin/commands"]);
+
+    expect(config.command?.["unslop-loop"]).toMatchObject({
+      description: "Run AI slop cleanup in a loop — supports --reduce",
+      template: "Use --reduce to focus on codebase-size reduction.",
+    });
+  });
 });

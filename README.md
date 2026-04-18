@@ -74,7 +74,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
 | `/go-back-to-work` | Resume work after a session failure — loads git state and last context snapshot, then automatically continues execution from where the session left off |
 | `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
-| `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, and commits after each cycle |
+| `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
 | `/plan-prd` | End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation |

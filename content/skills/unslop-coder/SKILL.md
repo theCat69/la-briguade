@@ -74,6 +74,17 @@ When not active: skip pass-4 implementation. Report those findings as deferred g
 
 ---
 
+## Reduction Override
+
+When the caller explicitly states that reduction mode is active, optimize for **net code-size reduction** within the listed findings.
+
+- Favor the smallest safe implementation that removes lines or symbols.
+- Allowed examples: inline pass-through wrappers, consolidate exact duplicates, remove useless comments, and delete redundant locals/imports/guards.
+- Skip rename-only or stylistic cleanup that does not materially shrink the code.
+- Never add a broader abstraction if it increases code size.
+
+---
+
 ## Orchestrator Validation Contract
 
 When called from `/unslop-loop` Orchestrator mode with a validation rule, this skill must:

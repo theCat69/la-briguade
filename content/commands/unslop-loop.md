@@ -1,5 +1,5 @@
 ---
-description: Run AI slop cleanup in a loop — auto-validates, writes tests, and commits after each cycle. Stops when all code is unslopped (default) or after N commits.
+description: Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup. Stops when all code is unslopped (default) or after N commits.
 ---
 
 > **Requires**: `task→coder`, `task→reviewer`, and `git-commit` skill permission. In Orchestrator context, bash rights must include only the git commands used directly by this workflow: `git diff --name-only HEAD`, `git diff --name-only HEAD~1`, `git diff --name-only`, `git checkout -- <scope files>`, `git tag`, `git add <scope files>`, and `git commit -m ...`.
@@ -19,18 +19,35 @@ Parse `$ARGUMENTS` to extract:
 
 - A bare integer (e.g., `3`) → sets `max_commits = 3`; the loop stops after 3 commits total (default: unlimited)
 - `--full` flag → sets scope to **entire codebase** instead of the git diff
+- `--reduce` flag → sets `cleanup_objective = reduce`; prioritize net codebase-size reduction via safe refactors, duplication removal, and useless comment deletion
 - Any remaining text after stripping recognized arguments → treated as **explicit file path(s) or glob(s)** to target directly
 
 Combination matrix:
 
-| Args | Scope | Limit |
-|---|---|---|
-| *(empty)* | `git diff --name-only HEAD` | unlimited |
-| `3` | `git diff --name-only HEAD` | 3 commits |
-| `--full` | All source files | unlimited |
-| `--full 2` | All source files | 2 commits |
-| `<path>` | Explicit path(s) | unlimited |
-| `<path> 1` | Explicit path(s) | 1 commit |
+| Args | Scope | Limit | Objective |
+|---|---|---|---|
+| *(empty)* | `git diff --name-only HEAD` | unlimited | standard |
+| `3` | `git diff --name-only HEAD` | 3 commits | standard |
+| `--reduce` | `git diff --name-only HEAD` | unlimited | reduce |
+| `--full 2 --reduce` | All source files | 2 commits | reduce |
+| `<path>` | Explicit path(s) | unlimited | standard |
+| `<path> 1 --reduce` | Explicit path(s) | 1 commit | reduce |
+
+---
+
+## Cleanup Objective
+
+Set `cleanup_objective` before entering the loop:
+
+- **Standard** (default): run the normal unslop sequence.
+- **Reduce** (`--reduce`): preserve behavior while prioritizing **net codebase-size reduction**. Prefer deletion and consolidation over polish. Safe local refactors are allowed only when they shrink code within scope.
+
+When `cleanup_objective = reduce`:
+
+- Prioritize exact duplication removal, pass-through wrapper inlining, redundant helper consolidation, dead code deletion, and useless comment removal.
+- Prefer changes that reduce total lines or symbols over rename-only cleanup.
+- Defer changes that mostly reshuffle code, add abstraction, or improve style without materially shrinking the codebase.
+- Keep tests and rollback rules unchanged.
 
 ---
 
@@ -106,17 +123,21 @@ After Pass 1 completes: run `git diff --name-only`.
 - **No changes**: skip commit, continue to Pass 2.
 - **Changes**: run auto-validation (see below). If validation passes: commit with label `pass-1/dead-code`. Increment `commit_count`. If validation fails: rollback and **stop**.
 
-#### Pass 2 — Duplication
+#### Pass 2 — Duplication / Reduction
 
 Extract repeated logic into a single authoritative location. Remove copy-paste branches. Consolidate redundant helpers. Only extract when duplication is exact and the knowledge is the same.
 
-After Pass 2: same change detection and conditional commit with label `pass-2/duplication`.
+If `cleanup_objective = reduce`, also apply small behavior-preserving refactors whose primary effect is shrinking code within scope: inline pass-through wrappers, collapse redundant locals/guards/imports, and remove helper layers that no longer earn their cost. Do NOT add abstraction if it grows the code.
 
-#### Pass 3 — Naming + Error Handling
+After Pass 2: same change detection and conditional commit with label `pass-2/duplication` (standard) or `pass-2/reduction` (`--reduce`).
+
+#### Pass 3 — Naming + Error Handling / Comments
 
 Rename generic identifiers (`data`, `value`, `temp`, `result`, `obj`, `info`) to intention-revealing names. Ensure errors are explicit and typed — no silent swallowing, no mixed return/error values. Remove noise comments.
 
-After Pass 3: same change detection and conditional commit with label `pass-3/naming`.
+If `cleanup_objective = reduce`, make this a size-focused cleanup pass: remove useless comments, stale explanatory noise, redundant inline "what" comments, and naming / error-handling boilerplate only when simplifying it preserves clarity and reduces code. Skip rename-only churn that does not materially shrink the code.
+
+After Pass 3: same change detection and conditional commit with label `pass-3/naming` (standard) or `pass-3/comments` (`--reduce`).
 
 #### Pass 4 — Test Writing
 
@@ -143,7 +164,7 @@ git commit -m "<version> / ai / unslop-loop iter-<iteration> <label> : <brief su
 Where:
 - `<version>` — derive from the latest `git tag` or `package.json` version field; if unavailable use `latest`
 - `<iteration>` — the current iteration number
-- `<label>` — one of: `pass-1/dead-code`, `pass-2/duplication`, `pass-3/naming`, `pass-4/tests`
+- `<label>` — standard mode uses `pass-1/dead-code`, `pass-2/duplication`, `pass-3/naming`, `pass-4/tests`; `--reduce` uses `pass-1/dead-code`, `pass-2/reduction`, `pass-3/comments`, `pass-4/tests`
 - `<brief summary>` — one sentence covering the dominant cleanup (e.g. "removed unused imports in auth module")
 
 #### Auto-Validation
@@ -179,7 +200,7 @@ Otherwise: increment `iteration` and go back to Pass 1.
 
 Call `reviewer` as a task with this prompt:
 
-> Load skill `unslop-reviewer`. Scan these files: [scope list from Step 1]. Test-writing override is active — include pass-4 findings for behaviors that would need test coverage. Return the full numbered findings list (all passes sorted 1→4, no prose, no file edits). Output ≤ 400 tokens.
+> Load skill `unslop-reviewer`. Scan these files: [scope list from Step 1]. Test-writing override is active — include pass-4 findings for behaviors that would need test coverage. If `cleanup_objective = reduce`, reduction override is active: prioritize findings that shrink code size (duplication, redundant helpers/wrappers, useless comments, dead code) and de-prioritize rename-only findings unless they directly reduce code. Return the full numbered findings list (all passes sorted 1→4, no prose, no file edits). Output ≤ 400 tokens.
 
 Once reviewer returns:
 
@@ -207,6 +228,7 @@ Once reviewer returns:
 Call `coder` as a task with this prompt:
 
 > Load skill `unslop-coder`. Apply these cleanup findings. Scope rule: never touch files outside [scope list]. Test-writing override is active for any pass-4 findings.
+> If `cleanup_objective = reduce`, reduction override is active: favor the smallest safe change that reduces code size, including local refactors, duplicate consolidation, and useless comment removal. Skip rename-only cleanup unless it materially shrinks code.
 > Validation rule: detect `TEST_CMD` using Step 2 order, then run it after edits when available. Report `test_cmd: <command|none>` and `tests: pass` or `tests: fail` with failing test names.
 > Findings:
 > [Bi — numbered findings list]
@@ -256,6 +278,7 @@ Otherwise: continue to next batch.
 
 After the loop ends, present:
 
+- **Objective** — `standard` | `reduce`
 - **Scope** — list of files targeted
 - **Iterations / batches run** — number of cycles completed
 - **Commits made** — count and short message of each commit
