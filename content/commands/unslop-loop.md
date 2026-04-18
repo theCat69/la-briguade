@@ -72,7 +72,7 @@ The resolved scope is **fixed** for the entire loop — it does not change betwe
 
 Before running auto-validation, detect which test runner is available in the project. Try in order:
 
-1. `bun test --dry-run` or check for `bun` + a `test` script in `package.json`
+1. `bun run test --dry-run` or check for `bun` + a `test` script in `package.json`
 2. `npx vitest run --passWithNoTests`
 3. `npx jest --passWithNoTests`
 4. `pytest --collect-only -q`

@@ -117,7 +117,7 @@ export default defineConfig({
 ## Running Tests
 
 ```bash
-npm test             # vitest run — single pass (use in CI)
+npm run test             # vitest run — single pass (use in CI)
 npm run test:watch   # vitest — watch mode (use during development)
 npx vitest run --coverage  # with coverage report
 ```
