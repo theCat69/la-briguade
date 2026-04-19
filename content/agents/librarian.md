@@ -55,11 +55,13 @@ Check whether the calling prompt explicitly contains **"DEEP FULL REVIEW"**.
 - **In DEEP FULL REVIEW mode, or when explicitly requested**: call
   `local-context-gatherer` only after following the **Before Calling
   local-context-gatherer** protocol in `cache-ctrl-caller`.
-- **Otherwise (default)**: first load skill `git-diff-review` (or run an equivalent
-  concrete changed-file discovery step) to define the changed repo file set,
-  then use `read`, `glob`, and `grep` on those changed files and any
-  documentation they impact; do NOT call `local-context-gatherer` unless
-  explicitly instructed.
+- **Otherwise (default)**: if the invoking prompt already includes sufficient
+  diff context (for example, explicit changed-file list and relevant diff
+  hunks), use that context directly. If diff context is absent or insufficient,
+  first load skill `git-diff-review` to define the changed repo file set, then
+  use `read`, `glob`, and `grep` on those changed files and any documentation
+  they impact; do NOT call `local-context-gatherer` unless explicitly
+  instructed.
 - **At any time**: if external references are needed, follow the **Before Calling
   external-context-gatherer** protocol in `cache-ctrl-caller`.
 

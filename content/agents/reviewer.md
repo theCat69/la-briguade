@@ -41,8 +41,12 @@ Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REV
 
 - **If "DEEP FULL REVIEW" is present**: Do NOT load `git-diff-review`. Review the
   entire in-scope codebase, not just changed files.
-- **Otherwise (default — diff-based review)**: Load `git-diff-review` first to
-  identify upstream and changed files. Restrict review to that changed-file set.
+- **Otherwise (default — diff-based review)**: If the invoking prompt already
+  includes sufficient diff context (for example, explicit changed-file list and
+  relevant diff hunks), use that context directly and do not load
+  `git-diff-review`. If diff context is absent or insufficient, load
+  `git-diff-review` first to identify upstream and changed files. Restrict
+  review to that changed-file set.
 
 # Context Gathering
 - **In DEEP FULL REVIEW mode, or when explicitly requested**: call
