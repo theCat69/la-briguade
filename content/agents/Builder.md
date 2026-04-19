@@ -19,6 +19,7 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   webfetch: "allow"
   websearch: "allow"
   "youtube-transcript_*": "allow"

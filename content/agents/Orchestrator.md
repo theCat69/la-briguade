@@ -28,6 +28,7 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   todowrite: "allow"
   todoread: "allow"
   question: "allow"

@@ -1,5 +1,5 @@
 ---
-description: "End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation."
+description: "OpenSpec-first planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and change artifact generation."
 ---
 
 > **Requires**: `question` tool, `task→architect`, `task→external-context-gatherer`, `task→critic`, `task→feature-designer`, and `deep-interview` skill permission.
@@ -10,6 +10,28 @@ $ARGUMENTS
 </user-input>
 
 You are running the `plan-prd` command. Follow every step in order. Do NOT skip steps.
+
+---
+
+## Step 0 — OpenSpec Setup Gate (Required Before Planning)
+
+Before planning, verify OpenSpec prerequisites and setup contract coverage:
+
+- OpenSpec CLI must be available.
+- Repository-local OpenSpec workspace must be used (`<project_root>/openspec/`).
+- Setup documentation scope must be explicit for this workflow:
+  - prerequisites,
+  - init invocation ownership (`openspec init` is owned by OpenSpec CLI behavior),
+  - baseline verification step (`openspec status --json`).
+
+If prerequisites are missing, stop with actionable guidance:
+
+1. Run `openspec init` from the project root.
+2. Explain non-destructive behavior: when `openspec/config.yaml` already exists, `openspec init` must preserve existing settings and return an already-initialized/no-op outcome.
+3. Explain init scope: create missing `openspec/` scaffolding and create `openspec/config.yaml` when absent.
+4. Verify deterministic baseline: run `openspec status --json` and confirm no setup-related errors.
+
+Do not proceed with partial or destructive setup actions inside this command.
 
 ---
 
@@ -204,7 +226,7 @@ Present the full plan exactly in this structure:
 
 Then use the `question` tool to ask:
 
-> **Would you like to refine any part of this plan before writing the spec?**
+> **Would you like to refine any part of this plan before generating OpenSpec change artifacts?**
 
 Options:
 
@@ -212,7 +234,7 @@ Options:
 - **Adjust architecture** — re-run architecture analysis (go back to Step 3)
 - **Change technology selections** — re-run research (go back to Step 4a) and selection interview (Step 4b)
 - **Challenge again** — re-run the critic with a different focus (go back to Step 5)
-- **Proceed to write spec** — move to Step 7
+- **Proceed to artifact generation** — move to Step 7
 
 If the user chooses a refinement option, re-run from that step and return to Step 6.
 Repeat until the user chooses to proceed.
@@ -230,43 +252,65 @@ Present a concise final summary containing:
 
 Then use the `question` tool to ask:
 
-> **Are you satisfied with this plan and ready to write the detailed PRD spec?**
+> **Are you satisfied with this plan and ready to generate the OpenSpec change artifacts?**
 
 Options:
 
-- **Yes, write the spec** — proceed to Step 8
+- **Yes, generate artifacts** — proceed to Step 8
 - **Make one more adjustment** — return to Step 6
 
 ---
 
-## Step 8 — Write Spec
+## Step 8 — Generate OpenSpec Change Artifacts (OpenSpec-First)
+
+OpenSpec is the primary output target for this command.
+
+### 8a — Change Selection and Compatibility Mapping
+
+Derive a default `<change-name>` from the Goal in kebab-case (max 5 words), using only letters, numbers, and hyphens.
+
+- If the user framed the request in legacy PRD terms, preserve compatibility by mapping intent to OpenSpec artifacts under `openspec/changes/<change-name>/`.
+- Do not delete or overwrite legacy PRD files.
+
+### 8b — Rerun Semantics (Non-Destructive)
+
+If `openspec/changes/<change-name>/` already exists:
+
+- Reuse and update that change by default.
+- Do not create a second change with equivalent intent unless the user explicitly confirms creating a different/new change.
+- Never silently overwrite unrelated artifacts outside the selected change.
+
+If the user requests a different change while a likely matching existing change exists, request explicit confirmation before creating the new change; otherwise keep work scoped to the existing change.
+
+### 8c — Artifact Mapping and Write Contract
 
 Call the `feature-designer` subagent with this prompt:
 
-> Write a comprehensive PRD spec to disk at `features/prd-<slug>.md` where slug = goal sentence in kebab-case, max 5 words (e.g. goal "Build a task management app" → `features/prd-build-task-management-app.md`).
-> When computing the slug: remove all characters except letters, numbers, and hyphens; strip any leading hyphens. Never include `/`, `\`, `.`, or `..` in the slug. The output path must always be exactly `features/prd-<slug>.md` — no subdirectories.
+> Write or update OpenSpec planning artifacts for `<change-name>` at `openspec/changes/<change-name>/`:
+> - `proposal.md`
+> - `specs/<capability>/spec.md` (one file per capability, normative requirements + scenario tests)
+> - `design.md`
+> - `tasks.md` (checkbox tasks, dependency-aware, apply-ready)
 >
-> The spec must include ALL of the following sections:
-> 1. **Executive Summary** — 3–5 sentence product overview
-> 2. **Problem Statement** — what problem this solves and why now
-> 3. **Goals & Success Metrics** — measurable goals with KPIs
-> 4. **Target Users** — personas or user categories
-> 5. **Functional Requirements** — numbered list; each requirement has acceptance criteria (a third party can verify)
-> 6. **Non-Functional Requirements** — performance, security, reliability, scalability targets
-> 7. **Technical Architecture** — component diagram in text, data flows, integration points
-> 8. **Technology Stack & Library Choices** — one table row per domain: Domain | Chosen Library | Version | Rationale
-> 9. **Implementation Phases & Tasks** — phased breakdown; each phase has a goal and a task list
-> 10. **Dependencies & Risks** — external deps and risk register (likelihood × impact)
-> 11. **Out of Scope** — explicit exclusions
+> Preserve compatibility-aware behavior for legacy PRD-framed inputs by mapping intent into these OpenSpec artifacts without destructive replacement of legacy files.
 >
-> Stack context: [stack if known from interview, else omit]
+> Ensure artifact dependency order and consistency:
+> 1. proposal scope
+> 2. capability specs
+> 3. design decisions
+> 4. tasks derived from approved requirements
 >
-> **Full plan context:**
+> Explicit readiness/apply-ready expectations for this handoff:
+> - Include a clear readiness summary indicating the change is planning-complete and ready for `openspec instructions apply --change <change-name> --json` consumption.
+> - Ensure `tasks.md` uses apply-ready checkbox formatting with explicit, dependency-aware, implementable tasks (`- [ ]` pending state only for unimplemented work).
+> - If readiness cannot be established from provided context, return blocked status with missing inputs instead of silently finalizing artifacts.
+>
+> **Plan context:**
 > [Product Vision Summary from Step 2]
 > [Architecture Blueprint from Step 3]
 > [Confirmed Technology Selections from Step 4b]
 > [Critic Challenges from Step 5 and how they were addressed]
 
-After the subagent writes the file, report exactly:
+After the subagent writes artifacts, report exactly:
 
-> ✅ PRD spec written to `features/prd-<slug>.md`. You can now run `/implement-prd --file features/prd-<slug>.md` to start implementation.
+> ✅ OpenSpec artifacts updated at `openspec/changes/<change-name>/` (`proposal.md`, `specs/*/spec.md`, `design.md`, `tasks.md`). You can now run `/implement-prd --change <change-name>` to start implementation. Legacy `--file` usage remains available as a compatibility path.
