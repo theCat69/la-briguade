@@ -185,6 +185,12 @@ All agents, skills, commands, vendor prompts, and auto-inject skills are plain M
 
 > Note: auto-inject discovery now reads only `auto-inject-skills` roots. Legacy regular `skills/` roots are not scanned for auto-inject entries.
 
+Auto-inject prompt insertion uses two modes:
+
+- If an agent already has a system prompt, each injected skill is appended as a wrapped block:
+  `---` → `#<skillName>` → description line (may be blank) → body → `---`.
+- If an agent has no existing prompt, la-briguade sets the prompt to the skill body only (no wrapper).
+
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 
 Any skill already installed at the opencode level (`~/.config/opencode/skills/` or `<project_root>/.opencode/skills/`) is automatically available to la-briguade agents without any extra configuration.

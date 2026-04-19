@@ -70,12 +70,17 @@ function makeConfig(agents: Record<string, unknown> = {}): Config {
 function makeEntry(overrides: Partial<AutoInjectEntry> = {}): AutoInjectEntry {
   return {
     skillName: "general-coding",
+    skillDecription: "General coding defaults.",
     body: "Skill guidelines body.",
     agents: ["coder"],
     detectFiles: [],
     detectContent: [],
     ...overrides,
   };
+}
+
+function makeWrappedAppend(entry: AutoInjectEntry): string {
+  return `---\n#${entry.skillName}\n${entry.skillDecription}\n${entry.body}\n---`;
 }
 
 // ─── collectAutoInjectSkills ──────────────────────────────────────────────────
@@ -382,7 +387,13 @@ describe("injectAutoInjectSkills", () => {
   it("should inject skill body into agent listed in skill's agents array", () => {
     // Arrange
     const config = makeConfig({ coder: { prompt: "Base coder prompt." } });
-    const entries = new Map([["general-coding", makeEntry({ agents: ["coder"], body: "Guidelines." })]]);
+    const entry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "General coding guide.",
+      agents: ["coder"],
+      body: "Guidelines.",
+    });
+    const entries = new Map([["general-coding", entry]]);
     const active = new Set(["general-coding"]);
 
     // Act
@@ -390,7 +401,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe("Base coder prompt.\n\nGuidelines.");
+    expect(coder["prompt"]).toBe(`Base coder prompt.\n\n${makeWrappedAppend(entry)}`);
   });
 
   it("should inject skill body into agent with explicit allow permission", () => {
@@ -401,9 +412,13 @@ describe("injectAutoInjectSkills", () => {
         permission: { skill: { "general-coding": "allow" } },
       },
     });
-    const entries = new Map([
-      ["general-coding", makeEntry({ agents: [], body: "Guidelines." })],
-    ]);
+    const entry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "General coding guide.",
+      agents: [],
+      body: "Guidelines.",
+    });
+    const entries = new Map([["general-coding", entry]]);
     const active = new Set(["general-coding"]);
 
     // Act
@@ -411,7 +426,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe("Base.\n\nGuidelines.");
+    expect(coder["prompt"]).toBe(`Base.\n\n${makeWrappedAppend(entry)}`);
   });
 
   it("should inject skill body into agent with explicit ask permission", () => {
@@ -422,7 +437,13 @@ describe("injectAutoInjectSkills", () => {
         permission: { skill: { typescript: "ask" } },
       },
     });
-    const entries = new Map([["typescript", makeEntry({ agents: [], body: "TS guidelines." })]]);
+    const entry = makeEntry({
+      skillName: "typescript",
+      skillDecription: "TypeScript project defaults.",
+      agents: [],
+      body: "TS guidelines.",
+    });
+    const entries = new Map([["typescript", entry]]);
     const active = new Set(["typescript"]);
 
     // Act
@@ -430,7 +451,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const reviewer = config.agent?.["reviewer"] as Record<string, unknown>;
-    expect(reviewer["prompt"]).toBe("Reviewer base.\n\nTS guidelines.");
+    expect(reviewer["prompt"]).toBe(`Reviewer base.\n\n${makeWrappedAppend(entry)}`);
   });
 
   it("should not inject skill body via wildcard permission", () => {
@@ -487,9 +508,21 @@ describe("injectAutoInjectSkills", () => {
   it("should append multiple active skills to the same agent prompt", () => {
     // Arrange
     const config = makeConfig({ coder: { prompt: "Base." } });
+    const generalEntry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "General coding defaults.",
+      agents: ["coder"],
+      body: "General.",
+    });
+    const typescriptEntry = makeEntry({
+      skillName: "typescript",
+      skillDecription: "TypeScript defaults.",
+      agents: ["coder"],
+      body: "TypeScript.",
+    });
     const entries = new Map([
-      ["general-coding", makeEntry({ skillName: "general-coding", agents: ["coder"], body: "General." })],
-      ["typescript", makeEntry({ skillName: "typescript", agents: ["coder"], body: "TypeScript." })],
+      ["general-coding", generalEntry],
+      ["typescript", typescriptEntry],
     ]);
     const active = new Set(["general-coding", "typescript"]);
 
@@ -498,7 +531,29 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe("Base.\n\nGeneral.\n\nTypeScript.");
+    expect(coder["prompt"]).toBe(
+      `Base.\n\n${makeWrappedAppend(generalEntry)}\n\n${makeWrappedAppend(typescriptEntry)}`,
+    );
+  });
+
+  it("should append wrapped skill with empty description line when prompt already exists", () => {
+    // Arrange
+    const config = makeConfig({ coder: { prompt: "Base." } });
+    const entry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "",
+      agents: ["coder"],
+      body: "Guidelines.",
+    });
+    const entries = new Map([["general-coding", entry]]);
+    const active = new Set(["general-coding"]);
+
+    // Act
+    injectAutoInjectSkills(config, entries, active);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown>;
+    expect(coder["prompt"]).toBe("Base.\n\n---\n#general-coding\n\nGuidelines.\n---");
   });
 
   it("should not inject skill with empty body", () => {
