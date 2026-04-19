@@ -1,3 +1,0 @@
-- Remove the fact that agents create an "agents" entry in the "auto-inject-skill" as "agents: [*]" when running init-implementer command => Agents should just not write an agents entry. It is already handled by agents permissions.
-- Reviewer, security-reviewer and librarian are eagerly loading git-diff skill when, most of the time, the main agent is giving the diff in the input prompt => We should change the wording to make this skill loading optional depending on the user request.
-- 
