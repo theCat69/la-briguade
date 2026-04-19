@@ -1,3 +1,0 @@
-- Fix init-implementer command. It stills create all skills and doens't put enough details in them.
-- Check why local-context-gatherer doesn't write to chache.
-- Change occurence of security-reviewer => it should only run when explictly asked by user.
