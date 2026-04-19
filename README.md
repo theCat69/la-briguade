@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 18 skills, 12 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 18 skills, 13 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -77,8 +77,9 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
-| `/plan-prd` | End-to-end PRD planning workflow: deep requirements interview, architecture, library research, critique, iterative refinement, and PRD file generation |
-| `/implement-prd` | Implement a PRD spec file via Orchestrator pipeline with validation, scoped execution, phased approvals, and completion reporting |
+| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
+| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
+| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
 
 ## Hooks

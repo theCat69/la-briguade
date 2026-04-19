@@ -13,6 +13,32 @@ You are running the `implement-prd` command. Follow every step in order. Do NOT 
 
 ---
 
+## Step 0 — OpenSpec Setup Gate (Required Before Implementation)
+
+Before parsing implementation scope, verify OpenSpec readiness. This is a hard gate.
+
+Required checks:
+
+1. OpenSpec CLI is available.
+2. Repository-local config exists at `openspec/config.yaml` or `openspec/config.yml`.
+
+If check (1) fails, stop immediately and do not continue implementation.
+
+Use this exact remediation direction:
+
+> "OpenSpec CLI is not available. Install or make `openspec` available in PATH, then re-run `/implement-prd`."
+
+If check (1) passes but check (2) fails, stop immediately and do not continue implementation.
+
+Use this exact remediation direction:
+
+> "OpenSpec is not initialized for this repository. Run `/openspec-init` first. After it verifies `openspec/config.yaml` (or `openspec/config.yml`), re-run `/implement-prd`."
+
+Do not auto-run `openspec init` inside this command.
+Do not continue with partial setup.
+
+---
+
 ## Argument Parsing
 
 Parse `$ARGUMENTS` to extract one of the following input modes:

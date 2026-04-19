@@ -15,23 +15,27 @@ You are running the `plan-prd` command. Follow every step in order. Do NOT skip 
 
 ## Step 0 — OpenSpec Setup Gate (Required Before Planning)
 
-Before planning, verify OpenSpec prerequisites and setup contract coverage:
+Before planning, verify OpenSpec readiness. This is a hard gate.
 
-- OpenSpec CLI must be available.
-- Repository-local OpenSpec workspace must be used (`<project_root>/openspec/`).
-- Setup documentation scope must be explicit for this workflow:
-  - prerequisites,
-  - init invocation ownership (`openspec init` is owned by OpenSpec CLI behavior),
-  - baseline verification step (`openspec status --json`).
+Required checks:
 
-If prerequisites are missing, stop with actionable guidance:
+1. OpenSpec CLI is available.
+2. Repository-local config exists at `openspec/config.yaml` or `openspec/config.yml`.
 
-1. Run `openspec init` from the project root.
-2. Explain non-destructive behavior: when `openspec/config.yaml` already exists, `openspec init` must preserve existing settings and return an already-initialized/no-op outcome.
-3. Explain init scope: create missing `openspec/` scaffolding and create `openspec/config.yaml` when absent.
-4. Verify deterministic baseline: run `openspec status --json` and confirm no setup-related errors.
+If check (1) fails, stop immediately and do not continue planning.
 
-Do not proceed with partial or destructive setup actions inside this command.
+Use this exact remediation direction:
+
+> "OpenSpec CLI is not available. Install or make `openspec` available in PATH, then re-run `/plan-prd`."
+
+If check (1) passes but check (2) fails, stop immediately and do not continue planning.
+
+Use this exact remediation direction:
+
+> "OpenSpec is not initialized for this repository. Run `/openspec-init` first. After it verifies `openspec/config.yaml` (or `openspec/config.yml`), re-run `/plan-prd`."
+
+Do not auto-run `openspec init` inside this command.
+Do not proceed with partial setup.
 
 ---
 
