@@ -18,6 +18,7 @@ permission:
     "mkdir -p .ai/context-snapshots": "allow"
     "mkdir -p .ai/context-snapshots/*": "allow"
     "cache-ctrl *": "allow"
+    "openspec *": "allow"
   edit: 
     "*": "deny"
     ".ai/context-snapshots/current.json": "allow"
