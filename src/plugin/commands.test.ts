@@ -118,4 +118,27 @@ describe("registerCommands", () => {
       template: "Use --reduce to focus on codebase-size reduction.",
     });
   });
+
+  it("should register update-implementer command with refresh semantics", () => {
+    mockCollectFiles.mockReturnValue(
+      new Map([["update-implementer", "/builtin/commands/update-implementer.md"]]),
+    );
+    mockReadContentFile.mockReturnValue(
+      [
+        "---",
+        "description: Force-refresh implementer setup",
+        "---",
+        "Reconcile markdown artifacts with code as source of truth.",
+      ].join("\n"),
+    );
+
+    const config = makeConfig();
+
+    registerCommands(config, ["/builtin/commands"]);
+
+    expect(config.command?.["update-implementer"]).toMatchObject({
+      description: "Force-refresh implementer setup",
+      template: "Reconcile markdown artifacts with code as source of truth.",
+    });
+  });
 });

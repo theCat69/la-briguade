@@ -31,6 +31,29 @@ Load the relevant canonical skill before starting any task.
 
 ---
 
+## Slash Commands
+
+la-briguade currently ships **14 slash commands**.
+
+| Command | Description |
+|---|---|
+| `/init-implementer` | Initialize the implementer agent directory structure and project guidelines |
+| `/update-implementer` | Force-refresh implementer setup by reconciling markdown artifacts against current code state as source of truth |
+| `/interview` | Run a deep-interview requirements session with Socratic scored loop |
+| `/critic` | Challenge a plan, spec, or current work from first principles |
+| `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
+| `/go-back-to-work` | Resume work after a session failure — loads git state and last context snapshot, then automatically continues execution from where the session left off |
+| `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
+| `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
+| `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
+| `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
+| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
+| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
+| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
+| `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
+
+---
+
 ## Code Pattern Examples
 
 Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Reference these when adding new features to maintain consistency with the existing codebase:
