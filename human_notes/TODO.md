@@ -1,0 +1,1 @@
+- Remove the fact that agents create an "agents" entry in the "auto-inject-skill" as "agents: [*]" when running init-implementer command => Agents should just not write an agents entry. It is already handled by agents permissions.
