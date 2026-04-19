@@ -15,6 +15,7 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"
