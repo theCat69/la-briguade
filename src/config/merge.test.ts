@@ -2,136 +2,13 @@ import { describe, it, expect } from "vitest";
 
 import type { AgentConfig } from "@opencode-ai/sdk";
 
-import { applyAgentOverride, resolveAgentConfig, swapOpusModel } from "./merge.js";
-import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
+import { resolveAgentConfig, swapOpusModel } from "./merge.js";
+import type { LaBriguadeConfig } from "./schema.js";
 
 // Helper to create a base AgentConfig with minimal required fields
 function makeBase(overrides: Partial<AgentConfig> = {}): AgentConfig {
   return { prompt: "Base system prompt.", model: "openai/gpt-4o", ...overrides };
 }
-
-describe("applyAgentOverride", () => {
-  it("should append systemPromptSuffix with \\n\\n separator", () => {
-    // Arrange
-    const base = makeBase({ prompt: "Be helpful." });
-    const override: AgentOverride = { systemPromptSuffix: "Always use PNPM." };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    expect(result.prompt).toBe("Be helpful.\n\nAlways use PNPM.");
-  });
-
-  it("should set systemPromptSuffix as prompt when base has no system prompt", () => {
-    // Arrange — base with no prompt property
-    const base: AgentConfig = { model: "openai/gpt-4o" };
-    const override: AgentOverride = { systemPromptSuffix: "Always use PNPM." };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert — no leading separator when base prompt is absent
-    expect(result.prompt).toBe("Always use PNPM.");
-  });
-
-  it("should set suffix as prompt when base prompt is empty string", () => {
-    // Arrange
-    const base = makeBase({ prompt: "" });
-    const override: AgentOverride = { systemPromptSuffix: "Extra." };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    expect(result.prompt).toBe("Extra.");
-  });
-
-  it("should apply model override over base model", () => {
-    // Arrange
-    const base = makeBase({ model: "openai/gpt-4o" });
-    const override: AgentOverride = { model: "anthropic/claude-opus-4" };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    expect(result.model).toBe("anthropic/claude-opus-4");
-  });
-
-  it("should fall back to base values when override fields are absent", () => {
-    // Arrange
-    const base = makeBase({
-      model: "openai/gpt-4o",
-      temperature: 0.7,
-      top_p: 0.9,
-    });
-    const override: AgentOverride = {};
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert — no override means base values preserved
-    expect(result.model).toBe("openai/gpt-4o");
-    expect(result.temperature).toBe(0.7);
-    expect(result.top_p).toBe(0.9);
-  });
-
-  it("should deep-merge permission: base and override combined, override wins conflicts", () => {
-    // Arrange
-    const base = makeBase({
-      permission: {
-        edit: "ask",
-        bash: "deny",
-      },
-    });
-    const override: AgentOverride = {
-      permission: { bash: "allow", webfetch: "ask" },
-    };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    const perm = result.permission as Record<string, unknown>;
-    expect(perm["edit"]).toBe("ask");       // from base
-    expect(perm["bash"]).toBe("allow");     // override wins conflict
-    expect(perm["webfetch"]).toBe("ask");   // from override only
-  });
-
-  it("should apply topP, topK, variant, and maxTokens overrides", () => {
-    // Arrange
-    const base = makeBase({ top_p: 0.1 });
-    const override: AgentOverride = {
-      topP: 0.8,
-      topK: 40,
-      variant: "high",
-      maxTokens: 2048,
-    };
-
-    // Act
-    const result = applyAgentOverride(base, override);
-
-    // Assert
-    expect(result.top_p).toBe(0.8);
-    expect(result["topK"]).toBe(40);
-    expect(result.variant).toBe("high");
-    expect(result["maxTokens"]).toBe(2048);
-  });
-
-  it("should not mutate the base object", () => {
-    // Arrange
-    const base = makeBase({ model: "openai/gpt-4o" });
-    const baseCopy = { ...base };
-    const override: AgentOverride = { model: "anthropic/claude-opus-4" };
-
-    // Act
-    applyAgentOverride(base, override);
-
-    // Assert — base is unchanged
-    expect(base.model).toBe(baseCopy.model);
-  });
-});
 
 describe("resolveAgentConfig", () => {
   it("should apply top-level model default when no per-agent model override", () => {
@@ -229,6 +106,76 @@ describe("resolveAgentConfig", () => {
     // Assert — base is completely unchanged
     expect(base.model).toBe(originalModel);
     expect(base.prompt).toBe(originalPrompt);
+  });
+
+  it("should merge per-agent permission overrides with base permission", () => {
+    // Arrange
+    const base = makeBase({
+      permission: {
+        edit: "allow",
+        webfetch: "ask",
+      },
+    });
+    const userConfig: LaBriguadeConfig = {
+      agents: {
+        coder: {
+          permission: {
+            webfetch: "deny",
+            external_directory: "allow",
+          },
+        },
+      },
+    };
+
+    // Act
+    const result = resolveAgentConfig("coder", base, userConfig);
+
+    // Assert
+    expect(result.permission).toEqual({
+      edit: "allow",
+      webfetch: "deny",
+      external_directory: "allow",
+    });
+  });
+
+  it("should use suffix as prompt when base prompt is empty", () => {
+    // Arrange
+    const base = makeBase({ prompt: "" });
+    const userConfig: LaBriguadeConfig = {
+      agents: {
+        coder: { systemPromptSuffix: "Suffix-only prompt." },
+      },
+    };
+
+    // Act
+    const result = resolveAgentConfig("coder", base, userConfig);
+
+    // Assert
+    expect(result.prompt).toBe("Suffix-only prompt.");
+  });
+
+  it("should map option overrides to SDK config keys", () => {
+    // Arrange
+    const base = makeBase();
+    const userConfig: LaBriguadeConfig = {
+      agents: {
+        coder: {
+          topP: 0.25,
+          topK: 20,
+          variant: "reasoning",
+          maxTokens: 2048,
+        },
+      },
+    };
+
+    // Act
+    const result = resolveAgentConfig("coder", base, userConfig);
+
+    // Assert
+    expect(result.top_p).toBe(0.25);
+    expect(result.topK).toBe(20);
+    expect(result.variant).toBe("reasoning");
+    expect(result.maxTokens).toBe(2048);
   });
 });
 

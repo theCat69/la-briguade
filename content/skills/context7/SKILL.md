@@ -1,6 +1,6 @@
 ---
 name: context7
-description: Fetch up-to-date, version-specific library/framework documentation and code examples via the Context7 MCP server.
+description: Fetch version-specific external library/framework docs and examples via Context7 MCP when local repo context is insufficient; do not use for repo-local facts.
 agents:
   - external-context-gatherer
   - ask

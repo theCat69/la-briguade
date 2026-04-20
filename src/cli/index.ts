@@ -14,8 +14,8 @@ import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
 import { resolveOpencodeConfigDir, resolveUserConfig } from "../config/index.js";
-import { logger } from "../utils/logger.js";
-import { isRecord } from "../utils/type-guards.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rawPkg: unknown = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-8"));

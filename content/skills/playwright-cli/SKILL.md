@@ -1,6 +1,6 @@
 ---
 name: playwright-cli
-description: Automate browser interactions, test web pages and work with Playwright tests.
+description: Drive browser UI checks with playwright-cli commands, snapshots, and test/debug workflows; do not use for backend-only or non-browser tasks.
 agents:
   - coder
   - builder

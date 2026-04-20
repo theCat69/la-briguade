@@ -27,10 +27,10 @@ import {
   injectAutoInjectSkills,
   resolveActiveSkills,
 } from "./plugin/auto-inject.js";
-import { collectDirs } from "./utils/content-merge.js";
+import { collectDirs } from "./utils/content/content-merge.js";
 import { loadVendorPrompts } from "./plugin/vendors.js";
-import { startCacheCtrlWatch } from "./utils/cache-ctrl-watch.js";
-import { initLogger, logger } from "./utils/logger.js";
+import { startCacheCtrlWatch } from "./utils/runtime/cache-ctrl-watch.js";
+import { initLogger, logger } from "./utils/runtime/logger.js";
 
 const agentsDir = "agents";
 const commandsDir = "commands";

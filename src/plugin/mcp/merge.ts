@@ -1,7 +1,7 @@
 import type { McpLocalConfig, McpRemoteConfig } from "@opencode-ai/sdk";
 
 import type { Config } from "../../types/plugin.js";
-import { logger } from "../../utils/logger.js";
+import { logger } from "../../utils/runtime/logger.js";
 
 import {
   DISALLOWED_COMMAND_CHARS,

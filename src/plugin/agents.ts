@@ -5,12 +5,12 @@ import type { AgentConfig } from "@opencode-ai/sdk";
 import { resolveAgentConfig, swapOpusModel } from "../config/merge.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
-import { parseFrontmatter } from "../utils/frontmatter.js";
-import { logger } from "../utils/logger.js";
-import { loadContentFiles } from "../utils/load-content.js";
-import { parseModelSections } from "../utils/model-sections.js";
-import { readContentFile } from "../utils/read-content-file.js";
-import { isRecord } from "../utils/type-guards.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
+import { loadContentFiles } from "../utils/content/load-content.js";
+import { readContentFile } from "../utils/content/read-content-file.js";
+import { parseModelSections } from "../utils/prompts/model-sections.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isRecord } from "../utils/support/type-guards.js";
 import type { AgentSectionsEntry } from "../hooks/index.js";
 
 const MAX_AGENT_FILE_LENGTH = 50_000;

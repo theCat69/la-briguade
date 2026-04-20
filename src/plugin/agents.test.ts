@@ -4,12 +4,12 @@ import { registerAgents } from "./agents.js";
 
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
-import { collectFiles } from "../utils/content-merge.js";
-import { logger } from "../utils/logger.js";
-import { readContentFile } from "../utils/read-content-file.js";
+import { collectFiles } from "../utils/content/content-merge.js";
+import { readContentFile } from "../utils/content/read-content-file.js";
+import { logger } from "../utils/runtime/logger.js";
 
-vi.mock("../utils/content-merge.js");
-vi.mock("../utils/read-content-file.js");
+vi.mock("../utils/content/content-merge.js");
+vi.mock("../utils/content/read-content-file.js");
 
 const mockCollectFiles = vi.mocked(collectFiles);
 const mockReadContentFile = vi.mocked(readContentFile);

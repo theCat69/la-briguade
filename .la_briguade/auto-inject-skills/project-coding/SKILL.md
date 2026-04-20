@@ -1,8 +1,52 @@
 ---
 name: project-coding
 description: Project-specific coding guidelines, naming conventions, architecture patterns, and code examples for la-briguade
+agents:
+  - coder
+  - reviewer
+  - architect
+  - feature-designer
+  - feature-reviewer
+  - planner
+  - ask
+  - builder
+  - orchestrator
 ---
 # Project coding guidelines
+
+## Scope
+
+- **In scope**: production TypeScript coding standards, architecture patterns, dependency policy,
+  and repository-specific implementation constraints.
+- **Out of scope**: release logistics, test-only policy details, and non-code documentation process.
+
+## Invariants
+
+- Changes **MUST** compile under strict TypeScript configuration.
+- External or user-provided data **MUST** be validated at runtime boundaries.
+- Error handling **MUST** be explicit and actionable; silent failure paths are disallowed.
+- Patterns **MUST** preserve content override precedence and non-overwrite permission semantics.
+- Code **MUST NOT** introduce placeholder logic, dead/commented-out production paths, or unsafe type assertions.
+- Build/test validation **MUST** pass before work is considered complete.
+
+## Validation Checklist
+
+```bash
+npm run build
+npm test
+```
+
+For touched config/schema boundaries, also validate:
+
+```bash
+npm run generate-schema
+```
+
+## Failure Handling
+
+- If local context is insufficient, stop and request missing context rather than inventing APIs.
+- If validation fails, fix root cause first; do not bypass checks.
+- If constraints conflict, preserve stronger safety/contract wording and document the resolved decision.
 
 ## Code Style
 
@@ -44,7 +88,7 @@ import type { HooksResult } from "../types/plugin.js";
 
 ## Error Handling
 
-- Use try-catch with `logger.warn(message)` (from `src/utils/logger.ts`) for non-fatal failures (e.g. missing content dirs, YAML parse errors)
+- Use try-catch with `logger.warn(message)` (from `src/utils/runtime/logger.ts`) for non-fatal failures (e.g. missing content dirs, YAML parse errors)
 - Never silently swallow errors — always log with context identifying the source
 - Use `Result<T, E>` discriminated union pattern for recoverable errors in library/utility code:
   ```typescript
@@ -58,7 +102,7 @@ import type { HooksResult } from "../types/plugin.js";
 ### Plugin Registration
 The `Plugin` export (`src/index.ts`) is an async function that returns `{ config, ...hooks }`. The `config` callback receives the mutable `input` config object and calls `register*` helpers to merge into it. **Never mutate globals** — only mutate the `input` passed to the `config` callback.
 
-`resolveConfigBaseDirs(projectDir)` (from `src/config/index.ts`) returns `{ globalDir, projectDir }` — the two user content roots (`~/la_briguade/` and the project root). All content loaders receive ordered arrays of dirs (`[builtin, globalUser, projectUser]`) and use `collectFiles()` / `collectDirs()` from `src/utils/content-merge.ts` for priority-based last-wins merging.
+`resolveConfigBaseDirs(projectDir)` (from `src/config/index.ts`) returns `{ globalDir, projectDir }` — the two user content roots (`~/la_briguade/` and the project root). All content loaders receive ordered arrays of dirs (`[builtin, globalUser, projectUser]`) and use `collectFiles()` / `collectDirs()` from `src/utils/content/content-merge.ts` for priority-based last-wins merging.
 
 ```typescript
 const LaBriguadePlugin: Plugin = async (ctx) => ({
@@ -72,7 +116,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => ({
 ```
 
 ### Content-Driven Registration
-Agents, skills, and commands are loaded from `.md` files resolved across ordered layers. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
+Agents, skills, and commands are loaded from `.md` files resolved across ordered layers. All loaders call `collectFiles(dirs, '.md')` (for agents/commands/vendors) or `collectDirs(roots)` (for skills) from `src/utils/content/content-merge.ts`. Later directories in the array override earlier ones by filename stem — this is the user content override mechanism. Agent/command identity comes from the filename (`.md` stripped, first char lowercased for agents). Frontmatter YAML provides metadata.
 
 **User content override paths** (lowest → highest priority):
 
@@ -84,7 +128,7 @@ Agents, skills, and commands are loaded from `.md` files resolved across ordered
 | Vendor prompts | `~/la_briguade/vendor-prompts/` | `<root>/.la_briguade/vendor-prompts/` |
 
 Full priority chain for skills: builtin < opencode global (`~/.config/opencode/skills/`) < global (`~/la_briguade/skills/`) < opencode project (`<root>/.opencode/skills/`) < project (`<root>/.la_briguade/skills/`). For all other content types: builtin < global < project.
-Agents, commands, and vendor prompts are loaded via `loadContentFiles(dirs, '.md', parseFn)` from `src/utils/load-content.ts` — this centralizes the `collectFiles` → warn-and-skip → parse cycle. Each loader provides its own `parseFn` callback.
+Agents, commands, and vendor prompts are loaded via `loadContentFiles(dirs, '.md', parseFn)` from `src/utils/content/load-content.ts` — this centralizes the `collectFiles` → warn-and-skip → parse cycle. Each loader provides its own `parseFn` callback.
 
 ### Frontmatter Parsing
 Use the `yaml` library's `parse()` with default `schema: "core"` behavior to avoid YAML 1.1 quirks (`on`/`off` → boolean). Always validate the parsed value before casting:

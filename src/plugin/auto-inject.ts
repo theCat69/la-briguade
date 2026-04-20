@@ -3,12 +3,32 @@ import { basename, join } from "node:path";
 
 import { z } from "zod";
 
-import { parseFrontmatter } from "../utils/frontmatter.js";
-import { isNodeError, isRecord } from "../utils/type-guards.js";
-import { logger } from "../utils/logger.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isNodeError, isRecord } from "../utils/support/type-guards.js";
 import type { Config } from "../types/plugin.js";
 
-// ─── Schemas ────────────────────────────────────────────────────────────────
+const AUTO_INJECT_START_MARKER = ">>>>> AUTO-INJECTED-SKILLS-START >>>>>";
+const AUTO_INJECT_END_MARKER = "<<<<< AUTO-INJECTED-SKILLS-END <<<<<";
+const AUTO_INJECT_PREFACE =
+  "The following content is already-loaded auto-injected skills. " +
+  "Each skill is shown as '#skill-name', then description, then body.";
+
+function buildGroupedAutoInjectBlock(entries: AutoInjectEntry[]): string {
+  const skillSections = entries
+    .map((entry) => `#${entry.skillName}\n${entry.skillDecription}\n${entry.body}`)
+    .join("\n\n");
+
+  return [
+    "---",
+    AUTO_INJECT_START_MARKER,
+    AUTO_INJECT_PREFACE,
+    "",
+    skillSections,
+    AUTO_INJECT_END_MARKER,
+    "---",
+  ].join("\n");
+}
 
 const DetectContentEntrySchema = z.object({
   file: z.string(),
@@ -22,15 +42,14 @@ const DetectSchema = z.object({
 
 const AutoInjectFrontmatterSchema = z.object({
   agents: z.array(z.string()).optional(),
+  description: z.string().optional(),
   detect: DetectSchema.optional(),
 });
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 /** A single auto-inject skill entry, parsed from a SKILL.md file. */
 export type AutoInjectEntry = {
   skillName: string;
-  /** Raw markdown body (after frontmatter) to append to matching agent prompts. */
+  skillDecription: string;
   body: string;
   /** Agent names this skill should be injected into (from `agents:` frontmatter). */
   agents: string[];
@@ -39,8 +58,6 @@ export type AutoInjectEntry = {
   /** File+content pairs that activate the skill when matched (OR logic). */
   detectContent: Array<{ file: string; contains: string }>;
 };
-
-// ─── Collect ─────────────────────────────────────────────────────────────────
 
 /**
  * Read each auto-inject skill directory, parse its SKILL.md frontmatter and body,
@@ -80,10 +97,11 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
       continue;
     }
 
-    const { agents = [], detect } = parsed.data;
+    const { agents = [], description, detect } = parsed.data;
 
     entries.set(skillName, {
       skillName,
+      skillDecription: description ?? "",
       body: body.trim(),
       agents,
       detectFiles: detect?.files ?? [],
@@ -93,8 +111,6 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
 
   return entries;
 }
-
-// ─── Resolve ─────────────────────────────────────────────────────────────────
 
 /**
  * Determine which auto-inject skills are active for the given project directory.
@@ -114,13 +130,11 @@ export function resolveActiveSkills(
   const active = new Set<string>();
 
   for (const [skillName, entry] of entries) {
-    // No detect constraints → always active
     if (entry.detectFiles.length === 0 && entry.detectContent.length === 0) {
       active.add(skillName);
       continue;
     }
 
-    // detect.files: any matching file existing → active (OR logic)
     for (const file of entry.detectFiles) {
       if (existsSync(join(projectDir, file))) {
         active.add(skillName);
@@ -132,7 +146,6 @@ export function resolveActiveSkills(
       continue;
     }
 
-    // detect.content: any entry whose file exists and contains the substring → active (OR logic)
     for (const { file, contains } of entry.detectContent) {
       const filePath = join(projectDir, file);
       if (!existsSync(filePath)) {
@@ -152,8 +165,6 @@ export function resolveActiveSkills(
 
   return active;
 }
-
-// ─── Inject ──────────────────────────────────────────────────────────────────
 
 /**
  * Append each active auto-inject skill body to matching agent prompts.
@@ -184,12 +195,13 @@ export function injectAutoInjectSkills(
       continue;
     }
 
-    // Resolve explicit skill permissions for this agent (no wildcard)
     const rawPermission: unknown = agentConfig["permission"];
     const rawSkillPerms: Record<string, unknown> =
       isRecord(rawPermission) && isRecord(rawPermission["skill"])
         ? rawPermission["skill"]
         : {};
+
+    const injectableEntries: AutoInjectEntry[] = [];
 
     for (const [skillName, entry] of entries) {
       if (!activeSkills.has(skillName)) {
@@ -200,7 +212,6 @@ export function injectAutoInjectSkills(
         continue;
       }
 
-      // Authorize: skill's agents list OR explicit allow/ask (no wildcard)
       const inAgentsList = entry.agents.includes(agentName);
       const explicitPerm = rawSkillPerms[skillName];
       const hasExplicitPermission = explicitPerm === "allow" || explicitPerm === "ask";
@@ -209,11 +220,30 @@ export function injectAutoInjectSkills(
         continue;
       }
 
-      const existingPrompt = agentConfig["prompt"];
-      const promptStr = typeof existingPrompt === "string" ? existingPrompt : "";
-      agentConfig["prompt"] = promptStr.length > 0
-        ? `${promptStr}\n\n${entry.body}`
-        : entry.body;
+      injectableEntries.push(entry);
     }
+
+    if (injectableEntries.length === 0) {
+      continue;
+    }
+
+    const existingPrompt = agentConfig["prompt"];
+    const promptStr = typeof existingPrompt === "string" ? existingPrompt : "";
+    const hasMeaningfulPrompt = promptStr.trim().length > 0;
+    const firstInjectableEntry = injectableEntries[0];
+
+    if (firstInjectableEntry == null) {
+      continue;
+    }
+
+    if (!hasMeaningfulPrompt) {
+      const remainingEntries = injectableEntries.slice(1);
+      const groupedRemainder =
+        remainingEntries.length > 0 ? `\n\n${buildGroupedAutoInjectBlock(remainingEntries)}` : "";
+      agentConfig["prompt"] = `${firstInjectableEntry.body}${groupedRemainder}`;
+      continue;
+    }
+
+    agentConfig["prompt"] = `${promptStr}\n\n${buildGroupedAutoInjectBlock(injectableEntries)}`;
   }
 }

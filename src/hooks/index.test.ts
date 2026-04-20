@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createHooks, type AgentSectionsEntry } from "./index.js";
-import { notifier } from "../utils/notifier.js";
+import { notifier } from "../utils/runtime/notifier.js";
 
 import type { PluginInput } from "../types/plugin.js";
 
@@ -17,22 +17,24 @@ function getSystemTransformHook(
   return hooks["experimental.chat.system.transform"];
 }
 
-function getEventHook() {
+function createHooksFixture() {
   const hooks = createHooks(
     {} as PluginInput,
     new Map<string, AgentSectionsEntry>(),
     new Map<string, string>(),
   );
-  return hooks.event;
+  return {
+    event: hooks.event,
+    toolExecuteAfter: hooks["tool.execute.after"],
+  };
 }
 
 function getToolExecuteAfterHook() {
-  const hooks = createHooks(
-    {} as PluginInput,
-    new Map<string, AgentSectionsEntry>(),
-    new Map<string, string>(),
-  );
-  return hooks["tool.execute.after"];
+  return createHooksFixture().toolExecuteAfter;
+}
+
+function getEventHook() {
+  return createHooksFixture().event;
 }
 
 describe("tool.execute.after", () => {
@@ -68,6 +70,22 @@ describe("tool.execute.after", () => {
     // Arrange
     const hook = getToolExecuteAfterHook();
     const output = { output: "Error: oldString not found in target content." };
+
+    // Act
+    await hook?.({ tool: "edit" } as never, output as never);
+
+    // Assert
+    expect(output.output).toContain(
+      "Hint: Re-read the file to get current content before retrying the edit.",
+    );
+  });
+
+  it("should append edit retry hint for multiple oldString matches marker", async () => {
+    // Arrange
+    const hook = getToolExecuteAfterHook();
+    const output = {
+      output: "Error: Found multiple matches for oldString in target content.",
+    };
 
     // Act
     await hook?.({ tool: "edit" } as never, output as never);

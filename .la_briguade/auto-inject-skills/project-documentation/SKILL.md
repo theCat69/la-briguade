@@ -1,7 +1,37 @@
 ---
 name: project-documentation
 description: Documentation standards for code, README, API docs, and changelog for la-briguade
+agents:
+  - coder
+  - reviewer
 ---
+
+## Scope
+
+- **In scope**: TSDoc/API contracts, README structure, changelog hygiene, and content-file
+  documentation standards used by this repository.
+- **Out of scope**: runtime behavior changes and build/tooling policies not tied to documentation.
+
+## Invariants
+
+- Exported APIs **MUST** have accurate TSDoc describing parameters, returns, and failure modes.
+- Documentation **MUST** reflect current behavior; stale guidance is treated as a defect.
+- README sections **MUST** preserve the agreed ordering unless explicitly revised project-wide.
+- Changelog entries **MUST** use Keep a Changelog categories.
+- Comments in code **MUST** explain non-obvious rationale, not restate implementation.
+
+## Validation Checklist
+
+- Verify updated public APIs include matching TSDoc.
+- Verify README tables/sections still match current agents, skills, commands, and hooks.
+- Verify changelog entries are categorized correctly (`Added/Changed/Fixed/...`).
+- Verify content docs do not reference deprecated paths as canonical.
+
+## Failure Handling
+
+- If documentation and code conflict, update docs in the same change before completion.
+- If required release notes are missing, block release workflow until changelog is updated.
+- If canonical path references are ambiguous, resolve to a single canonical source and note mirrors as optional.
 
 ## Code Documentation
 
@@ -44,7 +74,7 @@ Sections in this order (keep consistent with existing `README.md`):
 
 - `src/index.ts` exports the default `Plugin` — document it with a full TSDoc block including `@example`
 - Content `.md` files (`content/agents/*.md`, `content/skills/*/SKILL.md`, `content/commands/*.md`) serve as their own "API documentation" via their YAML frontmatter
-- Frontmatter field documentation lives as comments in the relevant `register*.ts` source file
+- Frontmatter field documentation lives as comments in the relevant `register*.ts` source file and must stay aligned with parser behavior.
 - No dedicated API doc site needed at current scale
 
 ## Changelog
@@ -68,12 +98,14 @@ Sections in this order (keep consistent with existing `README.md`):
 ## Content File Documentation
 
 Each agent `.md` file in `content/agents/` should:
-- Have frontmatter with at minimum: `name`, `description`, `type` (`primary` | `subagent`)
+- Have frontmatter with metadata keys actually consumed by `src/plugin/agents.ts` (for example `description`, `mode`, `model`, `temperature`, `top_p`, `maxSteps`, `disable`, `variant`, `permission`)
+- Avoid undocumented keys; unknown keys are ignored by registration and must not be treated as contract
 - Have a body describing the agent's identity, mission, and key capabilities
 - Keep the body concise — it is injected into the model system prompt at runtime
 
 Each skill `SKILL.md` file should:
-- Have frontmatter with exactly `name` and `description`
+- Have frontmatter with `name`, `description`, and `agents` for project auto-inject skills
+- Use optional frontmatter blocks (`mcp`, `permission`, `detect`) only when the skill requires those behaviors
 - Open with a one-paragraph summary of what the skill covers
 - Use `##` sections for major topic areas
 - Keep content actionable — the AI reads this at task time, not for background reading

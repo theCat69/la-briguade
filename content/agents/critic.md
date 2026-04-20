@@ -10,10 +10,12 @@ permission:
   bash: 
     "*": "deny"
     "cache-ctrl *": "allow"
+    "openspec *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"

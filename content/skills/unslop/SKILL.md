@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: Clean AI-generated code slop in sequential bounded passes scoped to changed files only
+description: Perform sequential slop-cleanup edits in bounded changed-file scope with behavior-preserving rules; do not use for read-only scanning.
 agents:
   - builder
 ---
@@ -45,13 +45,22 @@ Verify that all behavior touched in Passes 1–3 is covered by tests.
 - **Default (flag-only)**: flag each uncovered path explicitly — do NOT write tests. Report each gap with: file, function/branch, and reason it is uncovered. The caller decides whether to proceed with writing tests.
 - **Test-writing override**: callers may explicitly request test authoring by stating it in the invocation prompt (e.g. `/unslop-loop` does this). When test writing is explicitly requested, write targeted tests that lock the preserved behavior. Each test must assert a meaningful result — not just "no error thrown". Co-locate new tests with existing test files following the project's naming convention.
 
+## Reduce Override (`--reduce`)
+
+When the caller explicitly requests reduction mode (`--reduce` or equivalent), change the optimization target from general cleanup to **net codebase-size reduction**.
+
+- Prioritize exact duplication removal, dead code deletion, useless comment removal, redundant helper consolidation, and pass-through wrapper inlining.
+- Local behavior-preserving refactors are allowed only when they **reduce code size** within the bounded scope.
+- De-prioritize rename-only, error-message wording, or style-only cleanup when it does not materially shrink the code.
+- Never introduce a larger abstraction just to make code look cleaner.
+
 ## Critical Rules
 
 - **Scope is bounded to changed files by default.** Identify them via `git diff`. Never touch a file that is not in the changed set unless `--full` is active.
 - **Full-codebase override (`--full`)**: when the caller explicitly passes `--full` or states full-codebase scope in the invocation prompt, scope expands to all source files (excluding `.ai/`, `node_modules/`, build artifact directories, and binary files). Use only when the default diff scope is empty or the caller has explicitly requested whole-codebase cleanup.
 - **Run passes sequentially.** Complete Pass 1 before starting Pass 2. Starting Pass 2 without finishing Pass 1 is a violation.
 - **Prefer deletion over addition.** But scope rule takes precedence: if a symbol is not in the changed files set and is not provably dead within those files, flag it for manual review — do NOT delete it speculatively. Deletion without scope evidence is a violation of the scope rule.
-- **Preserve behavior.** Do NOT refactor logic, restructure architecture, or improve algorithms. Surface-level cleanup only.
+- **Preserve behavior.** Do NOT refactor logic unless the caller explicitly enabled reduction mode and the refactor is local, behavior-preserving, and net-reduces code size. Never restructure architecture or change algorithms.
 - **Lock behavior with tests BEFORE deleting anything that has side effects.** Write the test first, then delete.
 - **Read-only scanning is handled by the `unslop-reviewer` skill** — do NOT use this skill in read-only contexts. This skill always edits files.
 

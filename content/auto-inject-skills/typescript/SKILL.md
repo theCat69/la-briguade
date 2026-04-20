@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: TypeScript-specific coding guidelines — strict typing, runtime validation, discriminated unions, and error patterns
+description: Apply strict TypeScript production rules for typing, runtime validation, state/error modeling, and module organization in TypeScript codebases; not intended for non-TypeScript stacks.
 detect:
   files:
     - tsconfig.json

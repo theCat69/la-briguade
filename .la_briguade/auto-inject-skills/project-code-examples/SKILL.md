@@ -1,7 +1,37 @@
 ---
 name: project-code-examples
 description: Catalog of project code examples — what patterns exist and where to find them in .code-examples-for-ai/
+agents:
+  - coder
+  - reviewer
+  - architect
+  - builder
 ---
+
+## Scope
+
+- **In scope**: indexing and maintaining repository code-pattern examples consumed by AI workflows.
+- **Out of scope**: introducing production behavior changes unrelated to example coverage.
+
+## Invariants
+
+- Example index **MUST** list each maintained pattern file with a one-line purpose.
+- Each example file **MUST** represent one focused pattern.
+- New patterns introduced in production code **MUST** be reflected in this index.
+- Existing examples **MUST NOT** be silently removed without replacement rationale.
+- Example snippets **MUST** stay concise and implementation-aligned.
+
+## Validation Checklist
+
+- Verify `.code-examples-for-ai/` contains the files listed in `## Available Examples`.
+- Verify any new coding pattern introduced by the change is documented with one dedicated `.md` example file.
+- Verify this index section is updated in the same change when example files are added/renamed/removed.
+
+## Failure Handling
+
+- If pattern coverage is unclear, add or update the nearest matching example before marking task done.
+- If an example becomes stale after refactors, update it in the same change that introduced drift.
+- If no new pattern was introduced, record that no example update was required.
 
 These examples demonstrate the coding patterns used in this project. Reference them when adding new features to maintain consistency.
 
@@ -21,6 +51,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `load-content-helper.md` — Shared `loadContentFiles()` wrapper that centralizes collectFiles + warn-and-skip parsing
 - `logger-notifier.md` — Logger singleton with two-phase init and notifier toast fallback integration
 - `skill-access-gating.md` — Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup
+- `auto-inject-prompt-wrapping.md` — Auto-inject prompt merge behavior: wrapped append for existing non-whitespace prompts, raw first-skill body when prompt is empty/whitespace-only
 
 ## Location
 

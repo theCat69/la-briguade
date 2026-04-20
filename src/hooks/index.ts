@@ -1,8 +1,8 @@
 import type { PluginInput, HooksResult } from "../types/plugin.js";
-import { resolveModelSection, KNOWN_FAMILIES } from "../utils/model-sections.js";
-import type { ModelSegment } from "../utils/model-sections.js";
-import { initNotifier, notifier } from "../utils/notifier.js";
-import { isRecord } from "../utils/type-guards.js";
+import { resolveModelSection, KNOWN_FAMILIES } from "../utils/prompts/model-sections.js";
+import type { ModelSegment } from "../utils/prompts/model-sections.js";
+import { initNotifier, notifier } from "../utils/runtime/notifier.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 /**
  * Invariant: HEAD_SIZE + TAIL_SIZE must be ≤ TRUNCATION_THRESHOLD.

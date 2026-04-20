@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { LOG_LEVELS } from "../utils/logger.js";
+import { LOG_LEVELS } from "../utils/runtime/logger.js";
 
 /** Regex that rejects keys matching reserved prototype pollution names. */
 export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;

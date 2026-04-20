@@ -23,9 +23,9 @@ import {
   resolveActiveSkills,
 } from "./plugin/auto-inject.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
-import { initLogger, logger } from "./utils/logger.js";
-import { startCacheCtrlWatch } from "./utils/cache-ctrl-watch.js";
-import { collectDirs } from "./utils/content-merge.js";
+import { collectDirs } from "./utils/content/content-merge.js";
+import { startCacheCtrlWatch } from "./utils/runtime/cache-ctrl-watch.js";
+import { initLogger, logger } from "./utils/runtime/logger.js";
 
 vi.mock("./config/index.js", () => ({
   resolveConfigBaseDirs: vi.fn(),
@@ -69,18 +69,18 @@ vi.mock("./plugin/mcp/index.js", () => ({
   mergeSkillMcps: vi.fn(),
 }));
 
-vi.mock("./utils/logger.js", () => ({
+vi.mock("./utils/runtime/logger.js", () => ({
   initLogger: vi.fn(),
   logger: {
     setLevel: vi.fn(),
   },
 }));
 
-vi.mock("./utils/cache-ctrl-watch.js", () => ({
+vi.mock("./utils/runtime/cache-ctrl-watch.js", () => ({
   startCacheCtrlWatch: vi.fn(),
 }));
 
-vi.mock("./utils/content-merge.js", () => ({
+vi.mock("./utils/content/content-merge.js", () => ({
   collectDirs: vi.fn(),
 }));
 

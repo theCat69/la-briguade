@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("node:fs");
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../utils/runtime/logger.js", () => ({
   LOG_LEVELS: ["off", "error", "warn", "info", "debug"] as const,
   logger: {
     warn: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock("../utils/logger.js", () => ({
 
 import { readFileSync } from "node:fs";
 import { loadConfig } from "./loader.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/runtime/logger.js";
 
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockLoggerWarn = vi.mocked(logger.warn);

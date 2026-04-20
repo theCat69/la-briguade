@@ -13,8 +13,8 @@ import {
 } from "./mcp/index.js";
 
 import type { Config } from "../types/plugin.js";
-import { logger } from "../utils/logger.js";
-import { isRecord } from "../utils/type-guards.js";
+import { logger } from "../utils/runtime/logger.js";
+import { isRecord } from "../utils/support/type-guards.js";
 import type {
   SkillAgentIndex,
   SkillBashPermIndex,

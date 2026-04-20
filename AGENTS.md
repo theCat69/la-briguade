@@ -10,16 +10,47 @@ No files are copied to the host system — everything is registered in-memory at
 
 ## Project Guidelines
 
-Detailed, stack-specific guidelines are in `.opencode/skills/`. Load the relevant skill before starting any task.
+This file is a high-level overview. The canonical detailed guideline source is:
+
+- `.la_briguade/auto-inject-skills/*/SKILL.md` (authoritative)
+
+Optional mirror (only when explicitly maintained by project workflows):
+
+- `.la_briguade/skills/*/SKILL.md`
+
+Load the relevant canonical skill before starting any task.
 
 | Skill file | Description |
 |---|---|
-| `.opencode/skills/project-coding/SKILL.md` | TypeScript strict ESM conventions, naming, import order, error handling, architecture patterns (plugin registration, frontmatter, JSONC, hooks) |
-| `.opencode/skills/project-build/SKILL.md` | Build commands (`npm run build/dev/clean`), prerequisites (Node ≥22), release workflow, output structure |
-| `.opencode/skills/project-test/SKILL.md` | Vitest v4 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
-| `.opencode/skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
-| `.opencode/skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
-| `.opencode/skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
+| `.la_briguade/auto-inject-skills/project-coding/SKILL.md` | TypeScript strict ESM conventions, naming, import order, error handling, architecture patterns (plugin registration, frontmatter, JSONC, hooks) |
+| `.la_briguade/auto-inject-skills/project-build/SKILL.md` | Build commands (`npm run build/dev/clean`), prerequisites (Node ≥22), release workflow, output structure |
+| `.la_briguade/auto-inject-skills/project-test/SKILL.md` | Vitest v4 setup, test file naming, AAA pattern, mocking conventions, coverage requirements |
+| `.la_briguade/auto-inject-skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
+| `.la_briguade/auto-inject-skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
+| `.la_briguade/auto-inject-skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
+
+---
+
+## Slash Commands
+
+la-briguade currently ships **14 slash commands**.
+
+| Command | Description |
+|---|---|
+| `/init-implementer` | Initialize the implementer agent directory structure and project guidelines |
+| `/update-implementer` | Force-refresh implementer setup by reconciling markdown artifacts against current code state as source of truth |
+| `/interview` | Run a deep-interview requirements session with Socratic scored loop |
+| `/critic` | Challenge a plan, spec, or current work from first principles |
+| `/full-review` | Run a full deep review of the project — code quality, security, and documentation |
+| `/go-back-to-work` | Resume work after a session failure — loads git state and last context snapshot, then automatically continues execution from where the session left off |
+| `/unslop` | Run a single AI slop cleanup pass on changed files (interactive) |
+| `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
+| `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
+| `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
+| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
+| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
+| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
+| `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
 
 ---
 
@@ -61,26 +92,32 @@ src/
       permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/.la_briguade/vendor-prompts/
-    auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project
+    auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project, and injects prompt content as one grouped wrapped block (start/end markers + explanatory preface + per-skill `#<skillName>`/description/body sections) when appending to non-whitespace prompts; whitespace-only prompts are treated as empty and receive raw first-skill body
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation
-    merge.ts         ← resolveAgentConfig(), applyAgentOverride() — layered merge logic
+    merge.ts         ← resolveAgentConfig() and swapOpusModel() — layered config merge and model swap helper
     schema.ts        ← Zod schemas: LaBriguadeConfigSchema, AgentOverrideSchema, configJsonSchema (z.toJSONSchema)
   hooks/
     index.ts         ← createHooks(ctx, agentSections, vendorPrompts, agentSkillPerms) — output truncation, edit error hints, empty response detection, model section injection, vendor prompt injection, skill access gating
   cli/
     index.ts         ← Commander CLI: install / uninstall / doctor / update
   utils/
-    frontmatter.ts   ← YAML frontmatter parser
-    read-dir.ts      ← Safe directory reader
-    content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
-    model-sections.ts ← parseModelSections(), resolveModelSection() — model-family + ALL-target prompt section support (SectionTarget, ModelSegment, ModelSections)
-    type-guards.ts   ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
-    logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
-    notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
-    cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
-    load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
+    content/
+      frontmatter.ts   ← YAML frontmatter parser
+      read-dir.ts      ← Safe directory reader
+      content-merge.ts ← collectFiles(dirs[], ext) and collectDirs(roots[]) — priority-based merge helpers for all content loaders
+      load-content.ts  ← loadContentFiles<T>(dirs, ext, parse) — generic warn-and-skip content loader used by all content loaders
+      read-content-file.ts ← Shared size-limited markdown reader for content loaders
+    prompts/
+      model-sections.ts ← parseModelSections(), resolveModelSection() — model-family + ALL-target prompt section support (SectionTarget, ModelSegment, ModelSections)
+    runtime/
+      logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
+      notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
+      cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
+    support/
+      error-message.ts   ← Shared safe error-message normalization/sanitization helper used by warnings and logging paths
+      type-guards.ts     ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types
   types/
     plugin.ts        ← Type aliases for @opencode-ai/plugin API
 

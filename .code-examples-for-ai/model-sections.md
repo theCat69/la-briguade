@@ -1,7 +1,7 @@
 <!-- Pattern: model-sections — Parsing and injecting model-specific prompt sections in agent .md files -->
 
 ```typescript
-// 1. DEFINE KNOWN FAMILIES AND TYPES (src/utils/model-sections.ts)
+// 1. DEFINE KNOWN FAMILIES AND TYPES (src/utils/prompts/model-sections.ts)
 
 /** Recognised model-family identifiers for section matching. */
 export const KNOWN_FAMILIES = ["claude", "gpt", "gemini", "grok"] as const;
@@ -79,7 +79,7 @@ export type RegisterAgentsResult = {
   agentSections: Map<string, AgentSectionsEntry>;
 };
 
-// 4. RESOLVE ORDERED SEGMENTS FOR A MODEL (src/utils/model-sections.ts)
+// 4. RESOLVE ORDERED SEGMENTS FOR A MODEL (src/utils/prompts/model-sections.ts)
 // Include segments in document order when target is "all" or matched family.
 // Claude fallback is only used for legacy files that have NO "all" segment.
 

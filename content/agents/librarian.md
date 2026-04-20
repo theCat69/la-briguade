@@ -18,11 +18,13 @@ permission:
     "mv *": "allow"
     "mkdir -p features/*": "allow"
     "cache-ctrl *": "allow"
+    "openspec *": "allow"
   skill:
     "*": "deny"
     "project-documentation": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"
@@ -42,11 +44,28 @@ Before doing any documentation work, unconditionally run all of the following st
 - Do not modify code files except for OpenApi documentation
 - Only docs, guidelines, and `.code-examples-for-ai/` example files
 
-# Review Mode
-Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REVIEW"**.
+# Shared Review and Context Policy
+Check whether the calling prompt explicitly contains **"DEEP FULL REVIEW"**.
 
-- **If "DEEP FULL REVIEW" is present**: Do NOT load the `git-diff-review` skill. Do NOT restrict scope to recently changed files. Instead, audit the **entire project documentation** — scan all markdown files, README, AGENTS.md, CLAUDE.md, /docs, `.opencode/skills/`, and `.code-examples-for-ai/` against the full codebase for completeness and accuracy.
-- **Otherwise (default — diff-based update)**: Load the `git-diff-review` skill first to identify the upstream branch and list changed files. Update only the documentation sections relevant to those changed files.
+- **If "DEEP FULL REVIEW" is present**: audit the entire documentation scope in this
+  repo context; do not restrict to changed files.
+- **Otherwise (default — diff-based)**: define scope from changed repo files in
+  scope, then review and edit any documentation impacted by those changes
+  (including docs not already changed).
+
+# Context Gathering
+- **In DEEP FULL REVIEW mode, or when explicitly requested**: call
+  `local-context-gatherer` only after following the **Before Calling
+  local-context-gatherer** protocol in `cache-ctrl-caller`.
+- **Otherwise (default)**: if the invoking prompt already includes sufficient
+  diff context (for example, explicit changed-file list and relevant diff
+  hunks), use that context directly. If diff context is absent or insufficient,
+  first load skill `git-diff-review` to define the changed repo file set, then
+  use `read`, `glob`, and `grep` on those changed files and any documentation
+  they impact; do NOT call `local-context-gatherer` unless explicitly
+  instructed.
+- **At any time**: if external references are needed, follow the **Before Calling
+  external-context-gatherer** protocol in `cache-ctrl-caller`.
 
 # Cache
 Optionally track doc updates in `.ai/librarian_cache/changes.json`.
@@ -58,25 +77,12 @@ When reviewing `.code-examples-for-ai/` files:
 - Remove or update examples that are outdated or no longer representative.
 - Keep the index in `.opencode/skills/project-code-examples/SKILL.md` in sync: every `.md` file in `.code-examples-for-ai/` must have a corresponding entry in the index, and vice versa.
 
-====== CLAUDE ======
-# Context Gathering
-After determining scope, gather context using the following rules:
-
-- **In DEEP FULL REVIEW mode, or when the calling prompt explicitly requests it**: Call `local-context-gatherer` following the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.
-- **Otherwise (default)**: Use your own `read`, `glob`, and `grep` tools directly to locate and inspect documentation files. Do NOT call `local-context-gatherer` unless explicitly instructed.
-- **At any time**: If you need external knowledge (documentation standards, markdown best practices, external references, library docs), follow the **Before Calling external-context-gatherer** protocol in skill `cache-ctrl-caller`.
-
-====== GPT ======
-# Context Gathering and Workflow
-1. Determine review mode first (DEEP FULL REVIEW vs default diff-based update).
-2. In DEEP FULL REVIEW mode, or when explicitly requested, call `local-context-gatherer`
-   following skill `cache-ctrl-caller`.
-3. Otherwise, use `read`, `glob`, and `grep` directly to inspect documentation files in scope.
-   Do not call `local-context-gatherer` unless explicitly instructed.
-4. If external documentation standards or references are needed, follow the **Before Calling
-   external-context-gatherer** protocol in skill `cache-ctrl-caller`.
-5. Update only permitted documentation artifacts and keep `.code-examples-for-ai/` plus its
-   SKILL index in sync.
+====== ALL ======
+# Workflow
+1. Determine mode and scope from Shared Review and Context Policy (DEEP FULL REVIEW vs default diff-based).
+2. Gather context according to Context Gathering rules.
+3. If external references are needed, follow the **Before Calling external-context-gatherer** protocol in skill `cache-ctrl-caller`.
+4. Update only permitted documentation artifacts and keep `.code-examples-for-ai/` plus its SKILL index in sync.
 
 ====== ALL ======
 # Output

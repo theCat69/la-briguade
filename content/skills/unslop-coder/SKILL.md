@@ -1,6 +1,6 @@
 ---
 name: unslop-coder
-description: Applies a pre-computed unslop findings list — targeted edits only, no scanning
+description: Apply unslop-reviewer findings as targeted in-scope code edits in pass order; do not run discovery/scanning in this skill.
 agents:
   - coder
 ---
@@ -14,20 +14,8 @@ It is not a scanning skill.
 
 ## What You'll Be Fixing
 
-Findings target one of these slop categories:
-
-1. **Dead code** — unreachable branches, unused exports/variables/functions, stale
-   feature flags, commented-out blocks, and debug leftovers (`console.log`, `print`,
-   `debugger`, shipped TODOs).
-2. **Duplication** — copy-paste logic, near-identical functions that differ only by a
-   constant, repeated config blocks, or redundant helpers doing the same work.
-3. **Needless abstraction** — pass-through wrappers with no logic, single-use layers,
-   speculative indirection, or premature generalization with only one real call site.
-4. **Boundary violations** — hidden coupling across modules, misplaced
-   responsibilities (business logic in a view layer, I/O in pure logic), or cross-layer
-   leakage.
-5. **Weak test coverage** — touched behavior not locked by tests, assertions that only
-   check "no error thrown", and missing edge cases on modified paths.
+Apply only the categories and priorities provided by `unslop-reviewer`; treat that
+review output as the canonical slop taxonomy for each run.
 
 ## Input Format
 
@@ -74,6 +62,30 @@ When not active: skip pass-4 implementation. Report those findings as deferred g
 
 ---
 
+## Reduction Override
+
+When the caller explicitly states that reduction mode is active, optimize for **net code-size reduction** within the listed findings.
+
+- Favor the smallest safe implementation that removes lines or symbols.
+- Allowed examples: inline pass-through wrappers, consolidate exact duplicates, remove useless comments, and delete redundant locals/imports/guards.
+- Skip rename-only or stylistic cleanup that does not materially shrink the code.
+- Never add a broader abstraction if it increases code size.
+
+---
+
+## Orchestrator Validation Contract
+
+When called from `/unslop-loop` Orchestrator mode with a validation rule, this skill must:
+
+1. Detect test runner using the caller-provided order and set `test_cmd`.
+2. If a runner is available, execute `test_cmd` after edits.
+3. Report `tests: pass` or `tests: fail`.
+4. When `tests: fail`, include failing test names in output.
+
+If no runner is available, report `test_cmd: none`.
+
+---
+
 ## Output (≤ 300 tokens)
 
 - **Files touched** — list modified files
@@ -82,3 +94,4 @@ When not active: skip pass-4 implementation. Report those findings as deferred g
   unsafe change, etc.)
 - **Pass-4 gaps** — when override is not active, list deferred pass-4 findings
 - **Risks** — remaining risk areas that could not be safely cleaned in-scope
+- **Validation status** — `test_cmd: <command|none>` and `tests: pass|fail`; include failing test names when status is fail

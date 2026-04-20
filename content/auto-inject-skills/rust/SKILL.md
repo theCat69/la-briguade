@@ -1,6 +1,6 @@
 ---
 name: rust
-description: Rust-specific coding guidelines — ownership, error handling, traits, async, testing, Cargo, and safety conventions
+description: Apply Rust engineering rules for ownership, type modeling, async/concurrency, testing, and unsafe/safety boundaries in Rust code; do not use for non-Rust projects.
 detect:
   files:
     - Cargo.toml

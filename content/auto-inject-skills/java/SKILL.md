@@ -1,6 +1,6 @@
 ---
 name: java
-description: Java-specific coding guidelines — records, sealed classes, Optional, virtual threads, and stream-based data handling
+description: Apply Java coding conventions for modern language features, concurrency, collections/streams, and error strategy in Java projects; do not use for non-Java implementations.
 detect:
   files:
     - pom.xml

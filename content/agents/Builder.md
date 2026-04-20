@@ -19,6 +19,7 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
+    "openspec-*": "allow"
   webfetch: "allow"
   websearch: "allow"
   "youtube-transcript_*": "allow"
@@ -111,8 +112,9 @@ load skill `deep-interview` before step 1 (before gathering context).
 5.5. Load skill `unslop` and run a bounded cleanup pass on changed files before calling
      reviewer.
 6. Call reviewer with the git diff.
-7. Call security-reviewer with the git diff.
-8. **Security triage — re-verification loop.** For each non-obvious finding, assess whether it
+7. Call security-reviewer with the git diff only if the user explicitly requested a security
+   review/audit.
+8. **Security triage — re-verification loop (only if step 7 ran).** For each non-obvious finding, assess whether it
    is genuinely applicable. Re-call security-reviewer with a targeted prompt if needed.
    Classify as Confirmed / Deferred / Discarded.
 9. Call librarian to check for doc changes.
@@ -158,8 +160,9 @@ Critical Rules before step 6.
 6. Write the code yourself.
 7. Load skill `unslop` and run a cleanup pass on changed files.
 8. Call `reviewer` with the git diff.
-9. Call `security-reviewer` with the git diff.
-10. For each non-obvious security finding: re-call `security-reviewer` with a targeted question
+9. Call `security-reviewer` with the git diff only if the user explicitly requested security
+   review.
+10. If step 9 ran, for each non-obvious security finding: re-call `security-reviewer` with a targeted question
     if needed. Classify every finding as Confirmed / Deferred / Discarded before acting.
 11. Call `librarian` to check for doc changes.
 12. Summarize results and ask the user to validate.

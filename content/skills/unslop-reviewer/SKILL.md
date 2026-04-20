@@ -1,6 +1,6 @@
 ---
 name: unslop-reviewer
-description: Read-only AI slop scanner — emits a structured findings list, never edits files
+description: Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill.
 agents:
   - reviewer
 ---
@@ -61,6 +61,14 @@ Each finding must include:
 
 Include pass-4 (`test`) findings only when explicitly requested (for example:
 "include pass-4 findings" or equivalent override).
+
+## Reduction Override
+
+When the caller explicitly requests reduction mode, prioritize findings that shrink code size.
+
+- Rank dead code, exact duplication, needless wrappers/helpers, redundant guards/locals/imports, and useless comments ahead of naming-only issues.
+- Emit naming or error-handling findings only when they directly reduce code size or unblock a safer deletion/consolidation.
+- Keep the same pass mapping; only the priority of findings changes.
 
 ## Output Format
 

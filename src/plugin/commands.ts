@@ -1,8 +1,8 @@
 import type { Config } from "../types/plugin.js";
-import { parseFrontmatter } from "../utils/frontmatter.js";
-import { loadContentFiles } from "../utils/load-content.js";
-import { readContentFile } from "../utils/read-content-file.js";
-import { isRecord } from "../utils/type-guards.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
+import { loadContentFiles } from "../utils/content/load-content.js";
+import { readContentFile } from "../utils/content/read-content-file.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 interface CommandConfig {
   template: string;

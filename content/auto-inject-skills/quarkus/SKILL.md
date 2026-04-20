@@ -1,6 +1,6 @@
 ---
 name: quarkus
-description: Quarkus-specific coding guidelines — reactive I/O, CDI scopes, repository pattern, config mapping, and testing strategy
+description: Apply Quarkus service conventions for reactive I/O, CDI/resource boundaries, persistence/config patterns, and Quarkus test layering; do not use outside Quarkus codebases.
 detect:
   content:
     - file: pom.xml
