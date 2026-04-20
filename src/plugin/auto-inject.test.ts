@@ -86,11 +86,11 @@ function makeGroupedWrappedAppend(entries: AutoInjectEntry[]): string {
 
   return [
     "---",
-    "AUTO-INJECTED-SKILLS-START",
+    ">>>>> AUTO-INJECTED-SKILLS-START >>>>>",
     "The following content is already-loaded auto-injected skills. Each skill is shown as '#skill-name', then description, then body.",
     "",
     skillSections,
-    "AUTO-INJECTED-SKILLS-END",
+    "<<<<< AUTO-INJECTED-SKILLS-END <<<<<",
     "---",
   ].join("\n");
 }
@@ -626,11 +626,11 @@ describe("injectAutoInjectSkills", () => {
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
     expect(coder["prompt"]).toBe(
-      "Base.\n\n---\nAUTO-INJECTED-SKILLS-START\n" +
+      "Base.\n\n---\n>>>>> AUTO-INJECTED-SKILLS-START >>>>>\n" +
       "The following content is already-loaded auto-injected skills. " +
       "Each skill is shown as '#skill-name', then description, then body.\n\n" +
       "#general-coding\n\nGuidelines.\n" +
-      "AUTO-INJECTED-SKILLS-END\n---",
+      "<<<<< AUTO-INJECTED-SKILLS-END <<<<<\n---",
     );
   });
 
