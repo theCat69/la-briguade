@@ -22,6 +22,7 @@ permission:
   webfetch: "allow"
   websearch: "allow"
   "youtube-transcript_*": "allow"
+  "github_*": "allow"
   bash:
     "*": "deny"
     "curl *": "allow"
