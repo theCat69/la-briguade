@@ -1,6 +1,6 @@
 ---
 name: git-commit 
-description: Git commit guidelines skill 
+description: Stage and create commits using the repository message convention after implementation is complete; do not use for diff analysis or branch review.
 version: 1.0.0
 author: theCat69 
 type: skill

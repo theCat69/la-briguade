@@ -1,6 +1,6 @@
 ---
 name: git-diff-review
-description: Git diff review skill - compare current branch against upstream to identify changed files for targeted review
+description: Identify upstream branch and changed files with git diff for scoped code review; do not perform commit operations in this skill.
 version: 1.0.0
 author: theCat69
 type: skill

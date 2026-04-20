@@ -1,6 +1,6 @@
 ---
 name: unslop-coder
-description: Applies a pre-computed unslop findings list — targeted edits only, no scanning
+description: Apply unslop-reviewer findings as targeted in-scope code edits in pass order; do not run discovery/scanning in this skill.
 agents:
   - coder
 ---

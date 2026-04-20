@@ -1,6 +1,6 @@
 ---
 name: unslop-reviewer
-description: Read-only AI slop scanner — emits a structured findings list, never edits files
+description: Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill.
 agents:
   - reviewer
 ---

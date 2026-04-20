@@ -1,6 +1,6 @@
 ---
 name: deep-interview
-description: Socratic requirements gathering with mathematical ambiguity scoring — proceed only when ambiguity < 20%
+description: Resolve ambiguous implementation requests through scored Socratic clarification until ambiguity is below 20%; do not start coding while interview mode is active.
 agents:
   - planner
   - builder

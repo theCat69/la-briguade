@@ -45,24 +45,24 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 
 | Skill | Description |
 |---|---|
-| general-coding | Universal coding best practices — naming, testing philosophy, comments, design principles |
-| typescript | TypeScript-specific coding guidelines — strict typing, runtime validation, discriminated unions, and error patterns |
-| angular | Angular-specific coding guidelines — standalone components, OnPush, signals, reactive forms, and testing conventions |
-| java | Java-specific coding guidelines — records, sealed classes, Optional, virtual threads, and stream-based data handling |
-| quarkus | Quarkus-specific coding guidelines — reactive I/O, CDI scopes, repository pattern, config mapping, and testing strategy |
-| rust | Rust-specific coding guidelines — ownership, error handling, traits, async, testing, Cargo, and safety conventions |
-| frontend | Frontend verification workflow — HTML semantics, CSS architecture decisions, and browser-based verification |
-| playwright-cli | Automate browser interactions, test web pages, and work with Playwright tests |
-| git-commit | Git commit guidelines |
-| git-diff-review | Compare current branch against upstream to identify changed files for targeted review |
-| deep-interview | Socratic requirements gathering with mathematical ambiguity scoring |
+| general-coding | Apply cross-language engineering baselines for naming, testing, design principles, and error handling across repository work; defer to language/framework-specific skills for stack-specific rules. |
+| typescript | Apply strict TypeScript production rules for typing, runtime validation, state/error modeling, and module organization in TypeScript codebases; not intended for non-TypeScript stacks. |
+| angular | Apply Angular project conventions for standalone architecture, state/reactivity, routing/forms, and testing in Angular codebases; do not use for non-Angular stacks. |
+| java | Apply Java coding conventions for modern language features, concurrency, collections/streams, and error strategy in Java projects; do not use for non-Java implementations. |
+| quarkus | Apply Quarkus service conventions for reactive I/O, CDI/resource boundaries, persistence/config patterns, and Quarkus test layering; do not use outside Quarkus codebases. |
+| rust | Apply Rust engineering rules for ownership, type modeling, async/concurrency, testing, and unsafe/safety boundaries in Rust code; do not use for non-Rust projects. |
+| frontend | Enforce browser-facing frontend standards and verification steps (semantic HTML, CSS architecture, playwright-cli checks) after UI changes; not applicable to backend-only work. |
+| playwright-cli | Drive browser UI checks with playwright-cli commands, snapshots, and test/debug workflows; do not use for backend-only or non-browser tasks. |
+| git-commit | Stage and create commits using the repository message convention after implementation is complete; do not use for diff analysis or branch review. |
+| git-diff-review | Identify upstream branch and changed files with git diff for scoped code review; do not perform commit operations in this skill. |
+| deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification until ambiguity is below 20%; do not start coding while interview mode is active. |
 | cache-ctrl-caller | How agents decide whether to call context gatherer subagents and control cache invalidation |
 | cache-ctrl-local | Detect file changes and manage the local context cache |
 | cache-ctrl-external | Check staleness, search, and manage the external context cache |
-| unslop | Clean AI-generated code slop in sequential bounded passes scoped to changed files only |
-| unslop-coder | Apply a pre-computed unslop findings list — targeted edits only, no scanning |
-| unslop-reviewer | Read-only AI slop scanner — emits a structured findings list, never edits files |
-| context7 | Fetch up-to-date, version-specific library/framework docs and code examples via the Context7 MCP server |
+| unslop | Perform sequential slop-cleanup edits in bounded changed-file scope with behavior-preserving rules; do not use for read-only scanning. |
+| unslop-coder | Apply unslop-reviewer findings as targeted in-scope code edits in pass order; do not run discovery/scanning in this skill. |
+| unslop-reviewer | Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill. |
+| context7 | Fetch version-specific external library/framework docs and examples via Context7 MCP when local repo context is insufficient; do not use for repo-local facts. |
 
 ### Commands
 

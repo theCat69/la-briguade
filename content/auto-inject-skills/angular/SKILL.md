@@ -1,6 +1,6 @@
 ---
 name: angular
-description: Angular-specific coding guidelines — standalone components, OnPush, signals, reactive forms, and testing conventions
+description: Apply Angular project conventions for standalone architecture, state/reactivity, routing/forms, and testing in Angular codebases; do not use for non-Angular stacks.
 detect:
   files:
     - angular.json
