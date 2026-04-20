@@ -8,6 +8,28 @@ import { logger } from "../utils/runtime/logger.js";
 import { isNodeError, isRecord } from "../utils/support/type-guards.js";
 import type { Config } from "../types/plugin.js";
 
+const AUTO_INJECT_START_MARKER = "AUTO-INJECTED-SKILLS-START";
+const AUTO_INJECT_END_MARKER = "AUTO-INJECTED-SKILLS-END";
+const AUTO_INJECT_PREFACE =
+  "The following content is already-loaded auto-injected skills. " +
+  "Each skill is shown as '#skill-name', then description, then body.";
+
+function buildGroupedAutoInjectBlock(entries: AutoInjectEntry[]): string {
+  const skillSections = entries
+    .map((entry) => `#${entry.skillName}\n${entry.skillDecription}\n${entry.body}`)
+    .join("\n\n");
+
+  return [
+    "---",
+    AUTO_INJECT_START_MARKER,
+    AUTO_INJECT_PREFACE,
+    "",
+    skillSections,
+    AUTO_INJECT_END_MARKER,
+    "---",
+  ].join("\n");
+}
+
 const DetectContentEntrySchema = z.object({
   file: z.string(),
   contains: z.string(),
@@ -179,6 +201,8 @@ export function injectAutoInjectSkills(
         ? rawPermission["skill"]
         : {};
 
+    const injectableEntries: AutoInjectEntry[] = [];
+
     for (const [skillName, entry] of entries) {
       if (!activeSkills.has(skillName)) {
         continue;
@@ -196,11 +220,30 @@ export function injectAutoInjectSkills(
         continue;
       }
 
-      const existingPrompt = agentConfig["prompt"];
-      const promptStr = typeof existingPrompt === "string" ? existingPrompt : "";
-      agentConfig["prompt"] = promptStr.length > 0
-        ? `${promptStr}\n\n---\n#${entry.skillName}\n${entry.skillDecription}\n${entry.body}\n---`
-        : entry.body;
+      injectableEntries.push(entry);
     }
+
+    if (injectableEntries.length === 0) {
+      continue;
+    }
+
+    const existingPrompt = agentConfig["prompt"];
+    const promptStr = typeof existingPrompt === "string" ? existingPrompt : "";
+    const hasMeaningfulPrompt = promptStr.trim().length > 0;
+    const firstInjectableEntry = injectableEntries[0];
+
+    if (firstInjectableEntry == null) {
+      continue;
+    }
+
+    if (!hasMeaningfulPrompt) {
+      const remainingEntries = injectableEntries.slice(1);
+      const groupedRemainder =
+        remainingEntries.length > 0 ? `\n\n${buildGroupedAutoInjectBlock(remainingEntries)}` : "";
+      agentConfig["prompt"] = `${firstInjectableEntry.body}${groupedRemainder}`;
+      continue;
+    }
+
+    agentConfig["prompt"] = `${promptStr}\n\n${buildGroupedAutoInjectBlock(injectableEntries)}`;
   }
 }

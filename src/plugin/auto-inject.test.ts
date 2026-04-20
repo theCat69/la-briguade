@@ -79,8 +79,20 @@ function makeEntry(overrides: Partial<AutoInjectEntry> = {}): AutoInjectEntry {
   };
 }
 
-function makeWrappedAppend(entry: AutoInjectEntry): string {
-  return `---\n#${entry.skillName}\n${entry.skillDecription}\n${entry.body}\n---`;
+function makeGroupedWrappedAppend(entries: AutoInjectEntry[]): string {
+  const skillSections = entries
+    .map((entry) => `#${entry.skillName}\n${entry.skillDecription}\n${entry.body}`)
+    .join("\n\n");
+
+  return [
+    "---",
+    "AUTO-INJECTED-SKILLS-START",
+    "The following content is already-loaded auto-injected skills. Each skill is shown as '#skill-name', then description, then body.",
+    "",
+    skillSections,
+    "AUTO-INJECTED-SKILLS-END",
+    "---",
+  ].join("\n");
 }
 
 // ─── collectAutoInjectSkills ──────────────────────────────────────────────────
@@ -401,7 +413,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe(`Base coder prompt.\n\n${makeWrappedAppend(entry)}`);
+    expect(coder["prompt"]).toBe(`Base coder prompt.\n\n${makeGroupedWrappedAppend([entry])}`);
   });
 
   it("should inject skill body into agent with explicit allow permission", () => {
@@ -426,7 +438,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe(`Base.\n\n${makeWrappedAppend(entry)}`);
+    expect(coder["prompt"]).toBe(`Base.\n\n${makeGroupedWrappedAppend([entry])}`);
   });
 
   it("should inject skill body into agent with explicit ask permission", () => {
@@ -451,7 +463,7 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const reviewer = config.agent?.["reviewer"] as Record<string, unknown>;
-    expect(reviewer["prompt"]).toBe(`Reviewer base.\n\n${makeWrappedAppend(entry)}`);
+    expect(reviewer["prompt"]).toBe(`Reviewer base.\n\n${makeGroupedWrappedAppend([entry])}`);
   });
 
   it("should not inject skill body via wildcard permission", () => {
@@ -505,6 +517,35 @@ describe("injectAutoInjectSkills", () => {
     expect(coder["prompt"]).toBe("Guidelines.");
   });
 
+  it("should treat whitespace-only existing prompt as empty", () => {
+    // Arrange
+    const config = makeConfig({ coder: { prompt: "   \n\t  " } });
+    const generalEntry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "General coding defaults.",
+      agents: ["coder"],
+      body: "General.",
+    });
+    const typescriptEntry = makeEntry({
+      skillName: "typescript",
+      skillDecription: "TypeScript defaults.",
+      agents: ["coder"],
+      body: "TypeScript.",
+    });
+    const entries = new Map([
+      ["general-coding", generalEntry],
+      ["typescript", typescriptEntry],
+    ]);
+    const active = new Set(["general-coding", "typescript"]);
+
+    // Act
+    injectAutoInjectSkills(config, entries, active);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown>;
+    expect(coder["prompt"]).toBe(`General.\n\n${makeGroupedWrappedAppend([typescriptEntry])}`);
+  });
+
   it("should append multiple active skills to the same agent prompt", () => {
     // Arrange
     const config = makeConfig({ coder: { prompt: "Base." } });
@@ -532,11 +573,42 @@ describe("injectAutoInjectSkills", () => {
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
     expect(coder["prompt"]).toBe(
-      `Base.\n\n${makeWrappedAppend(generalEntry)}\n\n${makeWrappedAppend(typescriptEntry)}`,
+      `Base.\n\n${makeGroupedWrappedAppend([generalEntry, typescriptEntry])}`,
     );
   });
 
-  it("should append wrapped skill with empty description line when prompt already exists", () => {
+  it("should preserve empty-prompt behavior and keep later active skills grouped", () => {
+    // Arrange
+    const config = makeConfig({ coder: {} });
+    const generalEntry = makeEntry({
+      skillName: "general-coding",
+      skillDecription: "General coding defaults.",
+      agents: ["coder"],
+      body: "General.",
+    });
+    const typescriptEntry = makeEntry({
+      skillName: "typescript",
+      skillDecription: "TypeScript defaults.",
+      agents: ["coder"],
+      body: "TypeScript.",
+    });
+    const entries = new Map([
+      ["general-coding", generalEntry],
+      ["typescript", typescriptEntry],
+    ]);
+    const active = new Set(["general-coding", "typescript"]);
+
+    // Act
+    injectAutoInjectSkills(config, entries, active);
+
+    // Assert
+    const coder = config.agent?.["coder"] as Record<string, unknown>;
+    expect(coder["prompt"]).toBe(
+      `General.\n\n${makeGroupedWrappedAppend([typescriptEntry])}`,
+    );
+  });
+
+  it("should append grouped wrapped skill with empty description line when prompt already exists", () => {
     // Arrange
     const config = makeConfig({ coder: { prompt: "Base." } });
     const entry = makeEntry({
@@ -553,7 +625,13 @@ describe("injectAutoInjectSkills", () => {
 
     // Assert
     const coder = config.agent?.["coder"] as Record<string, unknown>;
-    expect(coder["prompt"]).toBe("Base.\n\n---\n#general-coding\n\nGuidelines.\n---");
+    expect(coder["prompt"]).toBe(
+      "Base.\n\n---\nAUTO-INJECTED-SKILLS-START\n" +
+      "The following content is already-loaded auto-injected skills. " +
+      "Each skill is shown as '#skill-name', then description, then body.\n\n" +
+      "#general-coding\n\nGuidelines.\n" +
+      "AUTO-INJECTED-SKILLS-END\n---",
+    );
   });
 
   it("should not inject skill with empty body", () => {

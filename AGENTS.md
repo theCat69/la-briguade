@@ -92,7 +92,7 @@ src/
       permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/.la_briguade/vendor-prompts/
-    auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project, and injects prompt content (wrapped with `---`, `#<skillName>`, description line, body, `---` when appending; body-only when no existing prompt)
+    auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project, and injects prompt content as one grouped wrapped block (start/end markers + explanatory preface + per-skill `#<skillName>`/description/body sections) when appending to non-whitespace prompts; whitespace-only prompts are treated as empty and receive raw first-skill body
   config/
     index.ts         ← resolveConfigBaseDirs(projectDir) — returns { globalDir, projectDir } for ~/la_briguade and project root; resolveOpencodeConfigDir() — returns homedir()/.config/opencode; resolveUserConfig() — loads + merges global and project configs
     loader.ts        ← loadConfig() — JSONC file loading with Zod validation

@@ -51,7 +51,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `load-content-helper.md` — Shared `loadContentFiles()` wrapper that centralizes collectFiles + warn-and-skip parsing
 - `logger-notifier.md` — Logger singleton with two-phase init and notifier toast fallback integration
 - `skill-access-gating.md` — Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup
-- `auto-inject-prompt-wrapping.md` — Auto-inject prompt merge behavior: wrapped append for existing prompts, raw body when prompt is empty
+- `auto-inject-prompt-wrapping.md` — Auto-inject prompt merge behavior: wrapped append for existing non-whitespace prompts, raw first-skill body when prompt is empty/whitespace-only
 
 ## Location
 

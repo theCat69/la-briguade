@@ -188,9 +188,12 @@ All agents, skills, commands, vendor prompts, and auto-inject skills are plain M
 
 Auto-inject prompt insertion uses two modes:
 
-- If an agent already has a system prompt, each injected skill is appended as a wrapped block:
-  `---` → `#<skillName>` → description line (may be blank) → body → `---`.
-- If an agent has no existing prompt, la-briguade sets the prompt to the skill body only (no wrapper).
+- If an agent already has a non-whitespace system prompt, all injected skills are appended as one wrapped block with
+  clear start/end delimiters and a short preface explaining the content is already-loaded auto-injected
+  skills. Inside that block, each skill is shown as `#<skillName>` → description line (may be blank)
+  → body, preserving skill order.
+- If an agent has no existing prompt (or only whitespace), la-briguade starts with the first injected skill body (raw, no
+  wrapper). If additional injectable skills exist, they are appended afterward as one wrapped block.
 
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 
