@@ -8,7 +8,7 @@ You are executing a full parallel local context gathering. Follow every step in 
 
 ## Step 1 — Detect stale files
 
-Call `cache_ctrl_check_files`.
+Call `cache-ctrl check-files`.
 
 Collect the stale file set:
 - From `changed_files`: extract the `path` field of each entry.
@@ -77,10 +77,10 @@ Construct one prompt per batch using the appropriate template below. Replace `[F
 >
 > **CONSTRAINTS — follow exactly:**
 > 1. Read ONLY the files in the FILES section below. Do not scan any other files.
-> 2. Run `cache_ctrl_check_files` as your normal startup step, but ignore its result when deciding what to read — your scan scope is fixed to the file list below.
+> 2. Run `cache-ctrl check-files` as your normal startup step, but ignore its result when deciding what to read — your scan scope is fixed to the file list below.
 > 3. Read each file in full before writing facts.
-> 4. This batch contains structural files — you MUST write `global_facts`. Before writing, call `cache_ctrl_inspect` with `agent: "local"` and `filter: ["global"]` to read the current value. Merge your new observations with any existing entries — do not discard valid facts already stored.
-> 5. Write ONLY the files in this list to `tracked_files` and `facts`. The per-path merge in `cache_ctrl_write` preserves all other cached paths automatically.
+> 4. This batch contains structural files — you MUST write `global_facts`. Before writing, call `cache-ctrl inspect` with `agent: "local"` and `filter: ["global"]` to read the current value. Merge your new observations with any existing entries — do not discard valid facts already stored.
+> 5. Write ONLY the files in this list to `tracked_files` and `facts`. The per-path merge in `cache-ctrl write` preserves all other cached paths automatically.
 > 6. Use `topic: "Full parallel repository context scan"` and `description: "Parallel batch scan of all stale files in the repository"` in your write.
 > 7. Return ≤ 200 tokens: files read, facts count per file, any read errors.
 >
@@ -93,10 +93,10 @@ Construct one prompt per batch using the appropriate template below. Replace `[F
 >
 > **CONSTRAINTS — follow exactly:**
 > 1. Read ONLY the files in the FILES section below. Do not scan any other files.
-> 2. Run `cache_ctrl_check_files` as your normal startup step, but ignore its result when deciding what to read — your scan scope is fixed to the file list below.
+> 2. Run `cache-ctrl check-files` as your normal startup step, but ignore its result when deciding what to read — your scan scope is fixed to the file list below.
 > 3. Read each file in full before writing facts.
-> 4. This batch does NOT contain structural files — you MUST omit `global_facts` from your `cache_ctrl_write` call. The existing value is preserved automatically by the per-path merge.
-> 5. Write ONLY the files in this list to `tracked_files` and `facts`. The per-path merge in `cache_ctrl_write` preserves all other cached paths automatically.
+> 4. This batch does NOT contain structural files — you MUST omit `global_facts` from your `cache-ctrl write` call. The existing value is preserved automatically by the per-path merge.
+> 5. Write ONLY the files in this list to `tracked_files` and `facts`. The per-path merge in `cache-ctrl write` preserves all other cached paths automatically.
 > 6. Use `topic: "Full parallel repository context scan"` and `description: "Parallel batch scan of all stale files in the repository"` in your write.
 > 7. Return ≤ 200 tokens: files read, facts count per file, any read errors.
 >

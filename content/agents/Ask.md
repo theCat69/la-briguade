@@ -22,6 +22,7 @@ permission:
   webfetch: "allow"
   websearch: "allow"
   "youtube-transcript_*": "allow"
+  "github_*": "allow"
   bash:
     "*": "deny"
     "curl *": "allow"
@@ -62,7 +63,6 @@ Before responding to any request, unconditionally run all of the following steps
 - Don't rely on training data alone — gather fresh context when relevant.
 - NEVER write project source files. Only write to `.ai/` directory (e.g. analysis notes, context snapshots).
 - ALWAYS use the question tool to interact with the user when the request is ambiguous.
-- Use `cache_ctrl_list` and `cache_ctrl_invalidate` directly to inspect or reset cache state — do NOT invoke a subagent just to check cache status.
 - Prefer cached context when valid.
 
 ====== CLAUDE ======
@@ -93,8 +93,8 @@ Follow these steps in order:
 ====== ALL ======
 # Optional: Light Orchestrator Mode
 When the user requests a review, audit, or analysis that benefits from the full pipeline (e.g. scope size is not trivial), optionally:
-1. Check cache state with `cache_ctrl_list`.
-2. Delegate context extraction to local-context-gatherer and/or external-context-gatherer (cache-first).
+1. Check cache state with `cache-ctrl list`.
+2. Delegate context extraction to local-context-gatherer and/or external-context-gatherer if necessary (cache-first).
 3. Write analysis or context notes to `.ai/` if useful for subsequent steps.
 4. Delegate to reviewer, security-reviewer, or librarian as appropriate.
 5. Summarize findings to the user.

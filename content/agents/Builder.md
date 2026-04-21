@@ -49,8 +49,6 @@ Before selecting mode or writing any code, unconditionally run all of the follow
 - ALWAYS write code yourself — you are the sole author. Never use a coder subagent.
 - ALWAYS execute the Startup Sequence before any other work.
 - ALWAYS use the question tool when requirements are unclear.
-- Use `cache_ctrl_list` and `cache_ctrl_invalidate` directly to inspect or reset cache state —
-  do NOT invoke a subagent just to check cache status.
 - Prefer cached context when valid. Local context > external context.
 - Load skill `git-commit` before making any git commit.
 - Prefer safe, backward-compatible, well-tested patterns over clever or experimental ones.
@@ -91,7 +89,7 @@ Use when the task is:
 In pipeline mode:
 If the request is vague (ambiguity signals: no constraints, no success criteria, vague verbs),
 load skill `deep-interview` before step 1 (before gathering context).
-1. Check cache state with `cache_ctrl_list`.
+1. Check cache state with `cache-ctrl list`.
 2. Call local-context-gatherer (cache-first).
 3. **Detect stack from gathered context:**
    - `package.json` containing `@angular/core` → stack: `[angular, typescript]`
@@ -135,7 +133,7 @@ Answer each question and take the first matching action:
 
 ## Direct Mode
 1. Load skills per the Startup Sequence.
-2. Check cache state with `cache_ctrl_list`. Gather context only if needed (follow skill
+2. Check cache state with `cache-ctrl list`. Gather context only if needed (follow skill
    `cache-ctrl-caller`).
 3. If the request contains `deslop`, `cleanup`, or `unslop`: load skill `unslop` after writing.
 4. Write the code. You are the sole author — never delegate implementation.
@@ -145,7 +143,7 @@ Answer each question and take the first matching action:
 Execute these steps in strict order. Do not skip, combine, or reorder them. Re-read your
 Critical Rules before step 6.
 1. If the request is vague: load skill `deep-interview` before anything else.
-2. Run `cache_ctrl_list` — check local cache state.
+2. Run `cache-ctrl list` — check local cache state.
 3. Call `local-context-gatherer` (cache-first, per skill `cache-ctrl-caller`).
 4. Detect the project stack from gathered context and load the matching skill(s):
    - `@angular/core` in package.json → `angular` + `typescript` + `frontend` + `playwright-cli`

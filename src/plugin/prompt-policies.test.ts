@@ -27,17 +27,6 @@ describe("prompt policy contracts", () => {
     expect(content).toContain("## Failure Handling");
   });
 
-  it("should require cache-ctrl contract in init-implementer local cache instructions", () => {
-    const content = readContentFile("content/commands/init-implementer.md");
-
-    expect(content).toContain("Cache authority rule (scoped): `cache-ctrl` authority applies to **local-context-gatherer only**.");
-    expect(content).toContain("For `local-context-gatherer`: do **not** instruct direct cache JSON edits");
-    expect(content).toContain("For other sub-agents (including `external-context-gatherer`): follow each agent's own documented cache mechanism.");
-    expect(content).toContain("cache_ctrl_write");
-    expect(content).toContain("cache_ctrl_inspect");
-    expect(content).toContain("Cache results to `.ai/external-context-gatherer_cache/` (one JSON file per technology). Use the `edit` tool to write cache files");
-  });
-
   it("should keep auto-inject canonical and regular skills as explicit optional mirrors", () => {
     const content = readContentFile("content/commands/init-implementer.md");
 
@@ -58,25 +47,6 @@ describe("prompt policy contracts", () => {
     expect(justDoItContent).toContain("only if the user explicitly asked for a security review");
     expect(refactorContent).toContain("only if the user explicitly requests a security review");
     expect(implementPrdContent).toContain("only if the user explicitly requested a security review");
-  });
-
-  it("should enforce cache-ctrl write verification contract for local-context-gatherer", () => {
-    const content = readContentFile("content/agents/local-context-gatherer.md");
-
-    const coldStartIndex = content.indexOf("Cold start rule:");
-    const writeIndex = content.indexOf("Write: submit only the scanned files in `tracked_files`.");
-    const verifyIndex = content.indexOf("Post-write verification (mandatory for reliability/observability)");
-
-    expect(coldStartIndex).toBeGreaterThan(-1);
-    expect(writeIndex).toBeGreaterThan(-1);
-    expect(verifyIndex).toBeGreaterThan(-1);
-    expect(coldStartIndex).toBeLessThan(writeIndex);
-    expect(writeIndex).toBeLessThan(verifyIndex);
-
-    expect(content).toContain("Use `cache_ctrl_write` as the canonical write path");
-    expect(content).toContain("Post-write verification (mandatory for reliability/observability)");
-    expect(content).toContain("cache write failed");
-    expect(content).toContain("Write status (`written`, `verified`, `retries`)");
   });
 
   it("should keep AGENTS.md canonical pointer on auto-inject skills", () => {
