@@ -98,7 +98,7 @@ Before starting any workflow step, unconditionally run all of the following step
 
 # Anti-Bloat Rules (Critical)
 - Never store raw logs, diffs, docs, or web pages in chat context.
-- NEVER use `read` to read source code files for understanding code. Use `cache_ctrl_inspect`
+- NEVER use `read` to read source code files for understanding code. Use `cache-ctrl inspect`
   or delegate to `local-context-gatherer`.
 - NEVER use `glob` or `grep` to search for code patterns, find implementations, or explore the
   codebase. Delegate to `local-context-gatherer`.
@@ -106,7 +106,7 @@ Before starting any workflow step, unconditionally run all of the following step
   `security-reviewer`.
 - Require subagents to return summaries ≤ 500 tokens.
 - Use disk caches in `.ai/<agent>_cache/` as source of truth.
-- Use `cache_ctrl_list` and `cache_ctrl_invalidate` directly to inspect or reset cache state —
+- Use `cache-ctrl list` and `cache-ctrl invalidate` directly to inspect or reset cache state —
   do NOT invoke a subagent just to check cache status.
 - Preserve only:
   - current goal
@@ -150,31 +150,31 @@ Before ANY context need — local or external — follow this exact sequence. Sk
 protocol violation.
 
 ## Local Context
-1. Call `cache_ctrl_check_files` to detect repo file changes.
+1. Call `cache-ctrl check-files` to detect repo file changes.
 2. Decide based on result:
 
 | Result | Action |
 |---|---|
-| `status: "unchanged"` AND cache has relevant content | Call `cache_ctrl_inspect` (agent: `"local"`, filter: task keywords). Use cached facts directly. Do NOT call `local-context-gatherer`. |
+| `status: "unchanged"` AND cache has relevant content | Call `cache-ctrl inspect` (agent: `"local"`, filter: task keywords). Use cached facts directly. Do NOT call `local-context-gatherer`. |
 | `status: "unchanged"` BUT cache is empty or irrelevant | Call `local-context-gatherer` with explicit "forced full scan" instruction. |
 | `status: "changed"` | Call `local-context-gatherer` for delta scan. Pass `changed_files` and `new_files` in the prompt. |
 | No cache exists (cold start) | Call `local-context-gatherer` for initial scan. |
-| `cache_ctrl_check_files` fails | Treat as stale. Call `local-context-gatherer`. |
+| `cache-ctrl check-files` fails | Treat as stale. Call `local-context-gatherer`. |
 
 3. NEVER skip step 1.
 4. NEVER use `read`/`glob`/`grep` as a substitute for this protocol.
 
 ## External Context
-1. Call `cache_ctrl_list` (agent: `"external"`) to see existing entries.
-2. Call `cache_ctrl_search` with relevant keywords to find a matching entry.
+1. Call `cache-ctrl list` (agent: `"external"`) to see existing entries.
+2. Call `cache-ctrl search` with relevant keywords to find a matching entry.
 3. Decide based on result:
 
 | Cache State | Action |
 |---|---|
-| Fresh entry found AND sufficient | Call `cache_ctrl_inspect` to read it. Do NOT call `external-context-gatherer`. |
+| Fresh entry found AND sufficient | Call `cache-ctrl inspect` to read it. Do NOT call `external-context-gatherer`. |
 | Fresh entry found BUT insufficient | Call `external-context-gatherer` to supplement. |
 | Entry stale or absent | Call `external-context-gatherer` with the subject. |
-| Borderline freshness | Call `cache_ctrl_check_freshness` to decide. |
+| Borderline freshness | Call `cache-ctrl check-freshness` to decide. |
 | Any cache tool call fails | Treat as absent. Call `external-context-gatherer`. |
 
 4. NEVER skip steps 1-2.
@@ -184,7 +184,7 @@ protocol violation.
 # Workflow
 1. Restate goal briefly.
 2. **Gather local context — follow Cache-First Protocol (Local Context).** Run
-   `cache_ctrl_check_files` first. Only call `local-context-gatherer` if the protocol decision
+   `cache-ctrl check-files` first. Only call `local-context-gatherer` if the protocol decision
    table requires it. Never read source files directly.
 2b. **Detect stack from gathered context:**
    - `package.json` containing `@angular/core` → stack: `[angular, typescript]`
@@ -207,9 +207,7 @@ protocol violation.
      list to the user and ask whether to proceed or adjust scope.
 2d. **Optional deep-interview**: If scope and intent is not clear. Load `deep-interview` skill
    and perform the interview.
-3. **Gather external context — follow Cache-First Protocol (External Context).** Run
-   `cache_ctrl_list` + `cache_ctrl_search` first. Only call `external-context-gatherer` if the
-   protocol decision table requires it.
+3. **Gather external context — follow Cache-First Protocol (External Context).**
 4. Filter into Context Snapshot (≤ 1,000 tokens) and write to
    `.ai/context-snapshots/current.json`.
 5. Call coder with snapshot path + summary only.
@@ -250,9 +248,9 @@ Follow each step in the exact order below. Do not skip, combine, or reorder step
 Re-read your Critical Rules and Delegation Map before step 5 and again before step 11.
 
 1. Restate the user goal briefly in your own words. Identify what is missing.
-2. Run `cache_ctrl_check_files` to detect repo file changes.
+2. Run `cache-ctrl check-files` to detect repo file changes.
 3. Based on the cache state, decide — then act:
-   - `status: "unchanged"` AND relevant facts exist → call `cache_ctrl_inspect` directly.
+   - `status: "unchanged"` AND relevant facts exist → call `cache-ctrl inspect` directly.
    - `status: "unchanged"` AND cache is empty/irrelevant → call `local-context-gatherer` with
      a "forced full scan" instruction.
    - `status: "changed"` → call `local-context-gatherer` for a delta scan; pass `changed_files`
@@ -260,16 +258,14 @@ Re-read your Critical Rules and Delegation Map before step 5 and again before st
    - No cache or cache failure → call `local-context-gatherer` for initial scan.
 4. Detect the project stack from gathered context. Load the matching stack skill. Record the
    detected stack in the Context Snapshot.
-5. If the request involves significant structural change (major refactor, module reorganisation,
+5. Gather external context to respond accuratly to the user 
+6. If the request involves significant structural change (major refactor, module reorganisation,
    new service, new agent/skill): call `architect`. Never produce the structure map yourself.
    Present the result to the user.
-6. If scope or intent is unclear: load skill `deep-interview` and conduct a scored interview
+7. If scope or intent is unclear: load skill `deep-interview` and conduct a scored interview
    loop before proceeding.
-7. Optionally call `critic` on the user's stated intent or the `architect` output. Present the
+8. Optionally call `critic` on the user's stated intent or the `architect` output. Present the
    challenge list to the user and ask whether to proceed.
-8. Run `cache_ctrl_list` and `cache_ctrl_search` to check for relevant external context. Call
-   `external-context-gatherer` only if the Cache-First Protocol requires it. Never call it
-   without checking the cache first.
 9. Write the Context Snapshot (≤ 1,000 tokens) to `.ai/context-snapshots/current.json`. Do not
    include raw logs, diffs, or web pages in the snapshot.
 10. Call `coder` with the snapshot path and a brief summary. Never write code yourself.

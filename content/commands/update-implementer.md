@@ -25,7 +25,7 @@ Default generation scope policy:
 
 Cache authority rule (scoped): `cache-ctrl` authority applies to **local-context-gatherer only**.
 
-- For `local-context-gatherer`: do **not** instruct direct cache JSON edits; require the `cache-ctrl-local` workflow and `cache_ctrl_write` + verification via `cache_ctrl_inspect`.
+- For `local-context-gatherer`: do **not** instruct direct cache JSON edits; require the `cache-ctrl-local` workflow and `cache-ctrl write` + verification via `cache-ctrl inspect`.
 - For other sub-agents (including `external-context-gatherer`): follow each agent's own documented cache mechanism.
 
 ## Pre-requisite: GitHub MCP (Optional)
@@ -49,8 +49,8 @@ If these prerequisites are not met, the agents will skip GitHub MCP calls and fa
 Call the `local-context-gatherer` sub-agent with the following prompt:
 
 > Perform a comprehensive project scan and return a structured summary.
-> Use the `cache-ctrl-local` startup workflow and write local cache via `cache_ctrl_write` (canonical source of truth), targeting `.ai/local-context-gatherer_cache/context.json`.
-> After writing, perform mandatory verification via `cache_ctrl_inspect` (with a filter containing 2-4 scanned file paths) and only report success when verification confirms persistence.
+> Use the `cache-ctrl-local` startup workflow and write local cache via `cache-ctrl write` (canonical source of truth), targeting `.ai/local-context-gatherer_cache/context.json`.
+> After writing, perform mandatory verification via `cache-ctrl inspect` (with a filter containing 2-4 scanned file paths) and only report success when verification confirms persistence.
 > If verification fails, retry one corrected write; if the second attempt fails, report `cache write failed` with actionable reason and list non-persisted files.
 >
 > Also scan the current implementer artifacts and detect drift vs code reality:

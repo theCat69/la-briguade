@@ -42,10 +42,10 @@ Reuse cache if repo files have not changed.
     - `global_facts`: submit ONLY if a structural file (AGENTS.md, install.sh, opencode.json, package.json, *.toml) was in `changed_files` or `new_files`.
     - Always re-submit `topic` and `description`.
     - RULE: every key in `facts` must match a path in submitted `tracked_files`.
-    - Use `cache_ctrl_write` as the canonical write path (cache-ctrl is the source of truth).
-    - Write contract: a write is considered successful only if `cache_ctrl_write` returns success without validation errors.
+    - Use `cache-ctrl write` as the canonical write path (cache-ctrl is the source of truth).
+    - Write contract: a write is considered successful only if `cache-ctrl write` returns success without validation errors.
 6. Post-write verification (mandatory for reliability/observability):
-   - Immediately call `cache_ctrl_inspect` with `agent: "local"` and `filter` containing 2-4 scanned file paths.
+   - Immediately call `cache-ctrl inspect` with `agent: "local"` and `filter` containing 2-4 scanned file paths.
    - Confirm written facts are visible in inspect output.
    - If verification fails, retry one corrected write (fix payload shape, tracked_files/facts mismatch, or missing topic/description).
    - If the second attempt fails, report `cache write failed` with actionable reason and include which files were not persisted.

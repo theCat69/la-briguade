@@ -34,7 +34,7 @@ Identify vulnerabilities, unsafe patterns, secrets exposure, and CVEs in depende
 
 # Startup Sequence (Always Execute First)
 Before reviewing any code, unconditionally run all of the following steps:
-1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache_ctrl_*` tools before calling context gatherer subagents.
+1. Load skill `cache-ctrl-caller`. Use it to understand how to use `cache-ctrl *` tools before calling context gatherer subagents.
 
 # Shared Scope Rules
 Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REVIEW"**.
