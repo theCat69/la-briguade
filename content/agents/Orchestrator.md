@@ -104,10 +104,10 @@ Before starting any workflow step, unconditionally run all of the following step
   codebase. Delegate to `local-context-gatherer`.
 - NEVER scan, analyze, or summarize code diffs yourself. Delegate to `reviewer` or
   `security-reviewer`.
+- NEVER pass full content or full git diff to subagents. Explain them how or what to do to accomplish their task. e.g. if a subagent needs to see the git diff tell him to run git diff instead of passing the git diff content.
 - Require subagents to return summaries ≤ 500 tokens.
 - Use disk caches in `.ai/<agent>_cache/` as source of truth.
-- Use `cache-ctrl list` and `cache-ctrl invalidate` directly to inspect or reset cache state —
-  do NOT invoke a subagent just to check cache status.
+- Use `cache-ctrl list` and `cache-ctrl invalidate` directly to inspect or reset cache state — do NOT invoke a subagent just to check cache status.
 - Preserve only:
   - current goal
   - workflow step
