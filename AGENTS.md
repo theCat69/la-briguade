@@ -28,6 +28,9 @@ Load the relevant canonical skill before starting any task.
 | `.la_briguade/auto-inject-skills/project-documentation/SKILL.md` | TSDoc standards, README format, changelog format, content file documentation |
 | `.la_briguade/auto-inject-skills/project-security/SKILL.md` | YAML safe parsing, path traversal prevention, prototype pollution, dependency hygiene, no-secrets policy |
 | `.la_briguade/auto-inject-skills/project-code-examples/SKILL.md` | Index of code pattern examples in `.code-examples-for-ai/` — what exists and how to maintain it |
+| `.la_briguade/auto-inject-skills/nextjs/SKILL.md` | Next.js app-router production checklist guidance and official docs references |
+| `.la_briguade/auto-inject-skills/react/SKILL.md` | React purity, immutability, and effect synchronization guidance with official docs |
+| `.la_briguade/auto-inject-skills/flutter/SKILL.md` | Flutter app architecture and performance best-practice guidance with official docs |
 
 ---
 
