@@ -31,6 +31,8 @@ Load the relevant canonical skill before starting any task.
 | `.la_briguade/auto-inject-skills/nextjs/SKILL.md` | Next.js app-router production checklist guidance and official docs references |
 | `.la_briguade/auto-inject-skills/react/SKILL.md` | React purity, immutability, and effect synchronization guidance with official docs |
 | `.la_briguade/auto-inject-skills/flutter/SKILL.md` | Flutter app architecture and performance best-practice guidance with official docs |
+| `.la_briguade/auto-inject-skills/dioxus/SKILL.md` | Dioxus UI/component production guidance with hook correctness and rendering performance practices |
+| `.la_briguade/auto-inject-skills/axum/SKILL.md` | Axum server/middleware production guidance with layering order and error-handling practices |
 
 ---
 

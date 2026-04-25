@@ -70,6 +70,8 @@ describe("prompt policy contracts", () => {
       ".la_briguade/auto-inject-skills/nextjs/SKILL.md",
       ".la_briguade/auto-inject-skills/react/SKILL.md",
       ".la_briguade/auto-inject-skills/flutter/SKILL.md",
+      ".la_briguade/auto-inject-skills/dioxus/SKILL.md",
+      ".la_briguade/auto-inject-skills/axum/SKILL.md",
     ] as const;
 
     for (const skillPath of skillFiles) {
@@ -146,6 +148,28 @@ describe("prompt policy contracts", () => {
         "builder",
         "orchestrator",
       ],
+      ".la_briguade/auto-inject-skills/dioxus/SKILL.md": [
+        "coder",
+        "reviewer",
+        "architect",
+        "feature-designer",
+        "feature-reviewer",
+        "planner",
+        "ask",
+        "builder",
+        "orchestrator",
+      ],
+      ".la_briguade/auto-inject-skills/axum/SKILL.md": [
+        "coder",
+        "reviewer",
+        "architect",
+        "feature-designer",
+        "feature-reviewer",
+        "planner",
+        "ask",
+        "builder",
+        "orchestrator",
+      ],
     } as const;
 
     for (const [skillPath, expectedAgents] of Object.entries(expectedAgentsBySkillPath)) {
@@ -162,6 +186,8 @@ describe("prompt policy contracts", () => {
     const nextjs = readContentFile(".la_briguade/auto-inject-skills/nextjs/SKILL.md");
     const react = readContentFile(".la_briguade/auto-inject-skills/react/SKILL.md");
     const flutter = readContentFile(".la_briguade/auto-inject-skills/flutter/SKILL.md");
+    const dioxus = readContentFile(".la_briguade/auto-inject-skills/dioxus/SKILL.md");
+    const axum = readContentFile(".la_briguade/auto-inject-skills/axum/SKILL.md");
 
     expect(nextjs).toContain("- file: package.json");
     expect(nextjs).toContain("contains: '\"next\"'");
@@ -169,6 +195,10 @@ describe("prompt policy contracts", () => {
     expect(react).toContain("contains: '\"react\"'");
     expect(flutter).toContain("- file: pubspec.yaml");
     expect(flutter).toContain('contains: "flutter:"');
+    expect(dioxus).toContain("- file: Cargo.toml");
+    expect(dioxus).toContain('contains: "dioxus ="');
+    expect(axum).toContain("- file: Cargo.toml");
+    expect(axum).toContain('contains: "axum ="');
   });
 
   it("should keep project-documentation guidance aligned with current frontmatter policy", () => {

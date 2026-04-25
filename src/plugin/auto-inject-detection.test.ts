@@ -143,4 +143,100 @@ describe("auto-inject framework detection contracts", () => {
     // Assert
     expect(active.has("flutter")).toBe(true);
   });
+
+  it("should not activate dioxus skill when Cargo.toml exists without dioxus marker", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+    ]);
+    const tempProject = createTempProject({
+      "Cargo.toml": [
+        "[package]",
+        "name = \"service\"",
+        "version = \"0.1.0\"",
+        "edition = \"2021\"",
+        "",
+        "[dependencies]",
+        "serde = \"1\"",
+      ].join("\n"),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("dioxus")).toBe(false);
+  });
+
+  it("should activate dioxus skill when Cargo.toml contains dioxus dependency", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+    ]);
+    const tempProject = createTempProject({
+      "Cargo.toml": [
+        "[package]",
+        "name = \"ui\"",
+        "version = \"0.1.0\"",
+        "edition = \"2021\"",
+        "",
+        "[dependencies]",
+        "dioxus = \"0.7\"",
+      ].join("\n"),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("dioxus")).toBe(true);
+  });
+
+  it("should not activate axum skill when Cargo.toml exists without axum marker", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+    ]);
+    const tempProject = createTempProject({
+      "Cargo.toml": [
+        "[package]",
+        "name = \"service\"",
+        "version = \"0.1.0\"",
+        "edition = \"2021\"",
+        "",
+        "[dependencies]",
+        "tokio = { version = \"1\", features = [\"rt-multi-thread\"] }",
+      ].join("\n"),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("axum")).toBe(false);
+  });
+
+  it("should activate axum skill when Cargo.toml contains axum dependency", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+    ]);
+    const tempProject = createTempProject({
+      "Cargo.toml": [
+        "[package]",
+        "name = \"api\"",
+        "version = \"0.1.0\"",
+        "edition = \"2021\"",
+        "",
+        "[dependencies]",
+        "axum = \"0.8\"",
+      ].join("\n"),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("axum")).toBe(true);
+  });
 });
