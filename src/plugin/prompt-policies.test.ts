@@ -68,6 +68,7 @@ describe("prompt policy contracts", () => {
       ".la_briguade/auto-inject-skills/project-security/SKILL.md",
       ".la_briguade/auto-inject-skills/project-code-examples/SKILL.md",
       ".la_briguade/auto-inject-skills/nextjs/SKILL.md",
+      ".la_briguade/auto-inject-skills/react-native/SKILL.md",
       ".la_briguade/auto-inject-skills/react/SKILL.md",
       ".la_briguade/auto-inject-skills/flutter/SKILL.md",
       ".la_briguade/auto-inject-skills/dioxus/SKILL.md",
@@ -137,6 +138,17 @@ describe("prompt policy contracts", () => {
         "builder",
         "orchestrator",
       ],
+      ".la_briguade/auto-inject-skills/react-native/SKILL.md": [
+        "coder",
+        "reviewer",
+        "architect",
+        "feature-designer",
+        "feature-reviewer",
+        "planner",
+        "ask",
+        "builder",
+        "orchestrator",
+      ],
       ".la_briguade/auto-inject-skills/flutter/SKILL.md": [
         "coder",
         "reviewer",
@@ -185,6 +197,9 @@ describe("prompt policy contracts", () => {
   it("should require realistic detection markers for framework auto-inject skills", () => {
     const nextjs = readContentFile(".la_briguade/auto-inject-skills/nextjs/SKILL.md");
     const react = readContentFile(".la_briguade/auto-inject-skills/react/SKILL.md");
+    const reactNative = readContentFile(
+      ".la_briguade/auto-inject-skills/react-native/SKILL.md",
+    );
     const flutter = readContentFile(".la_briguade/auto-inject-skills/flutter/SKILL.md");
     const dioxus = readContentFile(".la_briguade/auto-inject-skills/dioxus/SKILL.md");
     const axum = readContentFile(".la_briguade/auto-inject-skills/axum/SKILL.md");
@@ -193,6 +208,8 @@ describe("prompt policy contracts", () => {
     expect(nextjs).toContain("contains: '\"next\"'");
     expect(react).toContain("- file: package.json");
     expect(react).toContain("contains: '\"react\"'");
+    expect(reactNative).toContain("- file: package.json");
+    expect(reactNative).toContain("contains: '\"react-native\"'");
     expect(flutter).toContain("- file: pubspec.yaml");
     expect(flutter).toContain('contains: "flutter:"');
     expect(dioxus).toContain("- file: Cargo.toml");

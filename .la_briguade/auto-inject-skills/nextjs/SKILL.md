@@ -1,6 +1,6 @@
 ---
 name: nextjs
-description: Next.js App Router production guidance for rendering strategy, data boundaries, caching, and runtime behavior in Next.js projects.
+description: Next.js web production guidance for App Router architecture, server/client boundaries, caching strategy, and runtime behavior.
 detect:
   files:
     - next.config.js
@@ -23,18 +23,18 @@ agents:
 
 ## Scope
 
-- **In scope**: Next.js App Router architecture, Server/Client Component boundaries, data
-  fetching and caching, and production-ready routing/error patterns.
+- **In scope**: Next.js web app architecture with App Router, Server/Client Component
+  boundaries, data fetching/caching, and production-ready routing/error patterns.
 - **Out of scope**: generic React fundamentals already covered by the `react` skill,
   non-Next bundler tooling, and backend platform operations.
 
 ## Invariants
 
-- Prefer **Server Components by default**; add `"use client"` only where browser APIs or
-  interactive state are required.
+- Prefer **Server Components by default**; add `"use client"` only for browser APIs,
+  local interactivity, or client-only libraries.
 - Keep data access and secrets on the server boundary (Route Handlers, Server Actions,
   server-only modules).
-- Use `next/link` for internal navigation and preserve App Router conventions
+- Use `next/link` for internal navigation and preserve App Router file conventions
   (`layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`).
 - Define caching behavior intentionally (`fetch` cache options, revalidation strategy,
   dynamic/static rendering) instead of relying on implicit defaults.
@@ -46,6 +46,7 @@ agents:
 - Read the official docs before implementing non-trivial behavior:
   - https://nextjs.org/docs/app/guides/production-checklist
   - https://nextjs.org/docs/app/guides
+- Validate server/client boundary decisions for each new route segment.
 - Verify route-level UX states exist where relevant (`loading`, `error`, `not-found`).
 - Run project validation commands (build + tests) and ensure no Next.js runtime warnings
   are introduced.

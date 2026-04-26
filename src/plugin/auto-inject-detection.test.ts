@@ -105,6 +105,42 @@ describe("auto-inject framework detection contracts", () => {
     expect(active.has("react")).toBe(true);
   });
 
+  it("should not activate react-native skill when package.json exists without react-native marker", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify({ name: "mobile", private: true }, null, 2),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("react-native")).toBe(false);
+  });
+
+  it("should activate react-native skill when package.json contains react-native dependency", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify(
+        { name: "mobile", dependencies: { "react-native": "0.82.0" } },
+        null,
+        2,
+      ),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("react-native")).toBe(true);
+  });
+
   it("should not activate flutter skill when pubspec.yaml exists without flutter sdk", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
