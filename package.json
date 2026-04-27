@@ -1,6 +1,6 @@
 {
   "name": "la-briguade",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Opencode plugin — registers agents, skills, commands, and hooks at runtime",
   "type": "module",
   "main": "dist/index.js",
