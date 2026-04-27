@@ -1,5 +1,5 @@
 {
-  "$id": "https://unpkg.com/la-briguade@0.3.0/schemas/la-briguade.schema.json",
+  "$id": "https://unpkg.com/la-briguade@0.4.0/schemas/la-briguade.schema.json",
   "title": "la-briguade configuration",
   "description": "Configuration file for the la-briguade opencode plugin. Place as la-briguade.json or la-briguade.jsonc in your project root.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
