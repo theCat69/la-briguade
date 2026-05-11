@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.4
+model: azure_foundry/gpt-5.4
 variant: high
 description: "Code quality and architecture reviewer for production systems"
 mode: subagent 

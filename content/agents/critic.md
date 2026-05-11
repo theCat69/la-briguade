@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gemini-3.1-pro-preview
+model: azure_foundry/Kimi-K2.6
 description: "Adversarial design challenger — challenges plans, feature specs, and architectural decisions from first principles before implementation"
 mode: subagent
 permission:

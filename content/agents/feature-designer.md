@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.4
+model: azure_foundry/gpt-5.4
 variant: medium
 description: "product manager and technical lead for production-grade software systems"
 mode: subagent

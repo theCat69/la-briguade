@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.4
+model: azure_foundry/gpt-5.4
 description: "Production-grade orchestrator for multi-agent software engineering on production systems"
 mode: primary
 color: "#cf880e"
