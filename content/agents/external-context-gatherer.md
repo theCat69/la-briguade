@@ -1,7 +1,7 @@
 ---
 description: "Fetches external technical context with caching"
 mode: subagent 
-model: "azure_foundry/gpt-5.4-nano"
+model: "github-copilot/gpt-5.4-mini"
 permission:
   "*": "deny"
   "github_*": "allow"

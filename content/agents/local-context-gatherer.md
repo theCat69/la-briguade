@@ -1,5 +1,5 @@
 ---
-model: "azure_foundry/gpt-5.4-nano"
+model: "github-copilot/gpt-5.4-mini"
 description: "Extracts relevant context from the local repository"
 mode: subagent 
 permission:
