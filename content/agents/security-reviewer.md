@@ -1,6 +1,6 @@
 ---
-model: github-copilot/gpt-5.5
-variant: low 
+model: github-copilot/gpt-5.4
+variant: high
 description: "Security-focused code reviewer for production systems"
 mode: subagent
 permission:
