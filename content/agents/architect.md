@@ -1,6 +1,6 @@
 ---
-model: github-copilot/gpt-5.4
-variant: high
+model: github-copilot/gpt-5.5
+variant: low
 description: "Code structure analyst — maps module boundaries, dependency graphs, and produces before/after architecture blueprints for refactoring and restructuring"
 mode: subagent
 permission:

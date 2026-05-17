@@ -1,6 +1,6 @@
 ---
-model: github-copilot/gpt-5.4
-variant: high
+model: github-copilot/gpt-5.5
+variant: low 
 description: "specification reviewer and production-readiness quality gate"
 mode: subagent
 permission:

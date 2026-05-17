@@ -1,6 +1,6 @@
 ---
-model: github-copilot/gpt-5.4
-variant: medium
+model: github-copilot/gpt-5.5
+variant: none
 description: "product manager and technical lead for production-grade software systems"
 mode: subagent
 permission:

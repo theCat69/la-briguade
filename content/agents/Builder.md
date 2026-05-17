@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.4
+model: github-copilot/gpt-5.5
 description: "Single-agent implementation assistant — writes code directly with optional context gathering and review"
 mode: primary
 color: "#5865f2"
