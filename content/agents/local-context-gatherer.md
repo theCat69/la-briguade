@@ -1,6 +1,7 @@
 ---
 model: "github-copilot/gpt-5.4-mini"
 description: "Extracts relevant context from the local repository"
+variant: none
 mode: subagent 
 permission:
   "*": "deny"
