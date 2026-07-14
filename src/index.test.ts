@@ -24,7 +24,6 @@ import {
 } from "./plugin/auto-inject.js";
 import type { AgentSectionsEntry } from "./hooks/index.js";
 import { collectDirs } from "./utils/content/content-merge.js";
-import { startCacheCtrlWatch } from "./utils/runtime/cache-ctrl-watch.js";
 import { initLogger, logger } from "./utils/runtime/logger.js";
 
 vi.mock("./config/index.js", () => ({
@@ -76,10 +75,6 @@ vi.mock("./utils/runtime/logger.js", () => ({
   },
 }));
 
-vi.mock("./utils/runtime/cache-ctrl-watch.js", () => ({
-  startCacheCtrlWatch: vi.fn(),
-}));
-
 vi.mock("./utils/content/content-merge.js", () => ({
   collectDirs: vi.fn(),
 }));
@@ -103,7 +98,6 @@ const mockInjectSkillBashPermissions = vi.mocked(injectSkillBashPermissions);
 const mockInjectSkillMcpPermissions = vi.mocked(injectSkillMcpPermissions);
 const mockMergeSkillMcps = vi.mocked(mergeSkillMcps);
 const mockInitLogger = vi.mocked(initLogger);
-const mockStartCacheCtrlWatch = vi.mocked(startCacheCtrlWatch);
 const mockSetLevel = vi.mocked(logger.setLevel);
 const mockCollectDirs = vi.mocked(collectDirs);
 
@@ -137,8 +131,6 @@ describe("LaBriguadePlugin", () => {
 
     // Assert
     expect(mockInitLogger).toHaveBeenCalledOnce();
-    expect(mockStartCacheCtrlWatch).toHaveBeenCalledOnce();
-    expect(mockStartCacheCtrlWatch).toHaveBeenCalledWith("/project");
     expect(mockCreateHooks).toHaveBeenCalledOnce();
     expect(plugin.event).toBe(eventHook);
     expect(typeof plugin.config).toBe("function");
