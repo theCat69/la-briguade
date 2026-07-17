@@ -45,7 +45,8 @@ Fix any failures before considering the work done.
 playwright-cli screenshot --filename=page.png
 ```
 
-Then use the `read` tool on `page.png` — Claude is vision-capable and can reason about layout from the screenshot.
+If cwebp is available then use cwebp to compress the image prior to reading it. 
+Else just read it directly.
 
 ---
 
@@ -86,6 +87,7 @@ Use semantic HTML — it gives you accessibility for free and is always cheaper 
 
 - Define spacing, color, and typography as CSS custom properties: `--color-primary`, `--space-4`
 - Never hardcode hex values or raw pixel sizes in component styles — always reference tokens
+- If design tokens exist, use them, don't create new one if existing ones are "close enough"
 
 ### Responsive design
 
