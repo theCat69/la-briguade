@@ -116,7 +116,7 @@ la-briguade supports a layered config system that lets you override agent settin
 
 | Scope | Path |
 |---|---|
-| Global | `~/la_briguade/la-briguade.json` (or `.jsonc`) |
+| Global | `~/.config/la_briguade/la-briguade.json` (or `.jsonc`) |
 | Project | `<project_root>/la-briguade.json` (or `.jsonc`) |
 
 Both files are optional. When both are present, project values take precedence over global values.
@@ -124,7 +124,7 @@ Both files are optional. When both are present, project values take precedence o
 ### Merge order (lowest to highest priority)
 
 1. Internal plugin defaults (agent frontmatter in `content/agents/*.md`)
-2. Global user config (`~/la_briguade/la-briguade.json`)
+2. Global user config (`~/.config/la_briguade/la-briguade.json`)
 3. Project-level config (`<project_root>/la-briguade.json`)
 
 ### Supported fields

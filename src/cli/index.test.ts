@@ -10,7 +10,11 @@ import {
   writeFileSync,
 } from "node:fs";
 
-import { resolveOpencodeConfigDir, resolveUserConfig } from "../config/index.js";
+import {
+  resolveLaBriguadeConfigDir,
+  resolveOpencodeConfigDir,
+  resolveUserConfigDetails,
+} from "../config/index.js";
 import { logger } from "../utils/runtime/logger.js";
 
 vi.mock("node:child_process", () => ({
@@ -27,8 +31,9 @@ vi.mock("node:fs", () => ({
 }));
 
 vi.mock("../config/index.js", () => ({
+  resolveLaBriguadeConfigDir: vi.fn(),
   resolveOpencodeConfigDir: vi.fn(),
-  resolveUserConfig: vi.fn(),
+  resolveUserConfigDetails: vi.fn(),
 }));
 
 vi.mock("../utils/runtime/logger.js", () => ({
@@ -45,17 +50,43 @@ const mockReadFileSync = vi.mocked(readFileSync);
 const mockReaddirSync = vi.mocked(readdirSync);
 const mockStatSync = vi.mocked(statSync);
 const mockWriteFileSync = vi.mocked(writeFileSync);
+const mockResolveLaBriguadeConfigDir = vi.mocked(resolveLaBriguadeConfigDir);
 const mockResolveOpencodeConfigDir = vi.mocked(resolveOpencodeConfigDir);
-const mockResolveUserConfig = vi.mocked(resolveUserConfig);
+const mockResolveUserConfigDetails = vi.mocked(resolveUserConfigDetails);
 const mockGetLogFilePath = vi.mocked(logger.getLogFilePath);
 
 const GLOBAL_CONFIG_PATH = "/tmp/opencode/opencode.json";
 const PACKAGE_JSON_PATH_SUFFIX = "/package.json";
 const EXPECTED_NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm";
 
-async function runCliCommand(command: "install" | "uninstall" | "doctor" | "update"): Promise<void> {
+function makeConfigDetails(
+  config: Record<string, unknown> = {},
+  overrides: Partial<ReturnType<typeof resolveUserConfigDetails>> = {},
+): ReturnType<typeof resolveUserConfigDetails> {
+  return {
+    global: {
+      searchedPaths: [
+        "/home/user/.config/la_briguade/la-briguade.json",
+        "/home/user/.config/la_briguade/la-briguade.jsonc",
+      ],
+      result: { ok: false, error: { kind: "not-found" } },
+    },
+    project: {
+      searchedPaths: ["/workspace/la-briguade.json", "/workspace/la-briguade.jsonc"],
+      result: { ok: false, error: { kind: "not-found" } },
+    },
+    config,
+    source: "none",
+    ...overrides,
+  };
+}
+
+async function runCliCommand(
+  command: "install" | "uninstall" | "doctor" | "update",
+  args: string[] = [],
+): Promise<void> {
   vi.resetModules();
-  process.argv = ["node", "la-briguade", command];
+  process.argv = ["node", "la-briguade", command, ...args];
   await import("./index.js");
 }
 
@@ -242,19 +273,36 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
   it("should report all checks passed in doctor happy path", async () => {
     // Arrange
-    vi.doMock("la-briguade", () => ({}), { virtual: true });
+    vi.doMock("la-briguade", () => ({}));
     mockSpawnSync.mockReturnValueOnce({
       status: 0,
       signal: null,
       error: undefined,
     } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
-    mockResolveUserConfig.mockReturnValue({ log_level: "info" });
+    mockResolveUserConfigDetails.mockReturnValue(
+      makeConfigDetails(
+        { log_level: "info" },
+        {
+          global: {
+            searchedPaths: [
+                "/home/user/.config/la_briguade/la-briguade.json",
+                "/home/user/.config/la_briguade/la-briguade.jsonc",
+              ],
+            resolvedPath: "/home/user/.config/la_briguade/la-briguade.json",
+            result: { ok: true, value: { log_level: "info" } },
+          },
+          source: "global",
+        },
+      ),
+    );
     mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
     mockExistsSync.mockImplementation((path) => {
       const value = String(path);
       return (
         value === GLOBAL_CONFIG_PATH ||
+        value === "/home/user/.config/la_briguade/la-briguade.json" ||
         value.endsWith("/content") ||
         value.endsWith("/content/agents") ||
         value.endsWith("/content/skills") ||
@@ -279,24 +327,27 @@ describe("cli install/uninstall/doctor/update commands", () => {
     // Act
     await runCliCommand("doctor");
     await vi.waitFor(() => {
-      expect(mockResolveUserConfig.mock.calls.length).toBeGreaterThan(0);
+      expect(mockResolveUserConfigDetails.mock.calls.length).toBeGreaterThan(0);
     });
 
     // Assert
-    expect(mockResolveUserConfig).toHaveBeenCalledWith("/workspace");
+    expect(mockResolveUserConfigDetails).toHaveBeenCalledWith("/workspace");
     expect(process.exitCode).toBeUndefined();
   });
 
   it("should pass doctor when cache-ctrl returns non-zero without spawn error", async () => {
     // Arrange
-    vi.doMock("la-briguade", () => ({}), { virtual: true });
+    vi.doMock("la-briguade", () => ({}));
     mockSpawnSync.mockReturnValueOnce({
       status: 1,
       signal: null,
       error: undefined,
     } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
-    mockResolveUserConfig.mockReturnValue({ log_level: "info" });
+    mockResolveUserConfigDetails.mockReturnValue(
+      makeConfigDetails({ log_level: "info" }),
+    );
     mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
     mockExistsSync.mockImplementation((path) => {
       const value = String(path);
@@ -326,7 +377,7 @@ describe("cli install/uninstall/doctor/update commands", () => {
     // Act
     await runCliCommand("doctor");
     await vi.waitFor(() => {
-      expect(mockResolveUserConfig.mock.calls.length).toBeGreaterThan(0);
+      expect(mockResolveUserConfigDetails.mock.calls.length).toBeGreaterThan(0);
     });
 
     // Assert
@@ -335,14 +386,17 @@ describe("cli install/uninstall/doctor/update commands", () => {
 
   it("should fail doctor when cache-ctrl spawn result has error", async () => {
     // Arrange
-    vi.doMock("la-briguade", () => ({}), { virtual: true });
+    vi.doMock("la-briguade", () => ({}));
     mockSpawnSync.mockReturnValueOnce({
       status: null,
       signal: null,
       error: new Error("spawn ENOENT"),
     } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
-    mockResolveUserConfig.mockReturnValue({ log_level: "info" });
+    mockResolveUserConfigDetails.mockReturnValue(
+      makeConfigDetails({ log_level: "info" }),
+    );
     mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
     mockExistsSync.mockImplementation((path) => {
       const value = String(path);
@@ -386,8 +440,9 @@ describe("cli install/uninstall/doctor/update commands", () => {
       signal: null,
       error: undefined,
     } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
     mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
-    mockResolveUserConfig.mockReturnValue({});
+    mockResolveUserConfigDetails.mockReturnValue(makeConfigDetails());
     mockGetLogFilePath.mockReturnValue("not initialized");
     mockExistsSync.mockReturnValue(false);
     configureConfigRead("{}\n");
@@ -405,6 +460,137 @@ describe("cli install/uninstall/doctor/update commands", () => {
     // Assert
     expect(process.exitCode).toBe(1);
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/issue(s)? found\./));
+  });
+
+  it("should report invalid project la-briguade config in doctor output", async () => {
+    // Arrange
+    vi.doMock("la-briguade", () => ({}));
+    mockSpawnSync.mockReturnValueOnce({
+      status: 0,
+      signal: null,
+      error: undefined,
+    } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockResolveUserConfigDetails.mockReturnValue(
+      makeConfigDetails(
+        {},
+        {
+          project: {
+            searchedPaths: ["/workspace/la-briguade.json", "/workspace/la-briguade.jsonc"],
+            resolvedPath: "/workspace/la-briguade.json",
+            result: {
+              ok: false,
+              error: { kind: "validation-error", message: "invalid config" },
+            },
+          },
+        },
+      ),
+    );
+    mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
+    mockExistsSync.mockImplementation((path) => {
+      const value = String(path);
+      return (
+        value === GLOBAL_CONFIG_PATH ||
+        value === "/workspace/la-briguade.json" ||
+        value.endsWith("/content") ||
+        value.endsWith("/content/agents") ||
+        value.endsWith("/content/skills") ||
+        value.endsWith("/content/commands")
+      );
+    });
+    configureConfigRead('{\n  "plugin": ["la-briguade@latest"]\n}\n');
+    mockReaddirSync.mockImplementation((dirPath) => {
+      const value = String(dirPath);
+      if (value.endsWith("/content/agents")) return ["coder.md"] as never;
+      if (value.endsWith("/content/commands")) return ["fix.md"] as never;
+      if (value.endsWith("/content/skills")) return ["typescript"] as never;
+      return [] as never;
+    });
+    mockStatSync.mockImplementation((filePath) => ({
+      isDirectory: () => String(filePath).includes("/content/skills/"),
+    }) as never);
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    process.cwd = vi.fn(() => "/workspace") as never;
+
+    // Act
+    await runCliCommand("doctor");
+    await vi.waitFor(() => {
+      expect(process.exitCode).toBe(1);
+    });
+
+    // Assert
+    expect(process.exitCode).toBe(1);
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Project la-briguade config"),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining("validation-error: invalid config in /workspace/la-briguade.json"),
+    );
+  });
+
+  it("should report requested agent model selection in doctor output", async () => {
+    // Arrange
+    vi.doMock("la-briguade", () => ({}));
+    mockSpawnSync.mockReturnValueOnce({
+      status: 0,
+      signal: null,
+      error: undefined,
+    } as ReturnType<typeof spawnSync>);
+    mockResolveLaBriguadeConfigDir.mockReturnValue("/home/user/.config/la_briguade");
+    mockResolveOpencodeConfigDir.mockReturnValue("/tmp/opencode");
+    mockResolveUserConfigDetails.mockReturnValue(
+      makeConfigDetails({
+        model: "azure_foundry/gpt-5.4",
+        agents: {
+          "local-context-gatherer": {
+            model: "azure_foundry/gpt-5.4-nano",
+          },
+        },
+      }),
+    );
+    mockGetLogFilePath.mockReturnValue("/tmp/opencode/log/la.log");
+    mockExistsSync.mockImplementation((path) => {
+      const value = String(path);
+      return (
+        value === GLOBAL_CONFIG_PATH ||
+        value.endsWith("/content") ||
+        value.endsWith("/content/agents") ||
+        value.endsWith("/content/skills") ||
+        value.endsWith("/content/commands")
+      );
+    });
+    configureConfigRead('{\n  "plugin": ["la-briguade@latest"]\n}\n');
+    mockReaddirSync.mockImplementation((dirPath) => {
+      const value = String(dirPath);
+      if (value.endsWith("/content/agents")) return ["coder.md"] as never;
+      if (value.endsWith("/content/commands")) return ["fix.md"] as never;
+      if (value.endsWith("/content/skills")) return ["typescript"] as never;
+      return [] as never;
+    });
+    mockStatSync.mockImplementation((filePath) => ({
+      isDirectory: () => String(filePath).includes("/content/skills/"),
+    }) as never);
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    process.cwd = vi.fn(() => "/workspace") as never;
+
+    // Act
+    await runCliCommand("doctor", ["--agent", "local-context-gatherer"]);
+    await vi.waitFor(() => {
+      expect(logSpy).toHaveBeenCalled();
+    });
+
+    // Assert
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Agent model selection"),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "local-context-gatherer: per-agent model azure_foundry/gpt-5.4-nano",
+      ),
+    );
   });
 
   it("should complete without setting exitCode when npm update succeeds", async () => {

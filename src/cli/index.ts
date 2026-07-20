@@ -13,7 +13,11 @@ import { spawnSync } from "node:child_process";
 import { Command } from "commander";
 import { parse as parseJsonc, modify, applyEdits } from "jsonc-parser";
 
-import { resolveOpencodeConfigDir, resolveUserConfig } from "../config/index.js";
+import {
+  resolveLaBriguadeConfigDir,
+  resolveOpencodeConfigDir,
+  resolveUserConfigDetails,
+} from "../config/index.js";
 import { logger } from "../utils/runtime/logger.js";
 import { isRecord } from "../utils/support/type-guards.js";
 
@@ -87,6 +91,78 @@ function readConfigOrExit(
     process.exitCode = 1;
     return undefined;
   }
+}
+
+interface CheckResult {
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
+function getConfigCandidatePaths(basePath: string): [string, string] {
+  return [`${basePath}.json`, `${basePath}.jsonc`];
+}
+
+function summarizeConfigCheck(
+  label: string,
+  basePath: string,
+  inspection: ReturnType<typeof resolveUserConfigDetails>["global"],
+): CheckResult {
+  const candidatePaths = getConfigCandidatePaths(basePath);
+  const existingPaths = candidatePaths.filter((path) => existsSync(path));
+
+  if (inspection.result.ok && inspection.resolvedPath !== undefined) {
+    return {
+      label,
+      ok: true,
+      detail: `Loaded ${inspection.resolvedPath}`,
+    };
+  }
+
+  if (inspection.resolvedPath !== undefined && !inspection.result.ok) {
+    const errorDetail =
+      inspection.result.error.kind === "not-found"
+        ? inspection.result.error.kind
+        : `${inspection.result.error.kind}: ${inspection.result.error.message}`;
+    return {
+      label,
+      ok: false,
+      detail: `${errorDetail} in ${inspection.resolvedPath}`,
+    };
+  }
+
+  if (existingPaths.length > 0) {
+    return {
+      label,
+      ok: false,
+      detail: `Detected ${existingPaths.join(", ")} but could not load it`,
+    };
+  }
+
+  return {
+    label,
+    ok: true,
+    detail: `Not found (${candidatePaths.join(", ")})`,
+  };
+}
+
+function summarizeAgentModelSelection(
+  agentName: string,
+  configDetails: ReturnType<typeof resolveUserConfigDetails>,
+): string {
+  const agentOverride = configDetails.config.agents?.[agentName];
+  const perAgentModel = agentOverride?.model;
+  const topLevelModel = configDetails.config.model;
+
+  if (perAgentModel !== undefined) {
+    return `${agentName}: per-agent model ${perAgentModel}`;
+  }
+
+  if (topLevelModel !== undefined) {
+    return `${agentName}: no per-agent model, top-level default ${topLevelModel}`;
+  }
+
+  return `${agentName}: no model override in la-briguade config`;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,13 +295,8 @@ program
 program
   .command("doctor")
   .description("Verify la-briguade installation and diagnose issues")
-  .action(async () => {
-    interface CheckResult {
-      label: string;
-      ok: boolean;
-      detail: string;
-    }
-
+  .option("--agent <name>", "Show resolved la-briguade config model selection for one agent")
+  .action(async (options: { agent?: string }) => {
     const checks: CheckResult[] = [];
 
     // 1. Plugin package importable
@@ -306,9 +377,13 @@ program
     }
 
     // 4. effective logger configuration
-    const userConfig = resolveUserConfig(process.cwd());
+    const currentDir = process.cwd();
+    const configDetails = resolveUserConfigDetails(currentDir);
+    const userConfig = configDetails.config;
     const logLevel = userConfig.log_level ?? "warn";
     const logFilePath = logger.getLogFilePath() ?? "not initialized";
+    const globalConfigBasePath = join(resolveLaBriguadeConfigDir(), "la-briguade");
+    const projectConfigBasePath = join(currentDir, "la-briguade");
 
     checks.push({
       label: "Log level",
@@ -320,8 +395,34 @@ program
       ok: true,
       detail: logFilePath,
     });
+    checks.push(
+      summarizeConfigCheck(
+        "Global la-briguade config",
+        globalConfigBasePath,
+        configDetails.global,
+      ),
+    );
+    checks.push(
+      summarizeConfigCheck(
+        "Project la-briguade config",
+        projectConfigBasePath,
+        configDetails.project,
+      ),
+    );
+    checks.push({
+      label: "Config merge source",
+      ok: true,
+      detail: configDetails.source,
+    });
+    if (options.agent !== undefined) {
+      checks.push({
+        label: "Agent model selection",
+        ok: true,
+        detail: summarizeAgentModelSelection(options.agent, configDetails),
+      });
+    }
 
-    // 5. cache-ctrl CLI availability
+    // 6. cache-ctrl CLI availability
     let cacheCtrlOk = false;
     try {
       const result = spawnSync("cache-ctrl", ["--version"], { stdio: "pipe" });

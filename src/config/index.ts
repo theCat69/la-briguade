@@ -1,9 +1,18 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { loadConfig } from "./loader.js";
+import { inspectConfigLoad } from "./loader.js";
 import type { AgentOverride, LaBriguadeConfig } from "./schema.js";
 import { logger } from "../utils/runtime/logger.js";
+
+export type UserConfigMergeSource = "none" | "global" | "project" | "merged";
+
+export interface ResolvedUserConfigDetails {
+  global: ReturnType<typeof inspectConfigLoad>;
+  project: ReturnType<typeof inspectConfigLoad>;
+  config: LaBriguadeConfig;
+  source: UserConfigMergeSource;
+}
 
 export function resolveConfigBaseDirs(projectDir: string): {
   globalDir: string;
@@ -15,6 +24,10 @@ export function resolveConfigBaseDirs(projectDir: string): {
   };
 }
 
+export function resolveLaBriguadeConfigDir(): string {
+  return join(homedir(), ".config", "la_briguade");
+}
+
 export function resolveOpencodeConfigDir(): string {
   return join(homedir(), ".config", "opencode");
 }
@@ -22,7 +35,7 @@ export function resolveOpencodeConfigDir(): string {
 /**
  * Resolve the merged user configuration for la-briguade.
  *
- * Loads global config from ~/la_briguade/la-briguade.{json,jsonc} and
+ * Loads global config from ~/.config/la_briguade/la-briguade.{json,jsonc} and
  * project config from projectDir/la-briguade.{json,jsonc}. Merges them
  * with project taking precedence over global.
  *
@@ -32,12 +45,19 @@ export function resolveOpencodeConfigDir(): string {
  * @returns Merged LaBriguadeConfig, or an empty config if both files are absent
  */
 export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
-  const { globalDir } = resolveConfigBaseDirs(projectDir);
+  return resolveUserConfigDetails(projectDir).config;
+}
+
+export function resolveUserConfigDetails(projectDir: string): ResolvedUserConfigDetails {
+  const globalDir = resolveLaBriguadeConfigDir();
   const globalConfigBasePath = join(globalDir, "la-briguade");
   const projectConfigBasePath = join(projectDir, "la-briguade");
 
-  const globalResult = loadConfig(globalConfigBasePath);
-  const projectResult = loadConfig(projectConfigBasePath);
+  const globalInspection = inspectConfigLoad(globalConfigBasePath);
+  const projectInspection = inspectConfigLoad(projectConfigBasePath);
+
+  const globalResult = globalInspection.result;
+  const projectResult = projectInspection.result;
 
   let globalConfig: LaBriguadeConfig | undefined;
   if (globalResult.ok) {
@@ -53,12 +73,59 @@ export function resolveUserConfig(projectDir: string): LaBriguadeConfig {
     logger.warn(`Project config error: ${projectResult.error.message}`);
   }
 
+  logger.debug(
+    `la-briguade config state (global): ${describeConfigInspection(globalInspection)}`,
+  );
+  logger.debug(
+    `la-briguade config state (project): ${describeConfigInspection(projectInspection)}`,
+  );
+
   if (globalConfig === undefined) {
-    if (projectConfig === undefined) return {};
-    return projectConfig;
+    if (projectConfig === undefined) {
+      logger.debug("la-briguade config source: none");
+      return {
+        global: globalInspection,
+        project: projectInspection,
+        config: {},
+        source: "none",
+      };
+    }
+    logger.debug("la-briguade config source: project");
+    return {
+      global: globalInspection,
+      project: projectInspection,
+      config: projectConfig,
+      source: "project",
+    };
   }
-  if (projectConfig === undefined) return globalConfig;
-  return mergeConfigs(globalConfig, projectConfig);
+  if (projectConfig === undefined) {
+    logger.debug("la-briguade config source: global");
+    return {
+      global: globalInspection,
+      project: projectInspection,
+      config: globalConfig,
+      source: "global",
+    };
+  }
+  logger.debug("la-briguade config source: merged");
+  return {
+    global: globalInspection,
+    project: projectInspection,
+    config: mergeConfigs(globalConfig, projectConfig),
+    source: "merged",
+  };
+}
+
+function describeConfigInspection(inspection: ReturnType<typeof inspectConfigLoad>): string {
+  if (inspection.resolvedPath === undefined) {
+    return `missing (${inspection.searchedPaths.join(", ")})`;
+  }
+
+  if (inspection.result.ok) {
+    return `loaded '${inspection.resolvedPath}'`;
+  }
+
+  return `${inspection.result.error.kind} in '${inspection.resolvedPath}'`;
 }
 
 /**

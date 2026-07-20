@@ -19,6 +19,12 @@ export type ConfigLoadResult =
   | { ok: true; value: LaBriguadeConfig }
   | { ok: false; error: ConfigLoadError };
 
+export interface ConfigLoadInspection {
+  searchedPaths: [string, string];
+  resolvedPath?: string;
+  result: ConfigLoadResult;
+}
+
 /**
  * Load and validate a la-briguade config file.
  *
@@ -27,8 +33,16 @@ export type ConfigLoadResult =
  * discriminated union result — never throws.
  */
 export function loadConfig(filePath: string): ConfigLoadResult {
+  return inspectConfigLoad(filePath).result;
+}
+
+export function inspectConfigLoad(filePath: string): ConfigLoadInspection {
   const jsonPath = `${filePath}.json`;
   const jsoncPath = `${filePath}.jsonc`;
+
+  logger.debug(
+    `Checking la-briguade config candidates: '${jsonPath}', '${jsoncPath}'`,
+  );
 
   let raw: string;
   let resolvedPath: string;
@@ -50,9 +64,15 @@ export function loadConfig(filePath: string): ConfigLoadResult {
       if (jsoncExists.code === "read-error") {
         logger.warn(`Could not read config file '${jsoncPath}': ${jsoncExists.message}`);
       }
-      return { ok: false, error: { kind: "not-found" } };
+      logger.debug(`No la-briguade config found for base path '${filePath}'`);
+      return {
+        searchedPaths: [jsonPath, jsoncPath],
+        result: { ok: false, error: { kind: "not-found" } },
+      };
     }
   }
+
+  logger.debug(`Loaded la-briguade config from '${resolvedPath}'`);
 
   // jsonc-parser does NOT throw on parse errors — it returns partial results
   // and populates the errors array. Check it explicitly.
@@ -60,16 +80,28 @@ export function loadConfig(filePath: string): ConfigLoadResult {
   const parsed: unknown = parseJsonc(raw, parseErrors);
 
   if (parseErrors.length > 0) {
+    logger.warn(
+      `Config parse failed (${basename(resolvedPath)}): ${parseErrors.length} parse error(s)`,
+    );
     return {
-      ok: false,
-      error: { kind: "parse-error", message: `${parseErrors.length} parse error(s)` },
+      searchedPaths: [jsonPath, jsoncPath],
+      resolvedPath,
+      result: {
+        ok: false,
+        error: { kind: "parse-error", message: `${parseErrors.length} parse error(s)` },
+      },
     };
   }
 
   if (parsed === null || parsed === undefined) {
+    logger.warn(`Config parse failed (${basename(resolvedPath)}): file is empty or contains only null`);
     return {
-      ok: false,
-      error: { kind: "parse-error", message: "file is empty or contains only null" },
+      searchedPaths: [jsonPath, jsoncPath],
+      resolvedPath,
+      result: {
+        ok: false,
+        error: { kind: "parse-error", message: "file is empty or contains only null" },
+      },
     };
   }
 
@@ -81,12 +113,20 @@ export function loadConfig(filePath: string): ConfigLoadResult {
         `${result.error.issues.length} issue(s) found`,
     );
     return {
-      ok: false,
-      error: { kind: "validation-error", message: result.error.message },
+      searchedPaths: [jsonPath, jsoncPath],
+      resolvedPath,
+      result: {
+        ok: false,
+        error: { kind: "validation-error", message: result.error.message },
+      },
     };
   }
 
-  return { ok: true, value: result.data };
+  return {
+    searchedPaths: [jsonPath, jsoncPath],
+    resolvedPath,
+    result: { ok: true, value: result.data },
+  };
 }
 
 type ReadResult =

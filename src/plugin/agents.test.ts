@@ -193,6 +193,51 @@ describe("registerAgents", () => {
     expect(coder?.["prompt"]).toBe("Project override prompt");
   });
 
+  it("should let la-briguade config model overrides win over frontmatter defaults", () => {
+    // Arrange
+    mockCollectFiles.mockReturnValue(
+      new Map([
+        ["local-context-gatherer", "/builtin/agents/local-context-gatherer.md"],
+        ["reviewer", "/builtin/agents/reviewer.md"],
+      ]),
+    );
+    mockReadContentFile.mockImplementation((filePath) => {
+      if (String(filePath).endsWith("local-context-gatherer.md")) {
+        return [
+          "---",
+          'model: "azure_foundry/gpt-5.4-nano"',
+          "---",
+          "Local gatherer prompt",
+        ].join("\n");
+      }
+
+      return [
+        "---",
+        'model: "azure_foundry/gpt-5.4"',
+        "---",
+        "Reviewer prompt",
+      ].join("\n");
+    });
+
+    const config = makeConfig();
+    const userConfig: LaBriguadeConfig = {
+      agents: {
+        "local-context-gatherer": { model: "azure_foundry/gpt-5.4-mini" },
+        reviewer: { model: "azure_foundry/gpt-5.3-codex" },
+      },
+    };
+
+    // Act
+    registerAgents(config, ["/builtin/agents"], userConfig);
+
+    // Assert
+    const localContextGatherer =
+      config.agent?.["local-context-gatherer"] as Record<string, unknown> | undefined;
+    const reviewer = config.agent?.["reviewer"] as Record<string, unknown> | undefined;
+    expect(localContextGatherer?.["model"]).toBe("azure_foundry/gpt-5.4-mini");
+    expect(reviewer?.["model"]).toBe("azure_foundry/gpt-5.3-codex");
+  });
+
   it("should return early and keep config unchanged when no agent files are found", () => {
     // Arrange
     mockCollectFiles.mockReturnValue(new Map());
