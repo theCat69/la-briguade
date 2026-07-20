@@ -1,5 +1,5 @@
 ---
-model: azure_foundry/gpt-5.4 
+model: github-copilot/gpt-5.6-terra 
 description: "Personal assistant — responds to any question about any subject"
 mode: primary
 permission:

@@ -1,5 +1,5 @@
 ---
-model: azure_foundry/gpt-5.4 
+model: github-copilot/gpt-5.6-terra 
 variant: high
 description: "Security-focused code reviewer for production systems"
 mode: subagent
