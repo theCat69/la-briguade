@@ -1,6 +1,6 @@
 ---
 description: "Writes production-grade code from curated snapshot for live production systems"
-model: "github-copilot/gpt-5.6-terra"
+model: "azure_foundry/gpt-5.4"
 variant: low 
 mode: subagent
 temperature: 0.1

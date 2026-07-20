@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: azure_foundry/gpt-5.4 
 variant: high
 description: "specification reviewer and production-readiness quality gate"
 mode: subagent

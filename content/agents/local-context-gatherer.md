@@ -1,5 +1,5 @@
 ---
-model: "github-copilot/gpt-5.6-luna"
+model: "azure_foundry/gpt-5.4-nano"
 description: "Extracts relevant context from the local repository"
 variant: none
 mode: subagent 

@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: azure_foundry/gpt-5.4 
 description: "Feature Planning Orchestrator for production-grade software systems."
 mode: primary
 color: "#138f15"
