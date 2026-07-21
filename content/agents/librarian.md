@@ -1,6 +1,6 @@
 ---
-model: github-copilot/gpt-5.4
-variant: medium
+model: github-copilot/gpt-5.6-terra 
+variant: low 
 description: "Keeps documentation in sync with code changes"
 mode: subagent
 permission:

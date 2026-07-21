@@ -1,7 +1,8 @@
 ---
 description: "Fetches external technical context with caching"
 mode: subagent 
-model: "github-copilot/gpt-5.4-mini"
+model: "github-copilot/gpt-5.6-luna"
+variant: none
 permission:
   "*": "deny"
   "github_*": "allow"

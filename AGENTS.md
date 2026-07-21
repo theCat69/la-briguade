@@ -120,7 +120,6 @@ src/
     runtime/
       logger.ts          ← Process-wide logger singleton: levels off/error/warn/info/debug, log file at ~/.local/share/opencode/log/
       notifier.ts        ← Toast notifier wrapping ctx.client?.tui?.showToast with logger fallback
-      cache-ctrl-watch.ts  ← Starts cache-ctrl watch background process once per workspace; non-fatal if CLI absent
     support/
       error-message.ts   ← Shared safe error-message normalization/sanitization helper used by warnings and logging paths
       type-guards.ts     ← isRecord(), isNodeError(), Result<T,E> — shared type guards and utility types

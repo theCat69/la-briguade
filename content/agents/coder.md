@@ -1,7 +1,7 @@
 ---
 description: "Writes production-grade code from curated snapshot for live production systems"
-model: "github-copilot/gpt-5.3-codex"
-variant: medium
+model: "github-copilot/gpt-5.6-terra"
+variant: low 
 mode: subagent
 temperature: 0.1
 permission:

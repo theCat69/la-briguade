@@ -4,6 +4,7 @@ vi.mock("node:fs");
 vi.mock("../utils/runtime/logger.js", () => ({
   LOG_LEVELS: ["off", "error", "warn", "info", "debug"] as const,
   logger: {
+    debug: vi.fn(),
     warn: vi.fn(),
   },
 }));

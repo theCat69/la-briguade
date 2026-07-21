@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.4
+model: github-copilot/gpt-5.6-terra 
 description: "Single-agent implementation assistant — writes code directly with optional context gathering and review"
 mode: primary
 color: "#5865f2"
@@ -91,24 +91,9 @@ If the request is vague (ambiguity signals: no constraints, no success criteria,
 load skill `deep-interview` before step 1 (before gathering context).
 1. Check cache state with `cache-ctrl list`.
 2. Call local-context-gatherer (cache-first).
-3. **Detect stack from gathered context:**
-   - `package.json` containing `@angular/core` → stack: `[angular, typescript]`
-   - `package.json` without Angular → stack: `[typescript]`
-   - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
-   - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
-   - `Cargo.toml` present → stack: `[rust]`
-   - No recognizable manifest → use `general-coding` only, warn user
-   Load the corresponding stack skills. Also check for frontend signals (load in addition to
-   stack skills):
-   - `package.json` contains any of `react`, `vue`, `svelte`, `next`, `nuxt`, `vite`,
-     `solid-js`, `astro` → load `frontend` + `playwright-cli`
-   - `@angular/core` detected (Angular project) → load `frontend` + `playwright-cli`
-   - `playwright.config.ts` or `playwright.config.js` exists at project root → load
-     `playwright-cli`
-4. Optionally call external-context-gatherer (cache-first) for external docs or best practices.
-5. Write the code yourself.
-5.5. Load skill `unslop` and run a bounded cleanup pass on changed files before calling
-     reviewer.
+3. Optionally call external-context-gatherer (cache-first) for external docs or best practices.
+4. Write the code yourself.
+5. Load skill `unslop` and run a bounded cleanup pass on changed files before calling reviewer.
 6. Call reviewer with the git diff.
 7. Call security-reviewer with the git diff only if the user explicitly requested a security
    review/audit.
@@ -145,25 +130,16 @@ Critical Rules before step 6.
 1. If the request is vague: load skill `deep-interview` before anything else.
 2. Run `cache-ctrl list` — check local cache state.
 3. Call `local-context-gatherer` (cache-first, per skill `cache-ctrl-caller`).
-4. Detect the project stack from gathered context and load the matching skill(s):
-   - `@angular/core` in package.json → `angular` + `typescript` + `frontend` + `playwright-cli`
-   - Other package.json → `typescript`; also `frontend` + `playwright-cli` if react / vue /
-     svelte / next / nuxt / vite / solid-js / astro is present, or if `playwright.config.ts`
-     exists at project root
-   - pom.xml / build.gradle with quarkus → `quarkus` + `java`
-   - pom.xml / build.gradle without quarkus → `java`
-   - Cargo.toml → `rust`
-   - No manifest → `general-coding` only, warn user
-5. Call `external-context-gatherer` (cache-first) only if external docs are needed.
-6. Write the code yourself.
-7. Load skill `unslop` and run a cleanup pass on changed files.
-8. Call `reviewer` with the git diff.
-9. Call `security-reviewer` with the git diff only if the user explicitly requested security
+4. Call `external-context-gatherer` (cache-first) only if external docs are needed.
+5. Write the code yourself.
+6. Load skill `unslop` and run a cleanup pass on changed files.
+7. Call `reviewer` with the git diff.
+8. Call `security-reviewer` with the git diff only if the user explicitly requested security
    review.
-10. If step 9 ran, for each non-obvious security finding: re-call `security-reviewer` with a targeted question
+9. If step 8 ran, for each non-obvious security finding: re-call `security-reviewer` with a targeted question
     if needed. Classify every finding as Confirmed / Deferred / Discarded before acting.
-11. Call `librarian` to check for doc changes.
-12. Summarize results and ask the user to validate.
+10. Call `librarian` to check for doc changes.
+11. Summarize results and ask the user to validate.
 
 ====== ALL ======
 # Output Format
