@@ -36,7 +36,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate react skill when package.json exists without react marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react"),
+      join(projectRoot, "content/auto-inject-skills/react"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
@@ -52,7 +52,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate nextjs skill when package.json exists without next marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/nextjs"),
+      join(projectRoot, "content/auto-inject-skills/nextjs"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
@@ -68,7 +68,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate nextjs skill when package.json contains next dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/nextjs"),
+      join(projectRoot, "content/auto-inject-skills/nextjs"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -88,7 +88,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate react skill when package.json contains react dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react"),
+      join(projectRoot, "content/auto-inject-skills/react"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -108,7 +108,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate react-native skill when package.json exists without react-native marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+      join(projectRoot, "content/auto-inject-skills/react-native"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "mobile", private: true }, null, 2),
@@ -124,7 +124,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate react-native skill when package.json contains react-native dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+      join(projectRoot, "content/auto-inject-skills/react-native"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -144,7 +144,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate flutter skill when pubspec.yaml exists without flutter sdk", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/flutter"),
+      join(projectRoot, "content/auto-inject-skills/flutter"),
     ]);
     const tempProject = createTempProject({
       "pubspec.yaml": "name: shared_dart_pkg\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n",
@@ -160,7 +160,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate flutter skill when pubspec.yaml contains flutter marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/flutter"),
+      join(projectRoot, "content/auto-inject-skills/flutter"),
     ]);
     const tempProject = createTempProject({
       "pubspec.yaml": [
@@ -183,7 +183,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate dioxus skill when Cargo.toml exists without dioxus marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+      join(projectRoot, "content/auto-inject-skills/dioxus"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -207,7 +207,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate dioxus skill when Cargo.toml contains dioxus dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+      join(projectRoot, "content/auto-inject-skills/dioxus"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -231,7 +231,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate axum skill when Cargo.toml exists without axum marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+      join(projectRoot, "content/auto-inject-skills/axum"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -255,7 +255,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate axum skill when Cargo.toml contains axum dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+      join(projectRoot, "content/auto-inject-skills/axum"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
