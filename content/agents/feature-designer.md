@@ -44,20 +44,6 @@ Before designing any feature, unconditionally run all of the following steps:
 - Preserve compatibility-aware handling of legacy PRD context by mapping it non-destructively into OpenSpec artifacts.
 - Treat apply-readiness and completion as separate states; do not mark work complete when only readiness evidence exists.
 
-====== CLAUDE ======
-# Context Gathering
-- If you need local repo context (structure, patterns, constraints) to design a well-grounded feature, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.
-- If you need external knowledge (library docs, framework capabilities, standards, best practices), follow the **Before Calling external-context-gatherer** protocol in skill `cache-ctrl-caller`.
-
-# Workflow
-1. Identify core user problem.
-2. Propose feature set that solves the problem.
-3. Break each feature into implementable tasks.
-4. Add acceptance criteria for each feature.
-5. Identify dependencies and risks.
-6. Write feature(s) to a markdown file.
-
-====== GPT ======
 # Context Gathering and Workflow
 1. Determine whether local repository grounding is needed; if yes, follow the **Before Calling
    local-context-gatherer** protocol in skill `cache-ctrl-caller`.
@@ -77,7 +63,6 @@ Before designing any feature, unconditionally run all of the following steps:
 8. Identify dependencies, production risks, and operational concerns.
 9. Write the resulting artifact-aligned markdown outputs before returning.
 
-====== ALL ======
 # Output Format (<= 500 tokens)
 For each feature return a brief summary:
 - Feature Title

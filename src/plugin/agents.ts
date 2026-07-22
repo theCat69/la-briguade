@@ -8,10 +8,7 @@ import type { Config } from "../types/plugin.js";
 import { parseFrontmatter } from "../utils/content/frontmatter.js";
 import { loadContentFiles } from "../utils/content/load-content.js";
 import { readContentFile } from "../utils/content/read-content-file.js";
-import { parseModelSections } from "../utils/prompts/model-sections.js";
-import { logger } from "../utils/runtime/logger.js";
 import { isRecord } from "../utils/support/type-guards.js";
-import type { AgentSectionsEntry } from "../hooks/index.js";
 
 const MAX_AGENT_FILE_LENGTH = 50_000;
 
@@ -30,11 +27,6 @@ function agentNameFromFilename(filename: string): string {
   return stem.charAt(0).toLowerCase() + stem.slice(1);
 }
 
-/** Return type for registerAgents — includes the per-agent model sections map. */
-export type RegisterAgentsResult = {
-  agentSections: Map<string, AgentSectionsEntry>;
-};
-
 /**
  * Register all agent definitions from content/agents/ into the config.
  * Reads .md files with YAML frontmatter, parses them into AgentConfig objects,
@@ -47,19 +39,17 @@ export function registerAgents(
   config: Config,
   agentDirs: string[],
   userConfig?: LaBriguadeConfig,
-): RegisterAgentsResult {
-  const agentSections: Map<string, AgentSectionsEntry> = new Map();
+) {
   const opusEnabled = userConfig?.opus_enabled ?? false;
 
   const loadedAgents = loadContentFiles(agentDirs, ".md", (filePath, stem) => {
     const raw = readContentFile(filePath, MAX_AGENT_FILE_LENGTH, "agent");
 
     const { attributes, body } = parseFrontmatter(raw);
-    const { base, segments } = parseModelSections(body);
     const agentName = agentNameFromFilename(stem);
 
     const agentConfig: AgentConfig = {
-      prompt: base,
+      prompt: body,
     };
 
     if (typeof attributes["description"] === "string") {
@@ -110,31 +100,20 @@ export function registerAgents(
         ? { ...resolved, model: swapOpusModel(resolved.model) }
         : resolved;
 
-      return {
-        agentName,
-        swappedConfig,
-        base,
-        segments,
-      };
+    return {
+      agentName,
+      swappedConfig
+    };
   });
 
-  if (loadedAgents.size === 0) return { agentSections };
+  if (loadedAgents.size === 0) return;
 
   const parsedAgents: Record<string, AgentConfig> = {};
 
   for (const parsed of loadedAgents.values()) {
     parsedAgents[parsed.agentName] = parsed.swappedConfig;
-
-    if (parsed.segments.length > 0) {
-      if (agentSections.has(parsed.agentName)) {
-        logger.warn(`duplicate agent name in sections map: '${parsed.agentName}'`);
-      }
-      agentSections.set(parsed.agentName, { base: parsed.base, segments: parsed.segments });
-    }
   }
 
   const existingAgents = isRecord(config.agent) ? config.agent : {};
   config.agent = { ...existingAgents, ...parsedAgents };
-
-  return { agentSections };
 }

@@ -180,69 +180,6 @@ protocol violation.
 4. NEVER skip steps 1-2.
 5. NEVER call `external-context-gatherer` without first checking for cached entries.
 
-====== CLAUDE ======
-# Workflow
-1. Restate goal briefly.
-2. **Gather local context — follow Cache-First Protocol (Local Context).** Run
-   `cache-ctrl check-files` first. Only call `local-context-gatherer` if the protocol decision
-   table requires it. Never read source files directly.
-2b. **Detect stack from gathered context:**
-   - `package.json` containing `@angular/core` → stack: `[angular, typescript]`
-   - `package.json` without Angular → stack: `[typescript]`
-   - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
-   - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
-   - `Cargo.toml` present → stack: `[rust]`
-   - No recognizable manifest → warn user, continue with `general-coding` only
-   Load the corresponding stack skills (e.g. `Load skill \`angular\``,
-   `Load skill \`typescript\``).
-   Record the detected stack as `"stack": ["angular", "typescript"]` in the Context Snapshot.
-2c. **Optional architecture analysis + design challenge**: For architecturally significant
-   requests (new service, major refactor, new public API, new agent/skill):
-   - **If the request involves significant structural change** (major refactor, module
-     reorganization, layer extraction, large codebase restructuring): delegate to `architect`
-     to map the current structure and produce a target architecture blueprint. Present the
-     architecture to the user. Do NOT produce the structure map yourself.
-   - Then optionally delegate to `critic` on the user's stated intent and requirements (or on
-     the `architect` output if available — not an implementation plan). Present the challenge
-     list to the user and ask whether to proceed or adjust scope.
-2d. **Optional deep-interview**: If scope and intent is not clear. Load `deep-interview` skill
-   and perform the interview.
-3. **Gather external context — follow Cache-First Protocol (External Context).**
-4. Filter into Context Snapshot (≤ 1,000 tokens) and write to
-   `.ai/context-snapshots/current.json`.
-5. Call coder with snapshot path + summary only.
-6. **Delegate to `reviewer`** with snapshot path + git diff summary. Do NOT review the diff
-   yourself. Reviewer may autonomously call external-context-gatherer for fresh best practices
-   on external libraries or non-trivial patterns.
-7. **Delegate to `security-reviewer` only when the user explicitly requests security review**
-   (for example: "run security review", "security audit", "check vulnerabilities") with snapshot
-   path + git diff summary. Do NOT perform security analysis yourself.
-8. **Security triage — re-verification loop (only if step 7 ran).** For each finding from step 7 that is not clearly
-   Critical or High severity with an obvious fix, assess two disqualifying conditions:
-   - **Code cost**: would fixing it require adding more than ~5 lines of new code (e.g. custom
-     guards, input validators, sanitizer layers)?
-   - **Performance impact**: could the recommended fix introduce a non-trivial performance
-     regression on a hot path?
-   If either condition is true, re-call security-reviewer with a targeted, context-aware prompt.
-   Be smart — tailor the question to the nature of the finding:
-   - Guard / validation pattern → *"For [finding]: is there a library update or a one-line
-     config change that addresses this instead of adding custom guard code? What is the minimal
-     viable fix?"*
-   - Performance-sensitive area → *"For [finding]: what is the realistic performance impact of
-     the recommended fix in this specific context? Is there a lighter alternative that still
-     mitigates the risk?"*
-   - Uncertain applicability → *"Is [finding] actually exploitable given [specific framework /
-     config / usage pattern present in this codebase]? Provide concrete evidence either way."*
-   Based on the re-verification result, classify the finding as:
-   - **Confirmed** — include in this session.
-   - **Deferred** — document in context snapshot, skip this session (fix too costly or certainty
-     too low).
-   - **Discarded** — false positive confirmed, discard silently.
-9. **Delegate to `librarian`** to check for doc changes. Do NOT assess documentation impact
-   yourself.
-10. Summarize blocking issues and next steps.
-
-====== GPT ======
 # Workflow
 Follow each step in the exact order below. Do not skip, combine, or reorder steps.
 Re-read your Critical Rules and Delegation Map before step 5 and again before step 11.
@@ -283,7 +220,6 @@ Re-read your Critical Rules and Delegation Map before step 5 and again before st
 14. Call `librarian` to check for doc changes. Never assess documentation impact yourself.
 15. Summarize blocking issues and next steps for the user.
 
-====== ALL ======
 # Output Contract to Subagents
 Always request:
 - cache hit/miss

@@ -65,17 +65,6 @@ Before responding to any request, unconditionally run all of the following steps
 - ALWAYS use the question tool to interact with the user when the request is ambiguous.
 - Prefer cached context when valid.
 
-====== CLAUDE ======
-# Workflow
-1. Identify the user goal.
-2. Ask focused clarifying questions if the goal is vague (use the question tool).
-3. Summarize the refined goal.
-4. Gather additional information with context7, webfetch, and/or websearch if necessary.
-5. Delegate to local-context-gatherer or external-context-gatherer for technical context when relevant.
-6. Delegate to reviewer, security-reviewer, or librarian if the user requests a review or audit.
-7. Respond to the user question accurately.
-
-====== GPT ======
 # Workflow
 Follow these steps in order:
 1. Restate the user goal in one sentence.
@@ -90,7 +79,6 @@ Follow these steps in order:
 5. If the user requests review/audit work, delegate to reviewer, security-reviewer, and/or librarian.
 6. Return an accurate, direct answer and clearly state any uncertainty.
 
-====== ALL ======
 # Optional: Light Orchestrator Mode
 When the user requests a review, audit, or analysis that benefits from the full pipeline (e.g. scope size is not trivial), optionally:
 1. Check cache state with `cache-ctrl list`.

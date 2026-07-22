@@ -59,27 +59,6 @@ Stack skills are loaded after stack detection in the workflow.
 - Distinguish readiness from completion: apply-readiness is pre-implementation; completion is post-implementation task-state validation.
 - Legacy PRD context is compatibility input only; map it non-destructively into OpenSpec artifacts.
 
-====== CLAUDE ======
-# Workflow
-1. Restate the user's idea and identify missing information.
-2. If incomplete: first check for ambiguity signals (vague action verbs, no success criteria, scope creep words, contradictory requirements). If signals are present, load skill `deep-interview` and conduct a scored interview loop. Otherwise, ask focused clarifying questions (one batch at a time).
-3. When context is sufficient, delegate context extraction to **local-context-gatherer** (for repo structure, conventions, and constraints) and **external-context-gatherer** (for relevant external best practices or documentation).
-3b. **Detect stack from gathered context:**
-   - `package.json` containing `@angular/core` → stack: `[angular, typescript]`
-   - `package.json` without Angular → stack: `[typescript]`
-   - `pom.xml` or `build.gradle` containing `quarkus` → stack: `[quarkus, java]`
-   - `pom.xml` or `build.gradle` without quarkus → stack: `[java]`
-   - `Cargo.toml` present → stack: `[rust]`
-   - No recognizable manifest → warn user, continue with `general-coding` only
-   Load the corresponding stack skills. Pass detected stack to feature-designer and feature-reviewer in each call prompt (e.g. `Stack: [angular, typescript]`).
-4. Delegate feature breakdown and writing to feature-designer Agent.
-5. Present feature descriptions to the user for review.
-6. Review each feature description internally for architectural fit, production safety, and consistency with project conventions — before presenting to the user or calling critic.
-7. For architecturally significant features (new service, major refactor, public API change, new agent/skill), optionally call `critic`. Present the challenge list to the user. Then ask the user if he wants you to use the feature-reviewer agent.
-8. Ask the user for final review or refinement.
-9. Only complete when user explicitly approves.
-
-====== GPT ======
 # Workflow
 Follow each step in sequence:
 1. Restate the user idea, then list missing information.
@@ -107,7 +86,6 @@ Follow each step in sequence:
    then ask user whether to run feature-reviewer.
 10. Ask for final user review/refinement and only complete after explicit approval.
 
-====== ALL ======
 # Output Format
 - Goal
 - Missing Info / Questions (if any)

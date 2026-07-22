@@ -43,17 +43,6 @@ Before reviewing any feature spec, unconditionally run all of the following step
 - Explicitly separate readiness verdict (pre-implementation) from completion validation (post-implementation task transitions).
 - Preserve compatibility-aware handling of legacy PRD context by mapping it non-destructively into OpenSpec lifecycle expectations.
 
-====== CLAUDE ======
-# Context Gathering
-- If you need local repo context (patterns, conventions) to assess spec alignment with the codebase, follow the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.
-- If you need external knowledge (library docs, framework capabilities, standards, best practices) to evaluate feasibility or correctness of a feature spec, follow the **Before Calling external-context-gatherer** protocol in skill `cache-ctrl-caller`.
-
-# Workflow
-1. Review each feature spec.
-2. Check for clarity, scope control, and acceptance criteria.
-3. Approve or request changes.
-
-====== GPT ======
 # Context Gathering and Workflow
 1. Determine whether local repository context is required to judge project fit. If yes, follow
    the **Before Calling local-context-gatherer** protocol in skill `cache-ctrl-caller`.
@@ -69,7 +58,6 @@ Before reviewing any feature spec, unconditionally run all of the following step
 6. Return only a verdict supported by artifact evidence, including readiness-vs-completion
    distinction.
 
-====== ALL ======
 # Output Format
 - Review Verdict (Approve / Changes Needed)
 - Issues Found

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createHooks, type AgentSectionsEntry } from "./index.js";
 import { notifier } from "../utils/runtime/notifier.js";
+import { logger } from "../utils/runtime/logger.js";
 
 import type { PluginInput } from "../types/plugin.js";
 
@@ -300,6 +301,133 @@ describe("injectVendorPrompts via experimental.chat.system.transform", () => {
     // Assert
     expect(output.system).toEqual([`${sharedBase}\n\nGlobal GPT prompt`]);
     expect(output.system[0]?.match(/Global GPT prompt/g)?.length).toBe(1);
+  });
+
+  it("should remain idempotent across repeated transform calls", async () => {
+    // Arrange
+    const basePrompt = "Base system prompt";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: basePrompt,
+          segments: [{ target: "gpt", text: "GPT section content" }],
+        },
+      ],
+    ]);
+    const vendorPrompts = new Map<string, string>([["gpt", "Global GPT prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+    const input = { model: { id: "openai/gpt-5" } };
+    const output = { system: [basePrompt] };
+
+    // Act
+    await transform?.(input as never, output as never);
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual([
+      "Base system prompt\n\nGPT section content\n\nGlobal GPT prompt",
+    ]);
+    expect(output.system[0]?.match(/GPT section content/g)?.length).toBe(1);
+    expect(output.system[0]?.match(/Global GPT prompt/g)?.length).toBe(1);
+  });
+
+  it("should rebuild prompt content when the model family changes", async () => {
+    // Arrange
+    const basePrompt = "Base system prompt";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: basePrompt,
+          segments: [
+            { target: "gpt", text: "GPT section content" },
+            { target: "claude", text: "Claude section content" },
+          ],
+        },
+      ],
+    ]);
+    const vendorPrompts = new Map<string, string>([
+      ["gpt", "Global GPT prompt"],
+      ["claude", "Global Claude prompt"],
+    ]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+    const output = { system: [basePrompt] };
+
+    // Act
+    await transform?.({ model: { id: "openai/gpt-5" } } as never, output as never);
+    await transform?.({ model: { id: "anthropic/claude-3-7-sonnet" } } as never, output as never);
+
+    // Assert
+    expect(output.system).toEqual([
+      "Base system prompt\n\nClaude section content\n\nGlobal Claude prompt",
+    ]);
+    expect(output.system[0]).not.toContain("GPT section content");
+    expect(output.system[0]).not.toContain("Global GPT prompt");
+  });
+
+  it("should emit debug logs describing pre-augmented system entries", async () => {
+    // Arrange
+    const basePrompt = "Base system prompt";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: basePrompt,
+          segments: [{ target: "claude", text: "Claude section content" }],
+        },
+      ],
+    ]);
+    const vendorPrompts = new Map<string, string>([["claude", "Global Claude prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
+
+    const input = { model: { id: "anthropic/claude-3-7-sonnet" } };
+    const output = {
+      system: [`${basePrompt}\n\nClaude section content\n\nGlobal Claude prompt`],
+    };
+
+    // Act
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(debugSpy).toHaveBeenNthCalledWith(
+      1,
+      "system transform start: model='anthropic/claude-3-7-sonnet', systemEntries=1, matchedEntries=1, preAugmentedEntries=1",
+    );
+    expect(debugSpy).toHaveBeenNthCalledWith(
+      2,
+      "system transform result: model='anthropic/claude-3-7-sonnet', modelSectionAppends=1, vendorFamily='claude', vendorPromptAppends=1, changedEntries=0, beforeTotalLength=64, afterTotalLength=64",
+    );
+  });
+
+  it("should report unchanged rebuilt prompts on repeated transform calls", async () => {
+    // Arrange
+    const basePrompt = "Base system prompt";
+    const agentSections = new Map<string, AgentSectionsEntry>([
+      [
+        "coder",
+        {
+          base: basePrompt,
+          segments: [{ target: "gpt", text: "GPT section content" }],
+        },
+      ],
+    ]);
+    const vendorPrompts = new Map<string, string>([["gpt", "Global GPT prompt"]]);
+    const transform = getSystemTransformHook(agentSections, vendorPrompts);
+    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
+    const input = { model: { id: "openai/gpt-5" } };
+    const output = { system: [basePrompt] };
+
+    // Act
+    await transform?.(input as never, output as never);
+    await transform?.(input as never, output as never);
+
+    // Assert
+    expect(debugSpy).toHaveBeenNthCalledWith(
+      4,
+      "system transform result: model='openai/gpt-5', modelSectionAppends=1, vendorFamily='gpt', vendorPromptAppends=1, changedEntries=0, beforeTotalLength=58, afterTotalLength=58",
+    );
   });
 });
 
