@@ -74,7 +74,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `zod-config-schema.md` | Zod v4 config schema with `z.record`, security `.refine()` constraints, and `z.toJSONSchema()` |
 | `model-sections.md` | Parsing and injecting model-family prompt sections from agent `.md` files |
 | `global-prompts-loader.md` | Loading shared vendor prompts from a directory, keyed by lowercased filename stem, with per-file error resilience |
-| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, and non-MCP `permission.bash` declarations, and skill-directed agent opt-in via `agents:` |
+| `skill-embedded-mcp.md` | Declaring local/remote MCP servers in SKILL.md frontmatter, `{env:VAR_NAME}` token resolution, command-injection guard, non-MCP `permission.bash`, skill-directory `permission.external_directory` injection, and skill-directed agent opt-in via `agents:` |
 | `agent-permissions.md` | Agent `permission.skill` declarations and skill-side `agents:` opt-in pattern |
 | `content-override-merge.md` | Priority-based merge of layered content directories — builtin < opencode global < global user < opencode project < project user — using `collectFiles()` / `collectDirs()` |
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
@@ -93,9 +93,9 @@ src/
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
     mcp/
       index.ts       ← barrel re-export
-      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() — reads mcp:, permission.bash, and agents: from SKILL.md files
+      collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() / collectSkillExternalDirectories() — reads mcp:, permission.bash, agents:, and skill-dir external-directory grants from SKILL.md files
       merge.ts       ← mergeSkillMcps() — merges collected MCP entries into config.mcp
-      permissions.ts ← injectSkillAgentPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, prefixed MCP, and bash permissions into agents
+      permissions.ts ← injectSkillAgentPermissions() / injectSkillExternalDirectoryPermissions() / injectSkillMcpPermissions() / injectSkillBashPermissions() — injects skill opt-in, skill-dir external_directory, prefixed MCP, and bash permissions into agents
       types.ts       ← internal MCP type definitions (SkillMcpEntry, SkillMcpMap, SkillMcpIndex, SkillAgentIndex, etc.)
     vendors.ts       ← loadVendorPrompts(vendorDirs[]) — merges vendor prompt .md files across builtin + user dirs via collectFiles(); dirs: builtin → ~/la_briguade/vendor-prompts/ → <root>/.la_briguade/vendor-prompts/
     auto-inject.ts   ← collectAutoInjectSkills(), resolveActiveSkills(), injectAutoInjectSkills() — scans auto-inject-skills dirs for SKILL.md files with detect: frontmatter, activates matching skills per project, and injects prompt content as one grouped wrapped block (start/end markers + explanatory preface + per-skill `#<skillName>`/description/body sections) when appending to non-whitespace prompts; whitespace-only prompts are treated as empty and receive raw first-skill body

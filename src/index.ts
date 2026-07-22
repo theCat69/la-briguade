@@ -15,9 +15,11 @@ import { registerCommands } from "./plugin/commands.js";
 import {
   collectSkillAgents,
   collectSkillBashPermissions,
+  collectSkillExternalDirectories,
   collectSkillMcps,
   injectSkillAgentPermissions,
   injectSkillBashPermissions,
+  injectSkillExternalDirectoryPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
@@ -106,6 +108,8 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       );
       const skillAgentIndex = collectSkillAgents(skillDirs);
       injectSkillAgentPermissions(input, skillAgentIndex);
+      const skillExternalDirIndex = collectSkillExternalDirectories(skillDirs);
+      injectSkillExternalDirectoryPermissions(input, skillExternalDirIndex);
       const { mcpMap, skillMcpIndex } = collectSkillMcps(skillDirs);
       mergeSkillMcps(input, mcpMap);
       injectSkillMcpPermissions(input, skillMcpIndex);

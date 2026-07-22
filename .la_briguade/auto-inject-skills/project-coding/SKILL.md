@@ -158,6 +158,12 @@ Skills can declare MCP servers in `SKILL.md` frontmatter under the `mcp:` key. A
 
 `collectSkillMcps()` returns `{ mcpMap, skillMcpIndex }`. The `skillMcpIndex` maps each skill dir basename to its prefixed tool permission map. A skill entry with no `permission:` block defaults to `{ "<id>_*": "allow" }`; a custom `permission:` block pre-prefixes each key (e.g. `"resolve-library-id"` → `"<id>_resolve-library-id"`). `injectSkillMcpPermissions(input, skillMcpIndex)` is called from the `config()` callback and adds missing prefixed entries to agents that opt in to a skill — without overwriting any key the agent already declares.
 
+### Skill Directory Access — `permission.external_directory`
+
+Skills implicitly grant read/search access to their own directory tree when an agent opts in via `permission.skill`. `collectSkillExternalDirectories(skillDirs)` validates each discovered skill dir and returns a `SkillExternalDirIndex` (`Record<skillName, skillDir>`). `injectSkillExternalDirectoryPermissions(input, skillExternalDirIndex)` then injects missing `permission.external_directory` object entries for both `<skillDir>` and `<skillDir>/**`, without overwriting any agent-defined external-directory rule.
+
+Only validated skill directories participate: missing `SKILL.md` files are skipped, paths containing glob metacharacters are skipped to avoid over-broad permission patterns, and symlinked content dirs are ignored earlier during directory discovery.
+
 See `.code-examples-for-ai/skill-embedded-mcp.md` for a full annotated example.
 
 ### Non-MCP Skill Permissions — `permission.bash`
@@ -170,11 +176,11 @@ Keys in `permission.bash` may contain spaces and glob patterns (e.g. `"playwrigh
 
 ### Skill-Directed Agent Opt-In — `agents:`
 
-SKILL.md files can declare which agents should automatically receive `permission.skill["<skillName>"] = "allow"` at startup. This runs before MCP and bash permission injection, so any MCP tools or bash patterns the skill declares are subsequently injected into those agents as well.
+SKILL.md files can declare which agents should automatically receive `permission.skill["<skillName>"] = "allow"` at startup. This runs before external-directory, MCP, and bash permission injection, so any skill-directory `permission.external_directory` entries, MCP tools, or bash patterns the skill declares are subsequently injected into those agents as well.
 
 `collectSkillAgents(skillDirs)` reads the optional `agents:` string array from each SKILL.md and returns a `SkillAgentIndex` (`Record<skillName, string[]>`). `injectSkillAgentPermissions(input, skillAgentIndex)` iterates the index and writes the skill's name into each listed agent's `permission.skill` block — without overwriting an existing entry (non-overwrite policy). Unknown agent names (not present in `input.agent`) produce a `logger.warn`. Agent names are validated with `isSafePermissionSubKey` plus a control-character check to guard against log injection.
 
-**Call order in `config()` callback**: `collectSkillAgents` → `injectSkillAgentPermissions` → `collectSkillMcps` → `mergeSkillMcps` → `injectSkillMcpPermissions` → `collectSkillBashPermissions` → `injectSkillBashPermissions`. The agent opt-in step must come first so that agents are already opted-in when MCP/bash injection checks `permission.skill`.
+**Call order in `config()` callback**: `collectSkillAgents` → `injectSkillAgentPermissions` → `collectSkillExternalDirectories` → `injectSkillExternalDirectoryPermissions` → `collectSkillMcps` → `mergeSkillMcps` → `injectSkillMcpPermissions` → `collectSkillBashPermissions` → `injectSkillBashPermissions`. The agent opt-in step must come first so that agents are already opted-in when external-directory/MCP/bash injection checks `permission.skill`.
 
 **Design note**: this couples a skill to project-specific agent names; it is intended for first-party project skills, not portable community skills.
 

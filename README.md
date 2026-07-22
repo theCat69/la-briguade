@@ -264,7 +264,7 @@ Each MCP entry must specify a `type`:
 - **`local`** — runs a local process. `command` is required and must be an argv-style array (e.g. `["npx", "-y", "pkg@latest"]`). Optional: `environment` (key-value env vars), `enabled`, `timeout`.
 - **`remote`** — connects to a remote SSE endpoint. `url` is required. Optional: `headers`, `enabled`, `timeout`.
 
-An optional `permission:` block on a local entry declares tool-level permissions for that MCP's tools. Values must be `"allow"`, `"ask"`, or `"deny"`. At startup, la-briguade automatically injects prefixed versions of these permissions into any agent that opts in to the skill (e.g. `"*": "allow"` becomes `"context7_*": "allow"` for the `context7` skill). Agents that already declare a matching key are not overridden.
+An optional `permission:` block on a local entry declares tool-level permissions for that MCP's tools. Values must be `"allow"`, `"ask"`, or `"deny"`. At startup, la-briguade automatically injects prefixed versions of these permissions into any agent that opts in to the skill (e.g. `"*": "allow"` becomes `"context7_*": "allow"` for the `context7` skill). The same skill opt-in also injects `permission.external_directory` allow rules for the skill directory itself and its subtree (`<skillDir>` and `<skillDir>/**`) so the agent can read/search files packaged with the skill. Agents that already declare a matching key are not overridden.
 
 #### Skill-directed agent opt-in — `agents:`
 
@@ -280,7 +280,7 @@ agents:
 ---
 ```
 
-When `agents:` is present, each listed agent automatically gets `permission.skill["my-skill"] = "allow"` before MCP and bash permission injection runs — so any MCP tools or bash patterns the skill declares will be injected into those agents as well. Agents that already have an explicit `permission.skill["my-skill"]` entry are not overridden (non-overwrite policy applies). Unknown agent names produce a warning and are skipped. This is intended for first-party project-specific skills; portable community skills should generally not hard-code agent names.
+When `agents:` is present, each listed agent automatically gets `permission.skill["my-skill"] = "allow"` before downstream skill-derived permission injection runs — so any MCP tools, `permission.bash` patterns, and `permission.external_directory` entries for that skill directory (`<skillDir>` and `<skillDir>/**`) will be injected into those agents as well. Agents that already have an explicit `permission.skill["my-skill"]` entry are not overridden (non-overwrite policy applies). Unknown agent names produce a warning and are skipped. This is intended for first-party project-specific skills; portable community skills should generally not hard-code agent names.
 
 #### Environment variable tokens
 

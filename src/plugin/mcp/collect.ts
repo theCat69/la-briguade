@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { z } from "zod";
 
@@ -14,11 +14,13 @@ import {
   buildPrefixedPermissionMap,
   type SkillAgentIndex,
   type SkillBashPermIndex,
+  type SkillExternalDirIndex,
   type SkillMcpIndex,
   type SkillMcpMap,
 } from "./types.js";
 
 const SKILL_FILE_NAME = "SKILL.md";
+const DISALLOWED_PERMISSION_GLOB_CHARS = /[*?[\]{}]|[@!+*?]\(/;
 
 type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
@@ -93,6 +95,57 @@ function forEachSkillDir(
 
     callback(fileDataResult.value);
   }
+}
+
+function hasSymlinkedDescendant(rootDir: string): boolean {
+  const pendingDirs = [rootDir];
+
+  while (pendingDirs.length > 0) {
+    const currentDir = pendingDirs.pop();
+    if (currentDir === undefined) {
+      continue;
+    }
+
+    let entries: string[];
+    try {
+      entries = readdirSync(currentDir);
+    } catch (error) {
+      logger.warn(
+        `Could not inspect skill directory tree: ${currentDir} ` +
+          `(${error instanceof Error ? error.message : String(error)})`,
+      );
+      return true;
+    }
+
+    for (const entry of entries) {
+      const entryPath = resolve(currentDir, entry);
+      let stats;
+
+      try {
+        stats = lstatSync(entryPath);
+      } catch (error) {
+        logger.warn(
+          `Could not inspect skill directory entry: ${entryPath} ` +
+            `(${error instanceof Error ? error.message : String(error)})`,
+        );
+        return true;
+      }
+
+      if (stats.isSymbolicLink()) {
+        logger.warn(
+          `Skill directory path "${rootDir}" contains symlinked content; ` +
+            "skipping external_directory injection",
+        );
+        return true;
+      }
+
+      if (stats.isDirectory()) {
+        pendingDirs.push(entryPath);
+      }
+    }
+  }
+
+  return false;
 }
 
 export function collectSkillMcps(
@@ -210,4 +263,28 @@ export function collectSkillAgents(skillDirs: string[]): SkillAgentIndex {
   });
 
   return skillAgentIndex;
+}
+
+export function collectSkillExternalDirectories(
+  skillDirs: string[],
+): SkillExternalDirIndex {
+  const skillExternalDirIndex: SkillExternalDirIndex = {};
+
+  forEachSkillDir(skillDirs, ({ skillDir, skillName }) => {
+    if (DISALLOWED_PERMISSION_GLOB_CHARS.test(skillDir)) {
+      logger.warn(
+        `Skill directory path "${skillDir}" contains unsupported glob characters; ` +
+          "skipping external_directory injection",
+      );
+      return;
+    }
+
+    if (hasSymlinkedDescendant(skillDir)) {
+      return;
+    }
+
+    skillExternalDirIndex[skillName] = skillDir;
+  });
+
+  return skillExternalDirIndex;
 }

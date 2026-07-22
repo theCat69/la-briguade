@@ -1,12 +1,14 @@
 export {
   collectSkillAgents,
   collectSkillBashPermissions,
+  collectSkillExternalDirectories,
   collectSkillMcps,
 } from "./collect.js";
 export { mergeSkillMcps } from "./merge.js";
 export {
   injectSkillAgentPermissions,
   injectSkillBashPermissions,
+  injectSkillExternalDirectoryPermissions,
   injectSkillMcpPermissions,
 } from "./permissions.js";
 export type { AgentConfig } from "./permissions.js";
@@ -19,6 +21,7 @@ export {
 export type {
   SkillAgentIndex,
   SkillBashPermIndex,
+  SkillExternalDirIndex,
   SkillMcpBinding,
   SkillMcpEntry,
   SkillMcpIndex,

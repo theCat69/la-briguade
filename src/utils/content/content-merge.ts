@@ -1,4 +1,4 @@
-import { statSync } from "node:fs";
+import { lstatSync } from "node:fs";
 import { basename, join } from "node:path";
 
 import { logger } from "../runtime/logger.js";
@@ -37,13 +37,32 @@ export function collectDirs(roots: string[]): Map<string, string> {
   const merged: Map<string, string> = new Map();
 
   for (const root of roots) {
+    try {
+      if (lstatSync(root).isSymbolicLink()) {
+        logger.warn(`Skipping symlinked content root '${root}'`);
+        continue;
+      }
+    } catch (err) {
+      if (!isNodeError(err) || err.code !== "ENOENT") {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.warn(`Could not access content root '${root}': ${message}`);
+      }
+      continue;
+    }
+
     const entries = readDirSafe(root, "content-dirs");
     if (entries === undefined) continue;
 
     for (const entry of entries) {
       const fullPath = join(root, entry);
       try {
-        if (statSync(fullPath).isDirectory()) {
+        const stats = lstatSync(fullPath);
+        if (stats.isSymbolicLink()) {
+          logger.warn(`Skipping symlinked content directory '${fullPath}'`);
+          continue;
+        }
+
+        if (stats.isDirectory()) {
           const safeDirName = basename(entry);
           merged.set(safeDirName, fullPath);
         }

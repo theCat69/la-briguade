@@ -58,7 +58,7 @@ agents:
 // Example effect for skill dir name "my-skill":
 // before: permission.skill = { "*": "deny" }
 // after:  permission.skill = { "*": "deny", "my-skill": "allow" }
-// Then MCP and permission.bash entries for "my-skill" can be injected.
+// Then external_directory, MCP, and permission.bash entries for "my-skill" can be injected.
 
 ## {env:VAR_NAME} token resolution
 
@@ -94,13 +94,17 @@ permission:
 // permission:
 //   skill:
 //     playwright-cli: "allow"
+//   external_directory:
+//     "/abs/path/to/skills/playwright-cli": "allow"
+//     "/abs/path/to/skills/playwright-cli/**": "allow"
 //   bash:
 //     "playwright-cli *": "allow"   ← injected from skill frontmatter
 //
-// Injection rules (same as MCP):
+// Injection rules (same as MCP/external_directory):
 // - deny in skill permission → no injection for that skill
 // - deny value in bash block → pattern is skipped
 // - existing pattern in agent config → not overwritten (agent wins)
+// - external_directory gets <skillDir> and <skillDir>/** allow rules
 // - permission.bash initialized as {} if not present on the agent
 //
 // In la-briguade.jsonc (user config), nested permission is valid:

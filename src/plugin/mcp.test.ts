@@ -1,13 +1,15 @@
-import { readFileSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  collectSkillExternalDirectories,
   collectSkillAgents,
   collectSkillBashPermissions,
   collectSkillMcps,
   injectSkillAgentPermissions,
   injectSkillBashPermissions,
+  injectSkillExternalDirectoryPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
 } from "./mcp/index.js";
@@ -18,6 +20,7 @@ import { isRecord } from "../utils/support/type-guards.js";
 import type {
   SkillAgentIndex,
   SkillBashPermIndex,
+  SkillExternalDirIndex,
   SkillMcpIndex,
   SkillMcpMap,
 } from "./mcp/index.js";
@@ -25,6 +28,16 @@ import type {
 vi.mock("node:fs");
 
 const mockReadFileSync = vi.mocked(readFileSync);
+const mockLstatSync = vi.mocked(lstatSync);
+const mockReaddirSync = vi.mocked(readdirSync);
+
+function mockSkillTreeWithoutSymlinks(): void {
+  mockReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+  mockLstatSync.mockImplementation(() => ({
+    isDirectory: () => true,
+    isSymbolicLink: () => false,
+  }) as ReturnType<typeof lstatSync>);
+}
 
 function createConfig(): Config {
   return { mcp: {} };
@@ -1146,6 +1159,136 @@ describe("collectSkillAgents", () => {
       'Skill directory name "__proto__" is unsafe; skipping',
     );
   });
+
+  it("should skip skill directory paths containing glob characters", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/wild*skill";
+    mockSkillTreeWithoutSymlinks();
+    mockReadFileSync.mockReturnValue(["---", "description: Wild", "---", "Body"].join("\n"));
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories([skillDir]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({});
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("contains unsupported glob characters"),
+    );
+  });
+
+  it("should skip skill directory paths containing extglob characters", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/@(wild-skill)";
+    mockSkillTreeWithoutSymlinks();
+    mockReadFileSync.mockReturnValue(["---", "description: Wild", "---", "Body"].join("\n"));
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories([skillDir]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({});
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("contains unsupported glob characters"),
+    );
+  });
+});
+
+describe("collectSkillExternalDirectories", () => {
+  it("should collect validated skill directories by skill name", () => {
+    // Arrange
+    const skillDir = "/skills/playwright-cli";
+    mockSkillTreeWithoutSymlinks();
+    mockReadFileSync.mockReturnValue(
+      ["---", "description: Playwright", "---", "Body"].join("\n"),
+    );
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories([skillDir]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({
+      "playwright-cli": "/skills/playwright-cli",
+    });
+  });
+
+  it("should allow literal at-signs in skill directory paths", () => {
+    // Arrange
+    const skillDir = "/work/@acme/skills/playwright-cli";
+    mockSkillTreeWithoutSymlinks();
+    mockReadFileSync.mockReturnValue(
+      ["---", "description: Playwright", "---", "Body"].join("\n"),
+    );
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories([skillDir]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({
+      "playwright-cli": "/work/@acme/skills/playwright-cli",
+    });
+  });
+
+  it("should skip skill directories without SKILL.md", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation(() => {
+      const error = new Error("missing") as NodeJS.ErrnoException;
+      error.code = "ENOENT";
+      throw error;
+    });
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories(["/skills/missing"]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({});
+  });
+
+  it("should skip unsafe skill directory names", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    mockReadFileSync.mockClear();
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories(["/skills/__proto__"]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({});
+    expect(mockReadFileSync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Skill directory name "__proto__" is unsafe; skipping',
+    );
+  });
+
+  it("should skip skill directories containing nested symlinks", () => {
+    // Arrange
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const skillDir = "/skills/playwright-cli";
+    mockReadFileSync.mockReturnValue(
+      ["---", "description: Playwright", "---", "Body"].join("\n"),
+    );
+    mockReaddirSync.mockImplementation((path) => {
+      if (String(path) === skillDir) {
+        return ["nested-link"] as unknown as ReturnType<typeof readdirSync>;
+      }
+
+      return [] as unknown as ReturnType<typeof readdirSync>;
+    });
+    mockLstatSync.mockImplementation((path) => ({
+      isDirectory: () => String(path) === skillDir,
+      isSymbolicLink: () => String(path) === `${skillDir}/nested-link`,
+    }) as ReturnType<typeof lstatSync>);
+
+    // Act
+    const skillExternalDirIndex = collectSkillExternalDirectories([skillDir]);
+
+    // Assert
+    expect(skillExternalDirIndex).toEqual({});
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("contains symlinked content"),
+    );
+  });
 });
 
 describe("injectSkillBashPermissions", () => {
@@ -1358,6 +1501,196 @@ describe("injectSkillBashPermissions", () => {
     expect(getAskPermission(config)).toEqual({
       skill: { "playwright-cli": "allow" },
       bash: { "playwright-cli *": "allow" },
+    });
+  });
+});
+
+describe("injectSkillExternalDirectoryPermissions", () => {
+  const skillExternalDirIndex: SkillExternalDirIndex = {
+    "playwright-cli": "/skills/playwright-cli",
+  };
+
+  it("should inject external_directory patterns when skill is 'allow'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "allow" } });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/skills/playwright-cli": "allow",
+        "/skills/playwright-cli/**": "allow",
+      },
+    });
+  });
+
+  it("should inject external_directory patterns when skill is 'ask'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "ask" } });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "ask" },
+      external_directory: {
+        "/skills/playwright-cli": "allow",
+        "/skills/playwright-cli/**": "allow",
+      },
+    });
+  });
+
+  it("should NOT inject when skill is 'deny'", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "playwright-cli": "deny" } });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "deny" },
+    });
+  });
+
+  it("should inject via wildcard skill allow", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "allow" } });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "allow" },
+      external_directory: {
+        "/skills/playwright-cli": "allow",
+        "/skills/playwright-cli/**": "allow",
+      },
+    });
+  });
+
+  it("should NOT inject via wildcard skill deny", () => {
+    // Arrange
+    const config = createInjectConfig({ skill: { "*": "deny" } });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "*": "deny" },
+    });
+  });
+
+  it("should NOT overwrite existing external_directory permission keys", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/skills/playwright-cli": "ask",
+        "/skills/playwright-cli/**": "ask",
+      },
+    });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/skills/playwright-cli": "ask",
+        "/skills/playwright-cli/**": "ask",
+      },
+    });
+  });
+
+  it("should append to existing external_directory section without overwriting other entries", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/other/path/**": "allow",
+      },
+    });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/other/path/**": "allow",
+        "/skills/playwright-cli": "allow",
+        "/skills/playwright-cli/**": "allow",
+      },
+    });
+  });
+
+  it("should preserve scalar external_directory permission and skip skill injection", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      external_directory: "allow",
+    });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      external_directory: "allow",
+    });
+  });
+
+  it("should treat null external_directory permission as absent and inject patterns", () => {
+    // Arrange
+    const config = createInjectConfig({
+      skill: { "playwright-cli": "allow" },
+      external_directory: null,
+    });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      skill: { "playwright-cli": "allow" },
+      external_directory: {
+        "/skills/playwright-cli": "allow",
+        "/skills/playwright-cli/**": "allow",
+      },
+    });
+  });
+
+  it("should do nothing when agent has no permission block", () => {
+    // Arrange
+    const config = createInjectConfig(undefined);
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(config.agent?.ask).toEqual({});
+  });
+
+  it("should do nothing when agent has no skill sub-block", () => {
+    // Arrange
+    const config = createInjectConfig({ read: "allow" });
+
+    // Act
+    injectSkillExternalDirectoryPermissions(config, skillExternalDirIndex);
+
+    // Assert
+    expect(getAskPermission(config)).toEqual({
+      read: "allow",
     });
   });
 });

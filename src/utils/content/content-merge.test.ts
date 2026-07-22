@@ -1,10 +1,11 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { collectDirs, collectFiles } from "./content-merge.js";
+import { logger } from "../runtime/logger.js";
 
 const tempRoots: string[] = [];
 
@@ -145,5 +146,38 @@ describe("collectDirs", () => {
     const result = collectDirs([root]);
 
     expect(result).toEqual(new Map([["bar", join(root, "bar")]]));
+  });
+
+  it("should skip symlinked directories", () => {
+    const root = makeTempDir();
+    const target = makeTempDir();
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    mkdirSync(join(target, "frontend-target"));
+    symlinkSync(join(target, "frontend-target"), join(root, "frontend"));
+
+    const result = collectDirs([root]);
+
+    expect(result).toEqual(new Map());
+    expect(warnSpy).toHaveBeenCalledWith(
+      `Skipping symlinked content directory '${join(root, "frontend")}'`,
+    );
+  });
+
+  it("should skip symlinked roots", () => {
+    const linkParent = makeTempDir();
+    const targetRoot = makeTempDir();
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    mkdirSync(join(targetRoot, "frontend"));
+    const symlinkedRoot = join(linkParent, "skills-link");
+    symlinkSync(targetRoot, symlinkedRoot);
+
+    const result = collectDirs([symlinkedRoot]);
+
+    expect(result).toEqual(new Map());
+    expect(warnSpy).toHaveBeenCalledWith(
+      `Skipping symlinked content root '${symlinkedRoot}'`,
+    );
   });
 });

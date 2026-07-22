@@ -1,3 +1,5 @@
+import { join } from "node:path";
+
 import type { Config } from "../../types/plugin.js";
 import { logger } from "../../utils/runtime/logger.js";
 import { isRecord } from "../../utils/support/type-guards.js";
@@ -5,6 +7,7 @@ import { isRecord } from "../../utils/support/type-guards.js";
 import {
   type SkillAgentIndex,
   type SkillBashPermIndex,
+  type SkillExternalDirIndex,
   type SkillMcpIndex,
 } from "./types.js";
 
@@ -92,6 +95,49 @@ export function injectSkillBashPermissions(
         }
         if (bashSection[pattern] === undefined) {
           bashSection[pattern] = value;
+        }
+      }
+    }
+  });
+}
+
+function buildExternalDirectoryPatterns(skillDir: string): string[] {
+  return [skillDir, join(skillDir, "**")];
+}
+
+export function injectSkillExternalDirectoryPermissions(
+  input: AgentConfig,
+  skillExternalDirIndex: SkillExternalDirIndex,
+): void {
+  forEachAgentWithSkillPermission(input, (rawPermission, rawSkillPerms) => {
+    for (const [skillName, skillDir] of Object.entries(skillExternalDirIndex)) {
+      if (resolveSkillPermission(rawSkillPerms, skillName) === undefined) {
+        continue;
+      }
+
+      const existingExternalDirectory = rawPermission["external_directory"];
+      if (
+        existingExternalDirectory !== undefined &&
+        existingExternalDirectory !== null &&
+        !isRecord(existingExternalDirectory)
+      ) {
+        continue;
+      }
+
+      let externalDirectorySection: Record<string, unknown> | undefined = isRecord(
+        existingExternalDirectory,
+      )
+        ? existingExternalDirectory
+        : undefined;
+
+      for (const pattern of buildExternalDirectoryPatterns(skillDir)) {
+        if (externalDirectorySection === undefined) {
+          externalDirectorySection = {};
+          rawPermission["external_directory"] = externalDirectorySection;
+        }
+
+        if (externalDirectorySection[pattern] === undefined) {
+          externalDirectorySection[pattern] = "allow";
         }
       }
     }
