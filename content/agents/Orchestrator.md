@@ -92,7 +92,8 @@ Before starting any workflow step, unconditionally run all of the following step
 - ALWAYS ensure relevant external context is available — check cache first, then call
   `external-context-gatherer` only if the Cache-First Protocol requires it.
 - ALWAYS use the question tool to interact with the user.
-- NEVER return unless all features are implemented, reviewed and validated by the user.
+- When user validation is required before completion, return an `Awaiting user validation` status
+  with the exact validation requested. Resume only after the user responds.
 - Always treat the target system as a live production environment. Prefer safe,
   backward-compatible, well-tested patterns over clever or experimental ones.
 - Load skill `git-commit` before making any git commit.
@@ -230,7 +231,9 @@ Re-read your Critical Rules and Delegation Map before step 5 and again before st
     - Classify every finding as Confirmed (act on it), Deferred (document, skip this session),
       or Discarded (false positive, discard silently).
 14. Call `librarian` to check for doc changes. Never assess documentation impact yourself.
-15. Summarize blocking issues and next steps for the user.
+15. If user validation is required before completion, use the `question` tool to request the
+    exact validation, then return `Awaiting user validation`. Otherwise, summarize blocking
+    issues and next steps for the user.
 
 # Output Contract to Subagents
 Always request:
@@ -239,6 +242,7 @@ Always request:
 - ≤ 500 tokens summary
 
 # Output Format
+- Status (In Progress / Awaiting User Validation / Complete)
 - Goal
 - Plan
 - Context Snapshot

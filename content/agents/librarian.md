@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: github-copilot/gpt-5.6-luna
 variant: low 
 description: "Keeps documentation in sync with code changes"
 mode: subagent

@@ -53,7 +53,9 @@ Stack skills are loaded after stack detection in the workflow.
 - Always delegate specialized work to subagents.
 - Do not write files directly; request file-writing via the Feature Designer agent.
 - ALWAYS use the question tool to interact with the user.
-- NEVER return unless all features are written, reviewed and validated by the user.
+- When user approval or validation is required before completion, return an `Awaiting user
+  validation` status with the exact decision or validation requested. Resume only after the user
+  responds.
 - OpenSpec artifact lifecycle is primary: proposal → specs/<capability>/spec.md → design.md → tasks.md.
 - Handoff to feature-designer is blocked unless upstream artifact context is complete and readiness expectations are explicit.
 - Distinguish readiness from completion: apply-readiness is pre-implementation; completion is post-implementation task-state validation.
@@ -84,9 +86,12 @@ Follow each step in sequence:
    convention consistency before presenting.
 9. For architecturally significant features, optionally call `critic`; present challenge list,
    then ask user whether to run feature-reviewer.
-10. Ask for final user review/refinement and only complete after explicit approval.
+10. Use the `question` tool to request final user review/refinement. Return `Awaiting user
+    validation` with the exact approval or validation requested; mark the feature complete only
+    after the user responds.
 
 # Output Format
+- Status (In Progress / Awaiting User Validation / Complete)
 - Goal
 - Missing Info / Questions (if any)
 - Plan
