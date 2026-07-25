@@ -33,22 +33,28 @@ Parse `$ARGUMENTS`:
 Follow the `deep-interview` skill workflow exactly:
 
 1. Score the initial context across all 3 dimensions (Goal Clarity 40%, Constraint Clarity 30%, Success Criteria 30%). Report the score explicitly: each dimension's clarity %, the weighted clarity %, and the ambiguity %.
-2. **If ambiguity < 20%**: state *"Requirements are clear. Proceeding."* and skip directly to Step 3.
-3. **If ambiguity ≥ 20%**: identify the single highest-impact clarifying question — the one whose answer will most reduce ambiguity across the weighted dimensions. Ask that one question only. Wait for the user's answer.
+2. **If ambiguity < 20%**: skip directly to Step 3 without asking questions.
+3. **If ambiguity ≥ 20%**: identify the highest-impact clarifying questions for the dominant
+   ambiguity dimension. Ask one question, or a group of up to three closely related questions,
+   then wait for the user's answer.
 4. After each answer: re-score, report the new score, ask the next question if ambiguity is still ≥ 20%.
 5. **Round 4** — Contrarian mode: after the clarifying question, also challenge one assumption: *"What if the opposite were true?"*
 6. **Round 6** — Simplifier mode: after the clarifying question, propose the simplest version of the solution that still meets the stated goal and ask whether that would be sufficient.
 7. **Round 7** — continue the regular clarifying question loop (step 3). (Rounds 5 and 7 are normal clarifying rounds — no special mode.)
 8. **Round 8+** — Ontologist mode: restate in one sentence what the thing fundamentally IS (not what it does) and ask whether that matches the user's mental model.
 9. Continue until ambiguity drops below 20%, then proceed to Step 3.
+10. If the user says "just do it" or explicitly refuses to clarify, stop interview mode and
+    proceed to Step 3 with the current score and documented lowest-risk assumptions.
 
-Never ask more than one question per round. If the user says "just do it" or refuses to clarify, proceed with the lowest-risk interpretation and list every assumption made in the Structured Spec under **Assumptions Made**.
+Ask at most three closely related questions per round, all targeting the same ambiguity dimension.
+The forced-proceed exception is the only path to Step 3 while ambiguity remains at or above 20%;
+list every assumption in **Assumptions Made**.
 
 ---
 
 ## Step 3 — Produce Structured Spec
 
-When ambiguity < 20%, output the Structured Spec:
+When ambiguity < 20% or the forced-proceed exception applies, output the Structured Spec:
 
 - **Goal** — 1 sentence, measurable, describes the end state
 - **Constraints** — bullet list of technical, scope, and non-functional constraints

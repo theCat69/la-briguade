@@ -79,6 +79,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `content-override-merge.md` | Priority-based merge of layered content directories — builtin < opencode global < global user < opencode project < project user — using `collectFiles()` / `collectDirs()` |
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
+| `bounded-skill-loader.md` | Rejecting oversized auto-inject skill content before it enters memory or prompts |
 
 ---
 

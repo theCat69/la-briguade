@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 18 skills, 14 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 14 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -55,14 +55,18 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | playwright-cli | Drive browser UI checks with playwright-cli commands, snapshots, and test/debug workflows; do not use for backend-only or non-browser tasks. |
 | git-commit | Stage and create commits using the repository message convention after implementation is complete; do not use for diff analysis or branch review. |
 | git-diff-review | Identify upstream branch and changed files with git diff for scoped code review; do not perform commit operations in this skill. |
-| deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification until ambiguity is below 20%; do not start coding while interview mode is active. |
+| deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification; allow explicit forced proceed with documented assumptions. |
 | cache-ctrl-caller | How agents decide whether to call context gatherer subagents and control cache invalidation |
 | cache-ctrl-local | Detect file changes and manage the local context cache |
 | cache-ctrl-external | Check staleness, search, and manage the external context cache |
-| unslop | Perform sequential slop-cleanup edits in bounded changed-file scope with behavior-preserving rules; do not use for read-only scanning. |
-| unslop-coder | Apply unslop-reviewer findings as targeted in-scope code edits in pass order; do not run discovery/scanning in this skill. |
-| unslop-reviewer | Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill. |
+| unslop | Perform sequential, validated slop-cleanup edits across seven categories in bounded changed-file scope; do not use for read-only scanning. |
+| unslop-coder | Apply structured unslop-reviewer findings as targeted in-scope edits, deferring stale, conflicting, or unsafe changes. |
+| unslop-reviewer | Run a read-only, pass-ordered slop scan covering abstraction and locally fixable boundary findings; never edit files. |
 | context7 | Fetch version-specific external library/framework docs and examples via Context7 MCP when local repo context is insufficient; do not use for repo-local facts. |
+| drawio | Draw diagrams and schemas using draw.io. |
+| next-devtools | Discover and use Next.js development tools. |
+| read-image | Inspect images efficiently; use cwebp only to convert unsupported formats when necessary. |
+| serena | Use LSP-backed semantic tools for repository navigation, editing, refactoring, and debugging. |
 
 ### Commands
 

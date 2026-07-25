@@ -1,6 +1,6 @@
 ---
 name: deep-interview
-description: Resolve ambiguous implementation requests through scored Socratic clarification until ambiguity is below 20%; do not start coding while interview mode is active.
+description: Resolve ambiguous implementation requests through scored Socratic clarification; allow explicit forced proceed with documented assumptions.
 agents:
   - planner
   - builder
@@ -39,7 +39,7 @@ Score the request across three weighted dimensions. Each dimension is scored 0�
 ## Interview Workflow
 
 1. Score the request across all 3 dimensions. Report the score explicitly: each dimension's clarity %, the weighted clarity %, and the ambiguity %.
-2. **If ambiguity < 20%**: state "Requirements are clear. Proceeding." and stop — do not ask any questions.
+2. **If ambiguity < 20%**: produce the Structured Spec, hand off, and end interview mode — do not ask any questions.
 3. **If ambiguity ≥ 20%**: identify the highest-impact clarifying questions for the dominant ambiguity dimension. When 2–3 closely related questions all target the **same** dimension, group them in a single round. Ask only one group per round; never mix questions from different dimensions.
 4. After each answer: re-score, report the new score, ask the next question if ambiguity is still ≥ 20%.
 5. **Round 4** — Contrarian mode: after your clarifying question, also challenge one assumption: *"What if the opposite were true?"*
@@ -47,10 +47,14 @@ Score the request across three weighted dimensions. Each dimension is scored 0�
 7. **Round 7** — continue the regular clarifying question loop (step 3 above). Round 7 is a normal question round — no special mode. Contrarian / Simplifier / Ontologist modes apply only at their stated thresholds.
 8. **Round 8+** — Ontologist mode: restate in one sentence what the thing fundamentally IS (not what it does) and ask whether that matches the user's mental model.
 9. When ambiguity drops below 20%: produce the Structured Spec and hand off.
+10. **Forced-proceed exception**: if the user says "just do it" or explicitly refuses to
+    clarify, end interview mode even when ambiguity is ≥ 20%. Produce the Structured Spec with
+    the current score and every lowest-risk assumption, then hand off.
 
 ## Output — Structured Spec
 
-When the interview reaches ambiguity < 20%, output the following and nothing else:
+When ambiguity < 20% or the forced-proceed exception applies, output the following and nothing
+else:
 
 - **Goal** — 1 sentence, measurable, describes the end state
 - **Constraints** — bullet list of technical, scope, and non-functional constraints
@@ -63,6 +67,9 @@ When the interview reaches ambiguity < 20%, output the following and nothing els
 
 - Per round, ask at most 3 closely related clarifying questions — only when they all target the **same** ambiguity dimension. Never mix questions from different dimensions in the same round.
 - Never invent requirements — only clarify what the user implies or can confirm.
-- If the user says "just do it" or refuses to clarify, proceed with the lowest-risk interpretation and list every assumption explicitly in the Structured Spec under **Assumptions Made**.
+- If the user says "just do it" or refuses to clarify, use the forced-proceed exception: proceed
+  with the lowest-risk interpretation and list every assumption explicitly in the Structured Spec
+  under **Assumptions Made**.
 - The goal is not perfect specs — it is specs clear enough to implement safely and verifiably.
-- Do NOT start implementing while the interview is in progress. Ambiguity must reach < 20% first.
+- Do NOT start implementing while the interview is in progress. End interview mode only when
+  ambiguity is < 20% or the user explicitly invokes the forced-proceed exception.
