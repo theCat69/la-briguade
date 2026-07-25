@@ -18,7 +18,7 @@ mcp:
       - "agent"
       - "--open-web-dashboard"
       - "False"
-    enabled: true
+    enabled: false 
 ---
 
 # Skill: serena
