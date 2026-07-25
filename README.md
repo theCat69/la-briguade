@@ -220,9 +220,8 @@ Files in higher-priority layers override built-in files with the same stem name.
 
 Any skill already installed at the opencode level (`~/.config/opencode/skills/` or `<project_root>/.opencode/skills/`) is automatically available to la-briguade agents without any extra configuration.
 
-> **Security / Trust Boundary**
+> **Content Overrides**
 > Content placed in `~/la_briguade/` or project-level `.la_briguade/` directories can override built-in agents, skills, commands, and vendor prompts.
-> Only place files from trusted sources in these override directories.
 
 **Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/agents/coder.md` (applies globally) or `<project_root>/.la_briguade/agents/coder.md` (applies to that project only).
 
