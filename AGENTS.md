@@ -39,7 +39,7 @@ Load the relevant canonical skill before starting any task.
 
 ## Slash Commands
 
-la-briguade currently ships **14 slash commands**.
+la-briguade currently ships **17 slash commands**.
 
 | Command | Description |
 |---|---|
@@ -57,6 +57,9 @@ la-briguade currently ships **14 slash commands**.
 | `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
 | `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
+| `/grilling` | Stress-test a plan, decision, or idea through a decision-tree interview before acting |
+| `/handoff` | Create a compact, redacted Markdown handoff for a future agent or session |
+| `/learn` | Teach a topic through a focused lesson, with optional persistent artifacts outside the project workspace |
 
 ---
 

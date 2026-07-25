@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 14 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 17 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -86,6 +86,9 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
 | `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
+| `/grilling` | Stress-test a plan, decision, or idea through a decision-tree interview before acting |
+| `/handoff` | Create a compact, redacted Markdown handoff for a future agent or session |
+| `/learn` | Teach a topic through a focused lesson, with optional persistent artifacts outside the project workspace |
 
 ## Hooks
 
