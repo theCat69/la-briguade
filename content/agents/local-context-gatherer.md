@@ -12,6 +12,7 @@ permission:
   bash: 
     "*": "deny"
     "cache-ctrl *": "allow"
+    "rtk cache-ctrl *": "allow"
   edit: "allow"
   task:
     "*": "deny"

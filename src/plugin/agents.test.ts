@@ -58,9 +58,8 @@ describe("registerAgents", () => {
     expect(config.agent?.["bad"]).toBeUndefined();
   });
 
-  it("should warn on duplicate derived agent names and keep collision handling behavior", () => {
+  it("should let the later duplicate derived agent overwrite the full config", () => {
     // Arrange
-    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     mockCollectFiles.mockReturnValue(
       new Map([
         ["Coder", "/builtin/agents/Coder.md"],
@@ -91,15 +90,12 @@ describe("registerAgents", () => {
     const config = makeConfig();
 
     // Act
-    const result = registerAgents(config, ["/builtin/agents"]);
+    registerAgents(config, ["/builtin/agents"]);
 
     // Assert
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("duplicate agent name in sections map: 'coder'"),
-    );
     const coder = config.agent?.["coder"] as Record<string, unknown> | undefined;
-    expect(coder?.["prompt"]).toBe("Base two");
-    expect(result.agentSections.get("coder")?.base).toBe("Base two");
+    expect(coder?.["prompt"]).toBe("Base two\n====== CLAUDE ======\nSection two");
+    expect(coder?.["model"]).toBe("openai/gpt-4o-mini");
   });
 
   it("should swap opus model to sonnet when opus_enabled is false", () => {
@@ -248,7 +244,7 @@ describe("registerAgents", () => {
     const result = registerAgents(config, []);
 
     // Assert
-    expect(result.agentSections.size).toBe(0);
+    expect(result).toBeUndefined();
     expect(config).toEqual(initialConfig);
   });
 });

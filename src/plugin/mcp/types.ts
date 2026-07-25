@@ -111,3 +111,4 @@ export type SkillMcpBinding = { id: string; permission: Record<string, string> }
 export type SkillMcpIndex = Record<string, SkillMcpBinding[]>;
 export type SkillBashPermIndex = Record<string, Record<string, string>>;
 export type SkillAgentIndex = Record<string, string[]>;
+export type SkillExternalDirIndex = Record<string, string>;

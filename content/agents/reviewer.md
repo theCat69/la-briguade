@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: 
 variant: high
 description: "Code quality and architecture reviewer for production systems"
 mode: subagent 
@@ -15,6 +15,11 @@ permission:
     "git diff *": "allow"
     "cache-ctrl *": "allow"
     "openspec *": "allow"
+    "rtk git status *": "allow"
+    "rtk git branch *": "allow"
+    "rtk git diff *": "allow"
+    "rtk cache-ctrl *": "allow"
+    "rtk openspec *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"

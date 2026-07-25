@@ -33,10 +33,6 @@ Implement production-grade features from Context Snapshot only.
 Every change targets a live production system — code must be correct, secure, maintainable, and tested.
 Do not consider work done until the build and tests pass.
 
-# Startup Sequence (Always Execute First)
-Before writing any code, unconditionally run all of the following steps:
-1. Load skill `unslop-coder` and run a bounded cleanup pass on changed files ONLY when the calling prompt explicitly requests it (look for the phrase "run unslop" or "cleanup pass" in the prompt).
-
 # Rules
 - Work primarily from the Context Snapshot provided by the Orchestrator
 - Do not call implementation agents

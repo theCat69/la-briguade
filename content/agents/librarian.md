@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: github-copilot/gpt-5.6-luna
 variant: low 
 description: "Keeps documentation in sync with code changes"
 mode: subagent
@@ -19,6 +19,14 @@ permission:
     "mkdir -p features/*": "allow"
     "cache-ctrl *": "allow"
     "openspec *": "allow"
+    "rtk git log *": "allow"
+    "rtk git status *": "allow"
+    "rtk git branch *": "allow"
+    "rtk git diff *": "allow"
+    "rtk mv *": "allow"
+    "rtk mkdir -p features/*": "allow"
+    "rtk cache-ctrl *": "allow"
+    "rtk openspec *": "allow"
   skill:
     "*": "deny"
     "project-documentation": "allow"

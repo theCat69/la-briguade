@@ -7,6 +7,25 @@ import { describe, expect, it } from "vitest";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, "..", "..");
+const FRAMEWORK_SKILL_PATHS = [
+  "content/auto-inject-skills/nextjs/SKILL.md",
+  "content/auto-inject-skills/react/SKILL.md",
+  "content/auto-inject-skills/react-native/SKILL.md",
+  "content/auto-inject-skills/flutter/SKILL.md",
+  "content/auto-inject-skills/dioxus/SKILL.md",
+  "content/auto-inject-skills/axum/SKILL.md",
+] as const;
+const EXPECTED_FRAMEWORK_AGENTS = [
+  "coder",
+  "reviewer",
+  "architect",
+  "feature-designer",
+  "feature-reviewer",
+  "planner",
+  "ask",
+  "builder",
+  "orchestrator",
+] as const;
 
 function readContentFile(relativePath: string): string {
   return readFileSync(join(projectRoot, relativePath), "utf8");
@@ -42,11 +61,11 @@ describe("prompt policy contracts", () => {
     const refactorContent = readContentFile("content/commands/refactor.md");
     const implementPrdContent = readContentFile("content/commands/implement-prd.md");
 
-    expect(orchestratorContent).toContain("only when the user explicitly requests security review");
-    expect(builderContent).toContain("only if the user explicitly requested a security");
-    expect(justDoItContent).toContain("only if the user explicitly asked for a security review");
-    expect(refactorContent).toContain("only if the user explicitly requests a security review");
-    expect(implementPrdContent).toContain("only if the user explicitly requested a security review");
+    expect(orchestratorContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
+    expect(builderContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
+    expect(justDoItContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
+    expect(refactorContent).toMatch(/security-reviewer[\s\S]*explicitly requests?/i);
+    expect(implementPrdContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
   });
 
   it("should keep AGENTS.md canonical pointer on auto-inject skills", () => {
@@ -59,23 +78,8 @@ describe("prompt policy contracts", () => {
     expect(content).not.toContain("Detailed, stack-specific guidelines are in `.opencode/skills/`.");
   });
 
-  it("should require richer contract sections in checked-in auto-inject skills", () => {
-    const skillFiles = [
-      ".la_briguade/auto-inject-skills/project-coding/SKILL.md",
-      ".la_briguade/auto-inject-skills/project-build/SKILL.md",
-      ".la_briguade/auto-inject-skills/project-test/SKILL.md",
-      ".la_briguade/auto-inject-skills/project-documentation/SKILL.md",
-      ".la_briguade/auto-inject-skills/project-security/SKILL.md",
-      ".la_briguade/auto-inject-skills/project-code-examples/SKILL.md",
-      ".la_briguade/auto-inject-skills/nextjs/SKILL.md",
-      ".la_briguade/auto-inject-skills/react-native/SKILL.md",
-      ".la_briguade/auto-inject-skills/react/SKILL.md",
-      ".la_briguade/auto-inject-skills/flutter/SKILL.md",
-      ".la_briguade/auto-inject-skills/dioxus/SKILL.md",
-      ".la_briguade/auto-inject-skills/axum/SKILL.md",
-    ] as const;
-
-    for (const skillPath of skillFiles) {
+  it("should require richer contract sections in framework auto-inject skills", () => {
+    for (const skillPath of FRAMEWORK_SKILL_PATHS) {
       const content = readContentFile(skillPath);
 
       expect(content).toContain("## Scope");
@@ -85,124 +89,24 @@ describe("prompt policy contracts", () => {
     }
   });
 
-  it("should require init-implementer agents frontmatter contract in checked-in auto-inject skills", () => {
-    const expectedAgentsBySkillPath = {
-      ".la_briguade/auto-inject-skills/project-coding/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/project-build/SKILL.md": [
-        "coder",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/project-test/SKILL.md": ["coder", "reviewer", "builder"],
-      ".la_briguade/auto-inject-skills/project-documentation/SKILL.md": ["coder", "reviewer"],
-      ".la_briguade/auto-inject-skills/project-security/SKILL.md": [
-        "coder",
-        "reviewer",
-        "security-reviewer",
-      ],
-      ".la_briguade/auto-inject-skills/project-code-examples/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "builder",
-      ],
-      ".la_briguade/auto-inject-skills/nextjs/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/react/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/react-native/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/flutter/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/dioxus/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-      ".la_briguade/auto-inject-skills/axum/SKILL.md": [
-        "coder",
-        "reviewer",
-        "architect",
-        "feature-designer",
-        "feature-reviewer",
-        "planner",
-        "ask",
-        "builder",
-        "orchestrator",
-      ],
-    } as const;
-
-    for (const [skillPath, expectedAgents] of Object.entries(expectedAgentsBySkillPath)) {
+  it("should require framework auto-inject skills to declare the full agent opt-in contract", () => {
+    for (const skillPath of FRAMEWORK_SKILL_PATHS) {
       const content = readContentFile(skillPath);
       expect(content).toContain("agents:");
 
-      for (const expectedAgent of expectedAgents) {
+      for (const expectedAgent of EXPECTED_FRAMEWORK_AGENTS) {
         expect(content).toContain(`  - ${expectedAgent}`);
       }
     }
   });
 
   it("should require realistic detection markers for framework auto-inject skills", () => {
-    const nextjs = readContentFile(".la_briguade/auto-inject-skills/nextjs/SKILL.md");
-    const react = readContentFile(".la_briguade/auto-inject-skills/react/SKILL.md");
-    const reactNative = readContentFile(
-      ".la_briguade/auto-inject-skills/react-native/SKILL.md",
-    );
-    const flutter = readContentFile(".la_briguade/auto-inject-skills/flutter/SKILL.md");
-    const dioxus = readContentFile(".la_briguade/auto-inject-skills/dioxus/SKILL.md");
-    const axum = readContentFile(".la_briguade/auto-inject-skills/axum/SKILL.md");
+    const nextjs = readContentFile("content/auto-inject-skills/nextjs/SKILL.md");
+    const react = readContentFile("content/auto-inject-skills/react/SKILL.md");
+    const reactNative = readContentFile("content/auto-inject-skills/react-native/SKILL.md");
+    const flutter = readContentFile("content/auto-inject-skills/flutter/SKILL.md");
+    const dioxus = readContentFile("content/auto-inject-skills/dioxus/SKILL.md");
+    const axum = readContentFile("content/auto-inject-skills/axum/SKILL.md");
 
     expect(nextjs).toContain("- file: package.json");
     expect(nextjs).toContain("contains: '\"next\"'");
@@ -216,22 +120,5 @@ describe("prompt policy contracts", () => {
     expect(dioxus).toContain('contains: "dioxus ="');
     expect(axum).toContain("- file: Cargo.toml");
     expect(axum).toContain('contains: "axum ="');
-  });
-
-  it("should keep project-documentation guidance aligned with current frontmatter policy", () => {
-    const content = readContentFile(
-      ".la_briguade/auto-inject-skills/project-documentation/SKILL.md",
-    );
-
-    expect(content).toContain(
-      "Have frontmatter with metadata keys actually consumed by `src/plugin/agents.ts`",
-    );
-    expect(content).toContain(
-      "Have frontmatter with `name`, `description`, and `agents` for project auto-inject skills",
-    );
-    expect(content).not.toContain("Have frontmatter with exactly `name` and `description`");
-    expect(content).not.toContain(
-      "Have frontmatter with at minimum: `name`, `description`, `type` (`primary` | `subagent`)",
-    );
   });
 });

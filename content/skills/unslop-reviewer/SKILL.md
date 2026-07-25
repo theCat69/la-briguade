@@ -1,6 +1,6 @@
 ---
 name: unslop-reviewer
-description: Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill.
+description: Run a read-only, pass-ordered slop scan covering abstraction and locally fixable boundary findings; never edit files.
 agents:
   - reviewer
 ---
@@ -27,14 +27,20 @@ agents:
    speculative indirection, and premature generalization for single call sites.
 4. **Boundary violations** — hidden coupling, misplaced responsibilities across layers,
    and logic leaking across architectural boundaries.
-5. **Weak test coverage** — touched behavior not locked by tests, weak assertions that
+5. **Naming** — generic identifiers that obscure the role of a value, operation, or type.
+6. **Error handling** — swallowed errors, ambiguous failure values, or unhelpful failure paths.
+7. **Weak test coverage** — touched behavior not locked by tests, weak assertions that
    only verify "no error thrown", and untested edge paths.
+
+Naming and error handling are local clarity concerns reviewed alongside boundary violations in
+Pass 3. Boundary findings must be locally fixable within the caller-provided scope; otherwise,
+omit them rather than proposing an architectural rewrite.
 
 ## Pass Mapping
 
 - **Pass 1** → dead code
-- **Pass 2** → duplication
-- **Pass 3** → naming + error handling
+- **Pass 2** → duplication + abstraction
+- **Pass 3** → naming + error handling + boundary violations
 - **Pass 4** → test coverage gaps
 
 ## Findings Schema
@@ -47,7 +53,7 @@ Each finding must include:
 | `file` | string | Relative file path |
 | `pass` | integer | `1` to `4` |
 | `category` | enum | `dead-code` \| `duplication` \| `abstraction` \| `boundary` \| `naming` \| `error-handling` \| `test` |
-| `size` | enum | `S` = line/symbol, `M` = block/function, `L` = cross-file/structural |
+| `size` | enum | `S` = line/symbol, `M` = block/function, `L` = cross-file/local structural |
 | `description` | string | What the slop is and where |
 | `fix` | string | Concrete action for the coder to apply |
 

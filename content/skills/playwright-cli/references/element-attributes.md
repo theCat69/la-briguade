@@ -20,7 +20,4 @@ playwright-cli eval "el => el.getAttribute('aria-label')" e7
 
 # get a computed style property
 playwright-cli eval "el => getComputedStyle(el).display" e7
-
-# get the full outer HTML of an element
-playwright-cli eval "el => el.outerHTML" e7
 ```

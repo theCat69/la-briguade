@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 18 skills, 14 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 14 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -55,14 +55,18 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | playwright-cli | Drive browser UI checks with playwright-cli commands, snapshots, and test/debug workflows; do not use for backend-only or non-browser tasks. |
 | git-commit | Stage and create commits using the repository message convention after implementation is complete; do not use for diff analysis or branch review. |
 | git-diff-review | Identify upstream branch and changed files with git diff for scoped code review; do not perform commit operations in this skill. |
-| deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification until ambiguity is below 20%; do not start coding while interview mode is active. |
+| deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification; allow explicit forced proceed with documented assumptions. |
 | cache-ctrl-caller | How agents decide whether to call context gatherer subagents and control cache invalidation |
 | cache-ctrl-local | Detect file changes and manage the local context cache |
 | cache-ctrl-external | Check staleness, search, and manage the external context cache |
-| unslop | Perform sequential slop-cleanup edits in bounded changed-file scope with behavior-preserving rules; do not use for read-only scanning. |
-| unslop-coder | Apply unslop-reviewer findings as targeted in-scope code edits in pass order; do not run discovery/scanning in this skill. |
-| unslop-reviewer | Run a read-only slop scan and emit pass-ordered structured findings for unslop-coder; never edit files in this skill. |
+| unslop | Perform sequential, validated slop-cleanup edits across seven categories in bounded changed-file scope; do not use for read-only scanning. |
+| unslop-coder | Apply structured unslop-reviewer findings as targeted in-scope edits, deferring stale, conflicting, or unsafe changes. |
+| unslop-reviewer | Run a read-only, pass-ordered slop scan covering abstraction and locally fixable boundary findings; never edit files. |
 | context7 | Fetch version-specific external library/framework docs and examples via Context7 MCP when local repo context is insufficient; do not use for repo-local facts. |
+| drawio | Draw diagrams and schemas using draw.io. |
+| next-devtools | Discover and use Next.js development tools. |
+| read-image | Inspect images efficiently; use cwebp only to convert unsupported formats when necessary. |
+| serena | Use LSP-backed semantic tools for repository navigation, editing, refactoring, and debugging. |
 
 ### Commands
 
@@ -144,8 +148,19 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `permission` | `Record<string, string \| boolean \| number \| Record<string, string \| boolean \| number>>` | Permission overrides merged on top of agent defaults. Top-level values may be scalars or nested objects (e.g. `{ "bash": { "playwright-cli *": "allow" } }`) |
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
 | `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. All output goes to the per-session log file only (`~/.local/share/opencode/log/la-briguade-<timestamp>.log`, respects `$XDG_DATA_HOME`). Default: `"warn"`. |
+| `auto_inject.max_depth` | `integer` (0–10) | Maximum subdirectory depth scanned for auto-inject file and content detection. `0` (default) checks only the project root. A bare filename such as `package.json` matches at any scanned depth; paths containing a directory separator stay exact. |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
+
+Set `auto_inject.max_depth` for monorepos. With a depth of `2`, a skill detection entry of
+`package.json` also checks `apps/web/package.json`, while `apps/web/package.json` remains an
+exact project-relative path and must still be within the configured depth. The scan skips common
+dependency, VCS, and generated-output directories through your Git ignore rules (including
+`.gitignore`, `.git/info/exclude`, and global Git excludes) when those paths are untracked.
+Tracked files are considered project files even if a later ignore rule matches them. Outside a
+Git worktree, it falls back to a bounded scan that skips common generated-output directories. If
+Git cannot enumerate a Git worktree, recursive detection fails closed rather than scanning ignored
+content.
 
 ### Example
 
@@ -153,6 +168,9 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 {
   "$schema": "https://thecatmaincave.com/la-briguade-dev/la-briguade.schema.json",
   "model": "openai/gpt-4o",
+  "auto_inject": {
+    "max_depth": 3
+  },
   "agents": {
     "coder": {
       "model": "anthropic/claude-opus-4",
@@ -264,7 +282,7 @@ Each MCP entry must specify a `type`:
 - **`local`** — runs a local process. `command` is required and must be an argv-style array (e.g. `["npx", "-y", "pkg@latest"]`). Optional: `environment` (key-value env vars), `enabled`, `timeout`.
 - **`remote`** — connects to a remote SSE endpoint. `url` is required. Optional: `headers`, `enabled`, `timeout`.
 
-An optional `permission:` block on a local entry declares tool-level permissions for that MCP's tools. Values must be `"allow"`, `"ask"`, or `"deny"`. At startup, la-briguade automatically injects prefixed versions of these permissions into any agent that opts in to the skill (e.g. `"*": "allow"` becomes `"context7_*": "allow"` for the `context7` skill). Agents that already declare a matching key are not overridden.
+An optional `permission:` block on a local entry declares tool-level permissions for that MCP's tools. Values must be `"allow"`, `"ask"`, or `"deny"`. At startup, la-briguade automatically injects prefixed versions of these permissions into any agent that opts in to the skill (e.g. `"*": "allow"` becomes `"context7_*": "allow"` for the `context7` skill). The same skill opt-in also injects `permission.external_directory` allow rules for the skill directory itself and its subtree (`<skillDir>` and `<skillDir>/**`) so the agent can read/search files packaged with the skill. Agents that already declare a matching key are not overridden.
 
 #### Skill-directed agent opt-in — `agents:`
 
@@ -280,7 +298,7 @@ agents:
 ---
 ```
 
-When `agents:` is present, each listed agent automatically gets `permission.skill["my-skill"] = "allow"` before MCP and bash permission injection runs — so any MCP tools or bash patterns the skill declares will be injected into those agents as well. Agents that already have an explicit `permission.skill["my-skill"]` entry are not overridden (non-overwrite policy applies). Unknown agent names produce a warning and are skipped. This is intended for first-party project-specific skills; portable community skills should generally not hard-code agent names.
+When `agents:` is present, each listed agent automatically gets `permission.skill["my-skill"] = "allow"` before downstream skill-derived permission injection runs — so any MCP tools, `permission.bash` patterns, and `permission.external_directory` entries for that skill directory (`<skillDir>` and `<skillDir>/**`) will be injected into those agents as well. Agents that already have an explicit `permission.skill["my-skill"]` entry are not overridden (non-overwrite policy applies). Unknown agent names produce a warning and are skipped. This is intended for first-party project-specific skills; portable community skills should generally not hard-code agent names.
 
 #### Environment variable tokens
 
@@ -297,64 +315,6 @@ description: Brief description of what this command does
 
 Command prompt template in markdown. Use $ARGUMENTS for user input.
 ```
-
-### Model-Specific Prompt Sections
-
-Agent body files support optional **model-family sections** that append extra instructions only when the agent is running on a matching model. The base body (everything before the first section header) is always applied.
-
-**Syntax** — add one or more `====== FAMILY ======` headers anywhere after the base body:
-
-```markdown
----
-description: "My coder agent"
-mode: subagent
----
-
-You are a coder. Always write tests alongside the implementation.
-
-====== CLAUDE ======
-Reason step-by-step before writing any code.
-
-====== GPT ======
-Use structured output format. Show a plan before code.
-
-====== GEMINI ======
-Use markdown headers for all responses.
-
-====== GROK ======
-Be terse. No filler. Code only.
-```
-
-**Supported families** (case-insensitive): `claude`, `gpt`, `gemini`, `grok`. A special `ALL` target is also supported — sections tagged `====== ALL ======` are included for every model regardless of family.
-
-**Matching logic** — the active model ID (e.g. `"github-copilot/claude-sonnet-4-6"`) is matched against each family name as a substring. All segments in document order whose target is `all` or the matched family are joined and appended. Multiple sections with the same target are allowed and concatenated in order.
-
-**Claude fallback** — only used when no family matched **and** the body contains no `ALL` segment. If the model family was recognised but produced no text, or if any `ALL` segment exists, the fallback is suppressed and only the base body is sent.
-
-**`====== ALL ======` example** — to share a section across all models, place it anywhere after the base:
-
-```markdown
-====== CLAUDE ======
-Reason step-by-step before writing any code.
-
-====== ALL ======
-Always include a brief summary of your changes.
-
-====== GPT ======
-Use structured output format. Show a plan before code.
-```
-
-In this example, a Claude model receives the `CLAUDE` and `ALL` sections; a GPT model receives `GPT` and `ALL`; a Gemini model receives only `ALL`.
-
-**Unknown families** produce a logger warning and are skipped. A maximum of 50 segments per agent body is enforced; excess segments are skipped with a warning.
-
-### Vendor Prompts
-
-**Vendor prompts** are global instructions applied to **all agents** when the active model matches a known family. They live in `content/vendor-prompts/` as plain Markdown files named after the family (`claude.md`, `gpt.md`, `gemini.md`, `grok.md`). You can override or extend them by placing same-named files in `~/la_briguade/vendor-prompts/` (globally) or `<project_root>/.la_briguade/vendor-prompts/` (per-project).
-
-At chat time the vendor prompt is appended after any per-agent model section. No per-agent markup is required — the file's existence is enough. If no family matches the active model, nothing is injected (no fallback).
-
-This is the recommended place for cross-cutting, model-specific instructions that should apply uniformly across all agents (e.g. output formatting preferences, safety reminders, tool-use conventions for a specific provider).
 
 ## Requirements
 

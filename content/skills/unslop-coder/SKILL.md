@@ -27,15 +27,21 @@ The calling prompt provides a findings list in the format produced by `unslop-re
 …
 ```
 
-Apply **only** listed findings. Do not scan for additional slop. Do not apply fixes not
-present in the list.
+Each finding must use: `F-id | relative-file-path | pass:1-4 | category | size | description | fix`.
+Valid categories are `dead-code`, `duplication`, `abstraction`, `boundary`, `naming`,
+`error-handling`, and `test`; sizes are `S`, `M`, or `L`.
+
+Apply **only** listed findings. Before editing, confirm the referenced code still exists and the
+proposed fix still matches it. Do not scan for additional slop or apply fixes not present in the
+list. Skip stale, conflicting, or ambiguous findings and report why.
 
 ---
 
 ## Application Mechanics
 
 - Apply findings strictly in **pass order**: pass 1 → pass 2 → pass 3 → pass 4.
-- Within each pass, process findings by **file path**.
+- Within each pass, process findings by **file path**. For conflicting findings in the same file,
+  apply only the safer, independently valid finding; report the other as skipped.
 - Never touch files outside caller-provided scope.
 - Apply only the requested fix; do not add opportunistic refactors.
 
@@ -44,7 +50,7 @@ present in the list.
 - **Preserve observable behavior**. Slop cleanup is a scalpel, not a rewrite.
 - Prefer deletion over addition, but never delete speculatively.
 - **Test-before-delete**: if deletion may affect side effects, lock behavior with a test
-  first, then delete.
+  first, then delete. When test writing is not active, skip and report that finding instead.
 - This skill **always edits files**; it is not for read-only review.
 
 ---

@@ -9,15 +9,16 @@ import {
   resolveUserConfig,
 } from "./config/index.js";
 import { createHooks } from "./hooks/index.js";
-import type { AgentSectionsEntry } from "./hooks/index.js";
 import { registerAgents } from "./plugin/agents.js";
 import { registerCommands } from "./plugin/commands.js";
 import {
   collectSkillAgents,
   collectSkillBashPermissions,
+  collectSkillExternalDirectories,
   collectSkillMcps,
   injectSkillAgentPermissions,
   injectSkillBashPermissions,
+  injectSkillExternalDirectoryPermissions,
   injectSkillMcpPermissions,
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
@@ -28,13 +29,11 @@ import {
   resolveActiveSkills,
 } from "./plugin/auto-inject.js";
 import { collectDirs } from "./utils/content/content-merge.js";
-import { loadVendorPrompts } from "./plugin/vendors.js";
 import { initLogger, logger } from "./utils/runtime/logger.js";
 
 const agentsDir = "agents";
 const commandsDir = "commands";
 const skillsDir = "skills";
-const vendorPromptsDir = "vendor-prompts";
 const autoInjectSkillsDir = "auto-inject-skills";
 const laBriguadeUserDir = "la_briguade";
 const laBriguadeProjectDir = "." + laBriguadeUserDir;
@@ -48,7 +47,6 @@ const builtinAgentsDir = join(contentDir, agentsDir);
 const builtinCommandsDir = join(contentDir, commandsDir);
 const builtinSkillsDir = join(contentDir, skillsDir);
 const builtinAutoInjectRoot = join(contentDir, autoInjectSkillsDir);
-const builtinVendorDir = join(contentDir, vendorPromptsDir);
 
 const LaBriguadePlugin: Plugin = async (ctx) => {
   initLogger();
@@ -80,21 +78,14 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       autoInjectSkillsDir,
     ), // project: <root>/.la_briguade/auto-inject-skills
   ];
-  // Vendor prompts: builtin < global (~/la_briguade/vendor-prompts/) < project (<root>/.la_briguade/vendor-prompts/) — last-wins
-  const userVendorDirs = [
-    join(globalDir, vendorPromptsDir),                       // global: ~/la_briguade/vendor-prompts
-    join(projectDir, laBriguadeProjectDir, vendorPromptsDir), // project: <root>/.la_briguade/vendor-prompts
-  ];
-  const vendorPrompts = loadVendorPrompts([builtinVendorDir, ...userVendorDirs]);
-  const agentSections = new Map<string, AgentSectionsEntry>();
 
-  const hooks = createHooks(ctx, agentSections, vendorPrompts);
+  const hooks = createHooks(ctx);
 
   return {
     config: async (input) => {
       const userConfig = resolveUserConfig(ctx.directory);
       logger.setLevel(userConfig.log_level ?? "warn");
-      const { agentSections: sections } = registerAgents(
+      registerAgents(
         input,
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
@@ -106,6 +97,8 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       );
       const skillAgentIndex = collectSkillAgents(skillDirs);
       injectSkillAgentPermissions(input, skillAgentIndex);
+      const skillExternalDirIndex = collectSkillExternalDirectories(skillDirs);
+      injectSkillExternalDirectoryPermissions(input, skillExternalDirIndex);
       const { mcpMap, skillMcpIndex } = collectSkillMcps(skillDirs);
       mergeSkillMcps(input, mcpMap);
       injectSkillMcpPermissions(input, skillMcpIndex);
@@ -114,11 +107,12 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       const autoInjectDirMap = collectDirs([builtinAutoInjectRoot, ...userAutoInjectRoots]);
       const autoInjectDirs = [...autoInjectDirMap.values()];
       const autoInjectEntries = collectAutoInjectSkills(autoInjectDirs);
-      const activeSkills = resolveActiveSkills(autoInjectEntries, ctx.directory);
+      const maxDepth = userConfig.auto_inject?.max_depth;
+      const activeSkills =
+        maxDepth === undefined
+          ? resolveActiveSkills(autoInjectEntries, ctx.directory)
+          : resolveActiveSkills(autoInjectEntries, ctx.directory, { maxDepth });
       injectAutoInjectSkills(input, autoInjectEntries, activeSkills);
-      for (const [agentName, entry] of sections) {
-        agentSections.set(agentName, entry);
-      }
     },
     ...hooks,
   };

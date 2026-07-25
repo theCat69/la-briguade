@@ -17,6 +17,11 @@ export function isSafePermissionSubKey(key: string): boolean {
 
 const PermissionLeafSchema = z.union([z.string(), z.boolean(), z.number()]);
 
+const AutoInjectSchema = z.object({
+  /** Maximum directory depth to scan for auto-inject detection files; 0 checks only project root. */
+  max_depth: z.number().int().min(0).max(10).optional(),
+});
+
 /** One-level-deep nested record (e.g. bash: { "playwright-cli *": "allow" }). */
 const PermissionNestedSchema = z
   .record(z.string(), PermissionLeafSchema)
@@ -104,6 +109,8 @@ export const LaBriguadeConfigSchema = z.object({
   agents: z.record(z.string(), AgentOverrideSchema).optional(),
   /** Logger verbosity for file + console output. Default is resolved at runtime. */
   log_level: z.enum(LOG_LEVELS).optional(),
+  /** Controls recursive auto-inject skill detection. */
+  auto_inject: AutoInjectSchema.optional(),
 });
 
 /** TypeScript type inferred from {@link AgentOverrideSchema}. */

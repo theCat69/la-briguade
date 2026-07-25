@@ -1,4 +1,5 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { collectAutoInjectSkills, resolveActiveSkills } from "./auto-inject.js";
+import type { AutoInjectEntry } from "./auto-inject.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,6 +28,14 @@ function createTempProject(files: Record<string, string>): string {
   return dir;
 }
 
+function initializeGitRepository(projectDir: string): void {
+  execFileSync("git", ["init", "--quiet", projectDir]);
+}
+
+function stageGitFile(projectDir: string, relativePath: string): void {
+  execFileSync("git", ["-C", projectDir, "add", "--", relativePath]);
+}
+
 describe("auto-inject framework detection contracts", () => {
   afterEach(() => {
     for (const dir of tempDirs.splice(0, tempDirs.length)) {
@@ -36,7 +46,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate react skill when package.json exists without react marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react"),
+      join(projectRoot, "content/auto-inject-skills/react"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
@@ -52,7 +62,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate nextjs skill when package.json exists without next marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/nextjs"),
+      join(projectRoot, "content/auto-inject-skills/nextjs"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
@@ -68,7 +78,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate nextjs skill when package.json contains next dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/nextjs"),
+      join(projectRoot, "content/auto-inject-skills/nextjs"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -88,7 +98,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate react skill when package.json contains react dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react"),
+      join(projectRoot, "content/auto-inject-skills/react"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -105,10 +115,46 @@ describe("auto-inject framework detection contracts", () => {
     expect(active.has("react")).toBe(true);
   });
 
+  it("should not activate frontend skill for a backend package", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/frontend"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("frontend")).toBe(false);
+  });
+
+  it("should activate frontend skill when package.json contains vue dependency", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/frontend"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify(
+        { name: "web", dependencies: { vue: "^3.5.0" } },
+        null,
+        2,
+      ),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("frontend")).toBe(true);
+  });
+
   it("should not activate react-native skill when package.json exists without react-native marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+      join(projectRoot, "content/auto-inject-skills/react-native"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify({ name: "mobile", private: true }, null, 2),
@@ -124,7 +170,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate react-native skill when package.json contains react-native dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/react-native"),
+      join(projectRoot, "content/auto-inject-skills/react-native"),
     ]);
     const tempProject = createTempProject({
       "package.json": JSON.stringify(
@@ -144,7 +190,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate flutter skill when pubspec.yaml exists without flutter sdk", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/flutter"),
+      join(projectRoot, "content/auto-inject-skills/flutter"),
     ]);
     const tempProject = createTempProject({
       "pubspec.yaml": "name: shared_dart_pkg\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n",
@@ -160,7 +206,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate flutter skill when pubspec.yaml contains flutter marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/flutter"),
+      join(projectRoot, "content/auto-inject-skills/flutter"),
     ]);
     const tempProject = createTempProject({
       "pubspec.yaml": [
@@ -183,7 +229,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate dioxus skill when Cargo.toml exists without dioxus marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+      join(projectRoot, "content/auto-inject-skills/dioxus"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -207,7 +253,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate dioxus skill when Cargo.toml contains dioxus dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/dioxus"),
+      join(projectRoot, "content/auto-inject-skills/dioxus"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -231,7 +277,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should not activate axum skill when Cargo.toml exists without axum marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+      join(projectRoot, "content/auto-inject-skills/axum"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -255,7 +301,7 @@ describe("auto-inject framework detection contracts", () => {
   it("should activate axum skill when Cargo.toml contains axum dependency", () => {
     // Arrange
     const entries = collectAutoInjectSkills([
-      join(projectRoot, ".la_briguade/auto-inject-skills/axum"),
+      join(projectRoot, "content/auto-inject-skills/axum"),
     ]);
     const tempProject = createTempProject({
       "Cargo.toml": [
@@ -274,5 +320,133 @@ describe("auto-inject framework detection contracts", () => {
 
     // Assert
     expect(active.has("axum")).toBe(true);
+  });
+
+  it("should find a detected filename in a nested workspace within max depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(true);
+  });
+
+  it("should not inspect files deeper than the configured detection depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 1 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should not match a tracked detection file deleted from the working tree", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+    stageGitFile(tempProject, "packages/app/tsconfig.json");
+    rmSync(join(tempProject, "packages/app/tsconfig.json"));
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should find a content marker in a nested workspace within max depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/react"),
+    ]);
+    const tempProject = createTempProject({
+      "apps/web/package.json": JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("react")).toBe(true);
+  });
+
+  it("should ignore nested directories covered by the Git ignore rules", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/react"),
+    ]);
+    const tempProject = createTempProject({
+      ".gitignore": "build/\n",
+      "build/react/package.json": JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 3 });
+
+    // Assert
+    expect(active.has("react")).toBe(false);
+  });
+
+  it("should ignore a root detection file covered by Git ignore rules", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      ".gitignore": "tsconfig.json\n",
+      "tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should not match an explicit path deeper than the configured detection depth", () => {
+    // Arrange
+    const entry: AutoInjectEntry = {
+      skillName: "custom",
+      skillDecription: "",
+      body: "",
+      agents: [],
+      detectFiles: ["packages/app/tsconfig.json"],
+      detectContent: [],
+    };
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+
+    // Act
+    const active = resolveActiveSkills(new Map([[entry.skillName, entry]]), tempProject, {
+      maxDepth: 1,
+    });
+
+    // Assert
+    expect(active.has("custom")).toBe(false);
   });
 });

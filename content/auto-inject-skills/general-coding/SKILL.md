@@ -18,6 +18,20 @@ agents:
 
 ---
 
+## Skill Precedence
+
+When multiple auto-injected skills apply, resolve conflicts in this order:
+
+1. Explicit user requirements and repository conventions.
+2. Framework-specific skills (for example, Next.js or Quarkus).
+3. Language-specific skills.
+4. This general guidance.
+
+If equally specific rules conflict or the appropriate rule is unclear, ask the user rather than
+combining incompatible instructions.
+
+---
+
 ## 1. Naming Over Comments
 
 - Use **intention-revealing names** for every variable, function, parameter, class, and module
@@ -64,7 +78,8 @@ agents:
 
 ## 5. Open / Closed Principle (OCP)
 
-- Add behavior by writing **new code** — avoid editing working, tested logic
+- Prefer stable extension points when they reduce change risk; modify existing, tested logic when
+  that is the clearest and safest solution.
 - Use abstractions, interfaces, and composition points to enable extension without touching existing paths
 - Every `if/switch` on type is a sign you need polymorphism or a strategy pattern
 

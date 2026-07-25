@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
   readFileSync: vi.fn(),
+  statSync: vi.fn(),
 }));
 
 vi.mock("../utils/runtime/logger.js", () => ({
@@ -11,7 +12,7 @@ vi.mock("../utils/runtime/logger.js", () => ({
   },
 }));
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 
 import { logger } from "../utils/runtime/logger.js";
 import {
@@ -24,6 +25,7 @@ import type { Config } from "../types/plugin.js";
 
 const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
+const mockStatSync = vi.mocked(statSync);
 const mockLoggerWarn = vi.mocked(logger.warn);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -98,6 +100,10 @@ function makeGroupedWrappedAppend(entries: AutoInjectEntry[]): string {
 // ─── collectAutoInjectSkills ──────────────────────────────────────────────────
 
 describe("collectAutoInjectSkills", () => {
+  beforeEach(() => {
+    mockStatSync.mockReturnValue({ size: 100 } as ReturnType<typeof statSync>);
+  });
+
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -195,6 +201,21 @@ describe("collectAutoInjectSkills", () => {
     // Assert
     expect(result.size).toBe(0);
     expect(mockLoggerWarn).toHaveBeenCalledWith(expect.stringContaining("Invalid auto-inject"));
+  });
+
+  it("should warn and skip an oversized skill file", () => {
+    // Arrange
+    mockStatSync.mockReturnValue({ size: 50_001 } as ReturnType<typeof statSync>);
+
+    // Act
+    const result = collectAutoInjectSkills(["/skills/oversized"]);
+
+    // Assert
+    expect(result.size).toBe(0);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Auto-inject skill file exceeds size limit: /skills/oversized/SKILL.md",
+    );
+    expect(mockReadFileSync).not.toHaveBeenCalled();
   });
 
   it("should collect from multiple dirs using provided order", () => {
