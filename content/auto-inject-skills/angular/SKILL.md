@@ -19,10 +19,16 @@ agents:
 # Angular Skill
 
 ## Standalone Components by Default
-All new components, directives, and pipes must be standalone (`standalone: true`). Do not create NgModules for new features. Standalone components are the Angular default since Angular 19 and simplify dependency management.
+Prefer standalone components, directives, and pipes (`standalone: true`) for new features unless
+the project deliberately uses NgModules. Standalone APIs are the Angular default since Angular 19
+and simplify dependency management.
 
 ## OnPush Change Detection on Every Component
-Every component must declare `changeDetection: ChangeDetectionStrategy.OnPush`. This is not the Angular framework default but is the required practice here. OnPush eliminates unnecessary re-renders and is essential for performance at scale. Use signals or explicit `markForCheck()` to trigger updates when needed.
+Use `changeDetection: ChangeDetectionStrategy.OnPush` for components that benefit from predictable
+rendering or are on performance-sensitive paths. Confirm compatibility with the project's state
+and third-party component patterns before applying it. Use signals or explicit `markForCheck()`
+when needed.
+OnPush change detection is the default starting from Angular 22.
 
 ## Signals for Local State
 Use Angular signals (`signal()`, `computed()`, `effect()`) for all component-local state. Signals integrate with OnPush change detection automatically — updating a signal triggers the component's change detection without manual intervention. Reserve RxJS observables for genuinely asynchronous streams (HTTP, WebSockets, timer-based logic).
@@ -40,10 +46,13 @@ In templates, always use the `async` pipe to subscribe to observables. Never sub
 Separate components into smart (container) components that own state and interact with services, and dumb (presentational) components that receive data via `@Input()` and emit events via `@Output()`. Dumb components must be pure: given the same inputs, they always render the same output.
 
 ## Lazy-Loaded Routes Always
-All feature modules and pages must be lazy-loaded via `loadComponent()` or `loadChildren()` in the route configuration. Eager loading of feature routes is not acceptable in a production application.
+Prefer lazy loading feature routes via `loadComponent()` or `loadChildren()` when it improves the
+initial-load budget. Keep routes eager when they are small, critical to first render, or when the
+project's measured performance profile justifies it.
 
-## Reactive Forms for Non-Trivial Forms
-Use reactive forms (`FormBuilder`, `FormGroup`, `FormControl`) for any form with more than two fields, conditional validation, or dynamic controls. Template-driven forms are acceptable only for simple, single-field inputs.
+## Forms 
+Use signal forms for EVERY forms.
+They are simple, efficient and can handle complicate and large forms.
 
 ## Track in @for Always
 Every `@for` block in a template must include a `track` expression. Omitting `track` forces Angular to re-render the entire list on every change detection cycle.

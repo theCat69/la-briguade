@@ -115,6 +115,42 @@ describe("auto-inject framework detection contracts", () => {
     expect(active.has("react")).toBe(true);
   });
 
+  it("should not activate frontend skill for a backend package", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/frontend"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify({ name: "service", private: true }, null, 2),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("frontend")).toBe(false);
+  });
+
+  it("should activate frontend skill when package.json contains vue dependency", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/frontend"),
+    ]);
+    const tempProject = createTempProject({
+      "package.json": JSON.stringify(
+        { name: "web", dependencies: { vue: "^3.5.0" } },
+        null,
+        2,
+      ),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("frontend")).toBe(true);
+  });
+
   it("should not activate react-native skill when package.json exists without react-native marker", () => {
     // Arrange
     const entries = collectAutoInjectSkills([

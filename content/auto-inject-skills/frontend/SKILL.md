@@ -4,6 +4,30 @@ description: Enforce browser-facing frontend standards and verification steps (s
 agents:
   - coder
   - builder
+detect:
+  files:
+    - index.html
+    - angular.json
+    - vite.config.js
+    - vite.config.mjs
+    - vite.config.ts
+    - next.config.js
+    - next.config.mjs
+    - next.config.ts
+    - nuxt.config.js
+    - nuxt.config.mjs
+    - nuxt.config.ts
+  content:
+    - file: package.json
+      contains: '"react"'
+    - file: package.json
+      contains: '"vue"'
+    - file: package.json
+      contains: '"next"'
+    - file: package.json
+      contains: '"nuxt"'
+    - file: package.json
+      contains: '"@angular/core"'
 ---
 
 # Frontend Development Guidelines
@@ -45,7 +69,7 @@ Fix any failures before considering the work done.
 playwright-cli screenshot --filename=page.png
 ```
 
-Load the "read-image" skill if available and follow it's instruction if it is available.
+Load the "read-image" skill if available and follow its instructions.
 Read the image.
 
 ---

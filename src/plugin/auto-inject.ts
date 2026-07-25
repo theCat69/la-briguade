@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import type { Dirent } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { basename, isAbsolute, join, relative, sep } from "node:path";
@@ -31,6 +31,7 @@ const FALLBACK_IGNORED_DIRECTORIES = new Set([
 ]);
 const MAX_DETECTION_DIRECTORIES = 1_000;
 const MAX_GIT_FILE_LIST_BYTES = 50 * 1024 * 1024;
+const MAX_AUTO_INJECT_SKILL_LENGTH = 50_000;
 
 interface DetectionFileIndex {
   pathsByName: Map<string, string[]>;
@@ -273,6 +274,24 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
     const skillName = basename(skillDir);
     const skillFilePath = join(skillDir, "SKILL.md");
 
+    let skillFileSize: number;
+    try {
+      skillFileSize = statSync(skillFilePath).size;
+    } catch (error) {
+      if (!isNodeError(error) || error.code !== "ENOENT") {
+        logger.warn(
+          `Could not inspect auto-inject skill file: ${skillFilePath} ` +
+          `(${error instanceof Error ? error.message : String(error)})`,
+        );
+      }
+      continue;
+    }
+
+    if (skillFileSize > MAX_AUTO_INJECT_SKILL_LENGTH) {
+      logger.warn(`Auto-inject skill file exceeds size limit: ${skillFilePath}`);
+      continue;
+    }
+
     let rawContent: string;
     try {
       rawContent = readFileSync(skillFilePath, "utf8");
@@ -283,6 +302,11 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
           `(${error instanceof Error ? error.message : String(error)})`,
         );
       }
+      continue;
+    }
+
+    if (rawContent.length > MAX_AUTO_INJECT_SKILL_LENGTH) {
+      logger.warn(`Auto-inject skill file exceeds size limit: ${skillFilePath}`);
       continue;
     }
 

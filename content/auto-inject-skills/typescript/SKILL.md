@@ -19,7 +19,10 @@ agents:
 # TypeScript Skill
 
 ## Compiler Strictness
-Always enable `strict: true`, `noUncheckedIndexedAccess`, and `exactOptionalPropertyTypes` in `tsconfig.json`. These three flags together catch the majority of runtime type errors at compile time.
+For new TypeScript configurations, enable `strict: true`, `noUncheckedIndexedAccess`, and
+`exactOptionalPropertyTypes`. Before enabling them in an existing project, assess compatibility,
+plan the migration, and preserve the project's agreed compiler baseline. These flags catch many
+runtime type errors at compile time.
 
 ## Unknown Over Any
 Prefer `unknown` over `any`. When a value's type is truly unknown, require an explicit type guard or narrowing before use. `any` silently disables type checking and must never appear in production code without a documented justification.
