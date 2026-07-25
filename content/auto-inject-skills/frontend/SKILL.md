@@ -45,8 +45,8 @@ Fix any failures before considering the work done.
 playwright-cli screenshot --filename=page.png
 ```
 
-If cwebp is available then use cwebp to compress the image prior to reading it. 
-Else just read it directly.
+Load the "read-image" skill if available and follow it's instruction if it is available.
+Read the image.
 
 ---
 

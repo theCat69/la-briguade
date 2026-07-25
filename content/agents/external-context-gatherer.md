@@ -17,6 +17,9 @@ permission:
     "git remote -v": "allow"
     "git status *": "allow"
     "cache-ctrl *": "allow"
+    "rtk git remote -v": "allow"
+    "rtk git status *": "allow"
+    "rtk cache-ctrl *": "allow"
   task:
     "*": "deny"
   skill:

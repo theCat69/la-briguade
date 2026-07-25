@@ -323,4 +323,36 @@ describe("loadConfig", () => {
       expect(result.value.opus_enabled).toBeUndefined();
     }
   });
+
+  it("should parse the auto-inject detection depth", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) {
+        return JSON.stringify({ auto_inject: { max_depth: 3 } });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toEqual({ ok: true, value: { auto_inject: { max_depth: 3 } } });
+  });
+
+  it("should reject an invalid auto-inject detection depth", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) {
+        return JSON.stringify({ auto_inject: { max_depth: -1 } });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toMatchObject({ ok: false, error: { kind: "validation-error" } });
+  });
 });

@@ -1,4 +1,5 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { collectAutoInjectSkills, resolveActiveSkills } from "./auto-inject.js";
+import type { AutoInjectEntry } from "./auto-inject.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +26,14 @@ function createTempProject(files: Record<string, string>): string {
   }
 
   return dir;
+}
+
+function initializeGitRepository(projectDir: string): void {
+  execFileSync("git", ["init", "--quiet", projectDir]);
+}
+
+function stageGitFile(projectDir: string, relativePath: string): void {
+  execFileSync("git", ["-C", projectDir, "add", "--", relativePath]);
 }
 
 describe("auto-inject framework detection contracts", () => {
@@ -274,5 +284,133 @@ describe("auto-inject framework detection contracts", () => {
 
     // Assert
     expect(active.has("axum")).toBe(true);
+  });
+
+  it("should find a detected filename in a nested workspace within max depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(true);
+  });
+
+  it("should not inspect files deeper than the configured detection depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 1 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should not match a tracked detection file deleted from the working tree", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+    stageGitFile(tempProject, "packages/app/tsconfig.json");
+    rmSync(join(tempProject, "packages/app/tsconfig.json"));
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should find a content marker in a nested workspace within max depth", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/react"),
+    ]);
+    const tempProject = createTempProject({
+      "apps/web/package.json": JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+    });
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 2 });
+
+    // Assert
+    expect(active.has("react")).toBe(true);
+  });
+
+  it("should ignore nested directories covered by the Git ignore rules", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/react"),
+    ]);
+    const tempProject = createTempProject({
+      ".gitignore": "build/\n",
+      "build/react/package.json": JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject, { maxDepth: 3 });
+
+    // Assert
+    expect(active.has("react")).toBe(false);
+  });
+
+  it("should ignore a root detection file covered by Git ignore rules", () => {
+    // Arrange
+    const entries = collectAutoInjectSkills([
+      join(projectRoot, "content/auto-inject-skills/typescript"),
+    ]);
+    const tempProject = createTempProject({
+      ".gitignore": "tsconfig.json\n",
+      "tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+    initializeGitRepository(tempProject);
+
+    // Act
+    const active = resolveActiveSkills(entries, tempProject);
+
+    // Assert
+    expect(active.has("typescript")).toBe(false);
+  });
+
+  it("should not match an explicit path deeper than the configured detection depth", () => {
+    // Arrange
+    const entry: AutoInjectEntry = {
+      skillName: "custom",
+      skillDecription: "",
+      body: "",
+      agents: [],
+      detectFiles: ["packages/app/tsconfig.json"],
+      detectContent: [],
+    };
+    const tempProject = createTempProject({
+      "packages/app/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
+    });
+
+    // Act
+    const active = resolveActiveSkills(new Map([[entry.skillName, entry]]), tempProject, {
+      maxDepth: 1,
+    });
+
+    // Assert
+    expect(active.has("custom")).toBe(false);
   });
 });

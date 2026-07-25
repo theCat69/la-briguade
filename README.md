@@ -144,8 +144,19 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `permission` | `Record<string, string \| boolean \| number \| Record<string, string \| boolean \| number>>` | Permission overrides merged on top of agent defaults. Top-level values may be scalars or nested objects (e.g. `{ "bash": { "playwright-cli *": "allow" } }`) |
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
 | `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. All output goes to the per-session log file only (`~/.local/share/opencode/log/la-briguade-<timestamp>.log`, respects `$XDG_DATA_HOME`). Default: `"warn"`. |
+| `auto_inject.max_depth` | `integer` (0–10) | Maximum subdirectory depth scanned for auto-inject file and content detection. `0` (default) checks only the project root. A bare filename such as `package.json` matches at any scanned depth; paths containing a directory separator stay exact. |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
+
+Set `auto_inject.max_depth` for monorepos. With a depth of `2`, a skill detection entry of
+`package.json` also checks `apps/web/package.json`, while `apps/web/package.json` remains an
+exact project-relative path and must still be within the configured depth. The scan skips common
+dependency, VCS, and generated-output directories through your Git ignore rules (including
+`.gitignore`, `.git/info/exclude`, and global Git excludes) when those paths are untracked.
+Tracked files are considered project files even if a later ignore rule matches them. Outside a
+Git worktree, it falls back to a bounded scan that skips common generated-output directories. If
+Git cannot enumerate a Git worktree, recursive detection fails closed rather than scanning ignored
+content.
 
 ### Example
 
@@ -153,6 +164,9 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 {
   "$schema": "https://thecatmaincave.com/la-briguade-dev/la-briguade.schema.json",
   "model": "openai/gpt-4o",
+  "auto_inject": {
+    "max_depth": 3
+  },
   "agents": {
     "coder": {
       "model": "anthropic/claude-opus-4",

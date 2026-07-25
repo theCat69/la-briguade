@@ -1,5 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import type { Dirent } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { basename, isAbsolute, join, relative, sep } from "node:path";
 
 import { z } from "zod";
 
@@ -13,6 +15,28 @@ const AUTO_INJECT_END_MARKER = "<<<<< AUTO-INJECTED-SKILLS-END <<<<<";
 const AUTO_INJECT_PREFACE =
   "The following content is already-loaded auto-injected skills. " +
   "Each skill is shown as '#skill-name', then description, then body.";
+const FALLBACK_IGNORED_DIRECTORIES = new Set([
+  ".cache",
+  ".git",
+  ".next",
+  ".turbo",
+  ".venv",
+  ".yarn",
+  "build",
+  "coverage",
+  "dist",
+  "node_modules",
+  "target",
+  "vendor",
+]);
+const MAX_DETECTION_DIRECTORIES = 1_000;
+const MAX_GIT_FILE_LIST_BYTES = 50 * 1024 * 1024;
+
+interface DetectionFileIndex {
+  pathsByName: Map<string, string[]>;
+  projectPaths: Set<string>;
+  usesGitIndex: boolean;
+}
 
 function buildGroupedAutoInjectBlock(entries: AutoInjectEntry[]): string {
   const skillSections = entries
@@ -58,6 +82,179 @@ export type AutoInjectEntry = {
   /** File+content pairs that activate the skill when matched (OR logic). */
   detectContent: Array<{ file: string; contains: string }>;
 };
+
+/** Options that bound recursive auto-inject detection. */
+export interface AutoInjectDetectionOptions {
+  /** Maximum directory depth below project root to inspect. Zero checks only project root. */
+  maxDepth?: number;
+}
+
+function isSafeDetectionPath(projectDir: string, detectionPath: string): boolean {
+  if (detectionPath.length === 0 || isAbsolute(detectionPath)) {
+    return false;
+  }
+
+  const resolvedPath = join(projectDir, detectionPath);
+  const relativePath = relative(projectDir, resolvedPath);
+  return relativePath !== "" && relativePath !== ".." && !relativePath.startsWith(`..${sep}`);
+}
+
+function buildDetectionFileIndex(
+  projectDir: string,
+  maxDepth: number,
+  detectionFileNames: ReadonlySet<string>,
+): DetectionFileIndex {
+  return buildGitDetectionFileIndex(projectDir, maxDepth, detectionFileNames) ??
+    buildFallbackDetectionFileIndex(projectDir, maxDepth, detectionFileNames);
+}
+
+function buildGitDetectionFileIndex(
+  projectDir: string,
+  maxDepth: number,
+  detectionFileNames: ReadonlySet<string>,
+): DetectionFileIndex | undefined {
+  let output: Buffer;
+  try {
+    output = execFileSync("git", ["ls-files", "-co", "--exclude-standard", "-z"], {
+      cwd: projectDir,
+      encoding: "buffer",
+      maxBuffer: MAX_GIT_FILE_LIST_BYTES,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return undefined;
+    }
+    if (existsSync(join(projectDir, ".git"))) {
+      logger.warn(`Could not read Git file list for auto-inject detection under: ${projectDir}`);
+      return { pathsByName: new Map(), projectPaths: new Set(), usesGitIndex: true };
+    }
+    return undefined;
+  }
+
+  const pathsByName = new Map<string, string[]>();
+  const projectPaths = new Set<string>();
+  for (const projectPath of output.toString("utf8").split("\0")) {
+    if (projectPath.length === 0 || !isSafeDetectionPath(projectDir, projectPath)) {
+      continue;
+    }
+
+    const pathDepth = getDetectionPathDepth(projectPath);
+    if (pathDepth > maxDepth) {
+      continue;
+    }
+
+    const absolutePath = join(projectDir, projectPath);
+    if (!existsSync(absolutePath)) {
+      continue;
+    }
+    projectPaths.add(absolutePath);
+    const fileName = basename(projectPath);
+    if (detectionFileNames.has(fileName)) {
+      const matchingPaths = pathsByName.get(fileName) ?? [];
+      matchingPaths.push(absolutePath);
+      pathsByName.set(fileName, matchingPaths);
+    }
+  }
+
+  return { pathsByName, projectPaths, usesGitIndex: true };
+}
+
+function buildFallbackDetectionFileIndex(
+  projectDir: string,
+  maxDepth: number,
+  detectionFileNames: ReadonlySet<string>,
+): DetectionFileIndex {
+  const pathsByName = new Map<string, string[]>();
+  const projectPaths = new Set<string>();
+
+  let scannedDirectories = 0;
+  let reachedDirectoryLimit = false;
+  const visitDirectory = (directory: string, depth: number): void => {
+    if (scannedDirectories >= MAX_DETECTION_DIRECTORIES) {
+      reachedDirectoryLimit = true;
+      return;
+    }
+    scannedDirectories += 1;
+
+    let entries: Dirent<string>[];
+    try {
+      entries = readdirSync(directory, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const entryPath = join(directory, entry.name);
+      if (entry.isFile()) {
+        projectPaths.add(entryPath);
+        if (detectionFileNames.has(entry.name)) {
+          const matchingPaths = pathsByName.get(entry.name) ?? [];
+          matchingPaths.push(entryPath);
+          pathsByName.set(entry.name, matchingPaths);
+        }
+      } else if (
+        entry.isDirectory() &&
+        depth < maxDepth &&
+        !FALLBACK_IGNORED_DIRECTORIES.has(entry.name)
+      ) {
+        visitDirectory(entryPath, depth + 1);
+      }
+    }
+  };
+
+  visitDirectory(projectDir, 0);
+  if (reachedDirectoryLimit) {
+    logger.warn(
+      `Auto-inject detection stopped after scanning ${MAX_DETECTION_DIRECTORIES} directories ` +
+      `under: ${projectDir}`,
+    );
+  }
+  return { pathsByName, projectPaths, usesGitIndex: false };
+}
+
+function getDetectionPathDepth(detectionPath: string): number {
+  return detectionPath.split(/[\\/]+/).filter((part) => part !== ".").length - 1;
+}
+
+function findDetectionPaths(
+  projectDir: string,
+  detectionPath: string,
+  maxDepth: number,
+  fileIndex: DetectionFileIndex,
+): string[] {
+  if (!isSafeDetectionPath(projectDir, detectionPath)) {
+    return [];
+  }
+
+  if (maxDepth === 0 || detectionPath.includes("/") || detectionPath.includes("\\")) {
+    const pathDepth = getDetectionPathDepth(detectionPath);
+    if (pathDepth > maxDepth) {
+      return [];
+    }
+    const exactPath = join(projectDir, detectionPath);
+    if (!fileIndex.usesGitIndex) {
+      return existsSync(exactPath) ? [exactPath] : [];
+    }
+    return fileIndex.projectPaths.has(exactPath) ? [exactPath] : [];
+  }
+
+  return fileIndex.pathsByName.get(detectionPath) ?? [];
+}
+
+function hasContentMatch(filePaths: string[], contains: string): boolean {
+  for (const filePath of filePaths) {
+    try {
+      if (readFileSync(filePath, "utf8").includes(contains)) {
+        return true;
+      }
+    } catch {
+      // Unreadable files are not treated as active matches.
+    }
+  }
+
+  return false;
+}
 
 /**
  * Read each auto-inject skill directory, parse its SKILL.md frontmatter and body,
@@ -122,12 +319,29 @@ export function collectAutoInjectSkills(skillDirs: string[]): Map<string, AutoIn
  *
  * @param entries - Collected auto-inject entries (from `collectAutoInjectSkills`)
  * @param projectDir - Absolute path to the project root to check file existence
+ * @param options - Optional bounded recursive detection settings
  */
 export function resolveActiveSkills(
   entries: Map<string, AutoInjectEntry>,
   projectDir: string,
+  options: AutoInjectDetectionOptions = {},
 ): Set<string> {
   const active = new Set<string>();
+  const maxDepth = options.maxDepth ?? 0;
+  const detectionFileNames = new Set<string>();
+  for (const entry of entries.values()) {
+    for (const file of entry.detectFiles) {
+      if (!file.includes("/") && !file.includes("\\")) {
+        detectionFileNames.add(file);
+      }
+    }
+    for (const { file } of entry.detectContent) {
+      if (!file.includes("/") && !file.includes("\\")) {
+        detectionFileNames.add(file);
+      }
+    }
+  }
+  const fileIndex = buildDetectionFileIndex(projectDir, maxDepth, detectionFileNames);
 
   for (const [skillName, entry] of entries) {
     if (entry.detectFiles.length === 0 && entry.detectContent.length === 0) {
@@ -136,7 +350,7 @@ export function resolveActiveSkills(
     }
 
     for (const file of entry.detectFiles) {
-      if (existsSync(join(projectDir, file))) {
+      if (findDetectionPaths(projectDir, file, maxDepth, fileIndex).length > 0) {
         active.add(skillName);
         break;
       }
@@ -147,18 +361,10 @@ export function resolveActiveSkills(
     }
 
     for (const { file, contains } of entry.detectContent) {
-      const filePath = join(projectDir, file);
-      if (!existsSync(filePath)) {
-        continue;
-      }
-      try {
-        const content = readFileSync(filePath, "utf8");
-        if (content.includes(contains)) {
-          active.add(skillName);
-          break;
-        }
-      } catch {
-        // Unreadable file is not treated as active for this entry
+      const filePaths = findDetectionPaths(projectDir, file, maxDepth, fileIndex);
+      if (hasContentMatch(filePaths, contains)) {
+        active.add(skillName);
+        break;
       }
     }
   }

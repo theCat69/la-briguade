@@ -107,7 +107,11 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
       const autoInjectDirMap = collectDirs([builtinAutoInjectRoot, ...userAutoInjectRoots]);
       const autoInjectDirs = [...autoInjectDirMap.values()];
       const autoInjectEntries = collectAutoInjectSkills(autoInjectDirs);
-      const activeSkills = resolveActiveSkills(autoInjectEntries, ctx.directory);
+      const maxDepth = userConfig.auto_inject?.max_depth;
+      const activeSkills =
+        maxDepth === undefined
+          ? resolveActiveSkills(autoInjectEntries, ctx.directory)
+          : resolveActiveSkills(autoInjectEntries, ctx.directory, { maxDepth });
       injectAutoInjectSkills(input, autoInjectEntries, activeSkills);
     },
     ...hooks,
