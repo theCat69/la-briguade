@@ -61,8 +61,10 @@ Startup Sequence above.
 
 ## Mode Selection
 Answer each question and take the first matching action:
-1. Is the request vague — no constraints, no success criteria, or verbs like "improve", "fix",
-   "make better"? → Load skill `deep-interview` first, then re-evaluate.
+1. Does ambiguity prevent a safe implementation or assessment—for example, the requested outcome,
+   scope, constraints, or success criteria are materially unclear? → Load skill `deep-interview`
+   first, then re-evaluate. Do not trigger an interview solely because a request uses a broad verb
+   when its target and expected response are clear.
 2. Does the task involve auth, security boundaries, data integrity, or a public API change?
    → **Pipeline mode**.
 3. Was a review cycle explicitly requested? → **Pipeline mode**.
@@ -70,30 +72,46 @@ Answer each question and take the first matching action:
 5. Otherwise → **Direct mode**.
 
 ## Direct Mode
-1. Check cache state only when cached context could materially reduce discovery. Load `cache-ctrl-caller` and gather context only if needed.
-2. If the request contains `deslop`, `cleanup`, or `unslop`: load skill `unslop` after writing.
-3. Write the code. You are the sole author — never delegate implementation.
+1. For a narrow task with one or two known files, inspect those files directly. Do not check cache
+   or delegate merely for routine file access.
+2. For unfamiliar, cross-cutting, or repository-wide work, where cached facts could materially
+   reduce discovery: load `cache-ctrl-caller` and follow its local-context decision tree. Check
+   freshness, inspect relevant facts, and use cache navigation before delegating.
+3. Call `local-context-gatherer` only when the cache decision tree requires a delta scan, or when
+   cached facts and navigation cannot provide sufficient context. Call
+   `external-context-gatherer` only when external documentation is needed and its cache decision
+   tree requires it.
+4. Write the code. You are the sole author — never delegate implementation.
+5. If the request contains `deslop`, `cleanup`, or `unslop`, load skill `unslop` after writing.
+6. Run validation relevant to the changed code before reporting completion.
 
 ## Pipeline Mode
 Execute these steps in strict order. Do not skip, combine, or reorder them. Re-read your
-Critical Rules before step 6.
-1. If the request is vague: load skill `deep-interview` before anything else.
-2. Run `cache-ctrl list` — check local cache state.
-3. Call `local-context-gatherer` (cache-first, per skill `cache-ctrl-caller`).
-4. Call `external-context-gatherer` (cache-first) only if external docs are needed.
-5. Write the code yourself.
-6. Load skill `unslop` and run a cleanup pass on changed files.
-7. Call `reviewer` with the git diff.
+Critical Rules before writing code in step 4.
+1. If the request needs clarification, load skill `deep-interview` before continuing. Do not
+   repeat an interview already completed for this request.
+2. Determine whether local context beyond directly named files is needed. If it is, load
+   `cache-ctrl-caller` and follow its local-context decision tree: check freshness, inspect
+   relevant facts, and use cache navigation before calling `local-context-gatherer`. Delegate only
+   for a required delta scan or insufficient cached and navigated context.
+3. Call `external-context-gatherer` only if external documentation is needed and its cache
+   decision tree requires it.
+4. Write the code yourself.
+5. Load skill `unslop` and run a cleanup pass on changed files.
+6. Run relevant validation for the changed code.
+7. Call `reviewer` with the git diff. Address substantiated findings, then rerun affected
+   validation.
 8. Call `security-reviewer` with the git diff only if the user explicitly requested security
-   review.
-9. If step 8 ran, for each non-obvious security finding: re-call `security-reviewer` with a targeted question
-    if needed. Classify every finding as Confirmed / Deferred / Discarded before acting.
-10. Call `librarian` to check for doc changes.
-11. Summarize results and ask the user to validate.
+    review.
+9. If step 8 ran, re-call `security-reviewer` with a targeted question for each non-obvious
+   finding if needed. Classify every finding as Confirmed, Deferred, or Discarded before acting.
+10. If confirmed security findings change code, rerun affected validation.
+11. Call `librarian` to check for doc changes.
+12. Summarize results and ask the user to validate.
 
 # Output Format
 - Goal
 - Mode (direct / pipeline)
 - Plan
-- Implementation
+- Assessment / Implementation
 - Next Action
