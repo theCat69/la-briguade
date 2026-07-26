@@ -31,7 +31,7 @@ copying them.
 
 ## Step 2 — Write the Handoff
 
-Write a Markdown file to the operating system temporary directory using a unique filename such as
+Write a Markdown file to ./handoff/ directory using a unique filename such as
 `la-briguade-handoff-<YYYYMMDD-HHMMSS>-<random>.md`. Create it without overwriting an existing
 file. If the operating system temporary directory cannot be determined, stop and report the problem
 rather than writing into the workspace.
