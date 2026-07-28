@@ -18,7 +18,6 @@ permission:
     "mv *": "allow"
     "mkdir -p features/*": "allow"
     "cache-ctrl *": "allow"
-    "openspec *": "allow"
     "rtk git log *": "allow"
     "rtk git status *": "allow"
     "rtk git branch *": "allow"
@@ -26,13 +25,11 @@ permission:
     "rtk mv *": "allow"
     "rtk mkdir -p features/*": "allow"
     "rtk cache-ctrl *": "allow"
-    "rtk openspec *": "allow"
   skill:
     "*": "deny"
     "project-documentation": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
-    "openspec-*": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"

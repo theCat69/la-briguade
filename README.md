@@ -82,9 +82,9 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
-| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
-| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
-| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
+| `/to-spec` | Turn the current conversation into a spec and publish it to the configured tracker or local Markdown |
+| `/to-tickets` | Break a spec, plan, or conversation into approved tracer-bullet tickets with dependency edges |
+| `/implement` | Implement approved work from a spec or unblocked ticket using its agreed test seams |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
 | `/grilling` | Stress-test a plan, decision, or idea through a decision-tree interview before acting |
 | `/handoff` | Create a compact, redacted Markdown handoff for a future agent or session |
@@ -152,6 +152,8 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
 | `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. All output goes to the per-session log file only (`~/.local/share/opencode/log/la-briguade-<timestamp>.log`, respects `$XDG_DATA_HOME`). Default: `"warn"`. |
 | `auto_inject.max_depth` | `integer` (0–10) | Maximum subdirectory depth scanned for auto-inject file and content detection. `0` (default) checks only the project root. A bare filename such as `package.json` matches at any scanned depth; paths containing a directory separator stay exact. |
+| `tracker.provider` | `"github" \| "linear"` | Optional issue tracker used by `/to-spec` and `/to-tickets` to publish specs and tickets. |
+| `tracker.project` | `string` | GitHub requires `owner/repository`; Linear accepts a non-empty team or project identifier. |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
 
@@ -174,6 +176,10 @@ content.
   "auto_inject": {
     "max_depth": 3
   },
+  "tracker": {
+    "provider": "github",
+    "project": "acme/example"
+  },
   "agents": {
     "coder": {
       "model": "anthropic/claude-opus-4",
@@ -186,6 +192,14 @@ content.
   }
 }
 ```
+
+### Planning and implementation workflow
+
+Use `/grilling` to settle a change, then `/to-spec` to publish a shared specification and
+`/to-tickets` to create dependency-aware tracer-bullet implementation slices. When `tracker` is
+configured, the commands publish tracker artifacts and apply `ready-for-agent`; otherwise they use
+project-local Markdown under `.scratch/<feature-slug>/`. Use `/implement` only with an agreed spec
+or unblocked ticket; it follows the selected artifact's test seams and acceptance criteria.
 
 ## Adding Custom Content
 

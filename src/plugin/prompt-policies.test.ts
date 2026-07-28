@@ -59,13 +59,25 @@ describe("prompt policy contracts", () => {
     const builderContent = readContentFile("content/agents/Builder.md");
     const justDoItContent = readContentFile("content/commands/just-do-it.md");
     const refactorContent = readContentFile("content/commands/refactor.md");
-    const implementPrdContent = readContentFile("content/commands/implement-prd.md");
+    const implementContent = readContentFile("content/commands/implement.md");
 
     expect(orchestratorContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
     expect(builderContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
     expect(justDoItContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
     expect(refactorContent).toMatch(/security-reviewer[\s\S]*explicitly requests?/i);
-    expect(implementPrdContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
+    expect(implementContent).toMatch(/security-reviewer[\s\S]*when applicable/i);
+  });
+
+  it("should provide the spec-to-ticket workflow without legacy planning commands", () => {
+    const toSpecContent = readContentFile("content/commands/to-spec.md");
+    const toTicketsContent = readContentFile("content/commands/to-tickets.md");
+    const implementContent = readContentFile("content/commands/implement.md");
+
+    expect(toSpecContent).toContain("Do not restart requirements discovery");
+    expect(toSpecContent).toContain(".scratch/<feature-slug>/spec.md");
+    expect(toTicketsContent).toContain("tracer-bullet vertical slices");
+    expect(toTicketsContent).toContain(".scratch/<feature-slug>/issues/<NN>-<slug>.md");
+    expect(implementContent).toContain("unblocked frontier ticket");
   });
 
   it("should keep AGENTS.md canonical pointer on auto-inject skills", () => {

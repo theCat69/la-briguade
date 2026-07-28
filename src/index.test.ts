@@ -154,11 +154,15 @@ describe("LaBriguadePlugin", () => {
       ],
       { log_level: "info" },
     );
-    expect(mockRegisterCommands).toHaveBeenCalledWith(input, [
-      expect.stringMatching(/\/content\/commands$/),
-      "/global/commands",
-      "/project/.la_briguade/commands",
-    ]);
+    expect(mockRegisterCommands).toHaveBeenCalledWith(
+      input,
+      [
+        expect.stringMatching(/\/content\/commands$/),
+        "/global/commands",
+        "/project/.la_briguade/commands",
+      ],
+      { log_level: "info" },
+    );
     expect(mockRegisterSkills).toHaveBeenCalledWith(input, [
       expect.stringMatching(/\/content\/skills$/),
       "/config/opencode/skills",

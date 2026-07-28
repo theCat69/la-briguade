@@ -14,17 +14,14 @@ permission:
     "git branch *": "allow"
     "git diff *": "allow"
     "cache-ctrl *": "allow"
-    "openspec *": "allow"
     "rtk git status *": "allow"
     "rtk git branch *": "allow"
     "rtk git diff *": "allow"
     "rtk cache-ctrl *": "allow"
-    "rtk openspec *": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
     "cache-ctrl-caller": "allow"
-    "openspec-*": "allow"
   task:
     "*": "deny"
     "local-context-gatherer": "allow"

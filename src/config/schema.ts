@@ -4,6 +4,8 @@ import { LOG_LEVELS } from "../utils/runtime/logger.js";
 
 /** Regex that rejects keys matching reserved prototype pollution names. */
 export const SAFE_RECORD_KEY = /^(?!(?:__proto__|constructor|prototype)$)[\w\-.]+$/;
+const GITHUB_PROJECT_IDENTIFIER = /^(?!\.)(?!.*\/\.\.?(?:\/|$))[\w.-]+\/(?!\.)[\w.-]+$/;
+const LINEAR_PROJECT_IDENTIFIER = /^[A-Za-z0-9_-]+$/;
 
 /** Returns true when a key is safe from prototype pollution (permissive — allows spaces, globs, etc.). */
 export function isSafePermissionSubKey(key: string): boolean {
@@ -21,6 +23,23 @@ const AutoInjectSchema = z.object({
   /** Maximum directory depth to scan for auto-inject detection files; 0 checks only project root. */
   max_depth: z.number().int().min(0).max(10).optional(),
 });
+
+const TrackerSchema = z.discriminatedUnion("provider", [
+  z.object({
+    /** GitHub issue tracker integration and its owner/repository identifier. */
+    provider: z.literal("github"),
+    project: z.string().regex(GITHUB_PROJECT_IDENTIFIER, {
+      message: "GitHub tracker project must use the owner/repository format",
+    }),
+  }),
+  z.object({
+    /** Linear issue tracker integration and its team or project identifier. */
+    provider: z.literal("linear"),
+    project: z.string().regex(LINEAR_PROJECT_IDENTIFIER, {
+      message: "Linear tracker project must contain only letters, numbers, underscores, or hyphens",
+    }),
+  }),
+]);
 
 /** One-level-deep nested record (e.g. bash: { "playwright-cli *": "allow" }). */
 const PermissionNestedSchema = z
@@ -111,6 +130,8 @@ export const LaBriguadeConfigSchema = z.object({
   log_level: z.enum(LOG_LEVELS).optional(),
   /** Controls recursive auto-inject skill detection. */
   auto_inject: AutoInjectSchema.optional(),
+  /** Optional issue tracker for publishing specs and implementation tickets. */
+  tracker: TrackerSchema.optional(),
 });
 
 /** TypeScript type inferred from {@link AgentOverrideSchema}. */

@@ -90,7 +90,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
       );
-      registerCommands(input, [builtinCommandsDir, ...userCommandsDirs]);
+      registerCommands(input, [builtinCommandsDir, ...userCommandsDirs], userConfig);
       const { dirs: skillDirs } = registerSkills(
         input,
         [builtinSkillsDir, ...userSkillRoots],

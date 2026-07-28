@@ -18,7 +18,6 @@ permission:
     "mkdir -p .ai/context-snapshots": "allow"
     "mkdir -p .ai/context-snapshots/*": "allow"
     "cache-ctrl *": "allow"
-    "openspec *": "allow"
     "rtk git add *": "allow" 
     "rtk git commit *": "allow" 
     "rtk git log *": "allow" 
@@ -30,7 +29,6 @@ permission:
     "rtk mkdir -p .ai/context-snapshots": "allow"
     "rtk mkdir -p .ai/context-snapshots/*": "allow"
     "rtk cache-ctrl *": "allow"
-    "rtk openspec *": "allow"
   edit: 
     "*": "deny"
     ".ai/context-snapshots/current.json": "allow"
@@ -40,7 +38,6 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
-    "openspec-*": "allow"
   todowrite: "allow"
   todoread: "allow"
   question: "allow"

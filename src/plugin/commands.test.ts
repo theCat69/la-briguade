@@ -141,4 +141,32 @@ describe("registerCommands", () => {
       template: "Reconcile markdown artifacts with code as source of truth.",
     });
   });
+
+  it("should resolve tracker configuration in command templates", () => {
+    mockCollectFiles.mockReturnValue(new Map([["to-spec", "/builtin/commands/to-spec.md"]]));
+    mockReadContentFile.mockReturnValue("Publish with {{TRACKER_CONFIGURATION}}");
+
+    const config = makeConfig();
+
+    registerCommands(config, ["/builtin/commands"], {
+      tracker: { provider: "github", project: "acme/la-briguade" },
+    });
+
+    expect(config.command?.["to-spec"]).toMatchObject({
+      template: "Publish with Use the host's github tracker integration for 'acme/la-briguade'.",
+    });
+  });
+
+  it("should select local artifacts when no tracker is configured", () => {
+    mockCollectFiles.mockReturnValue(new Map([["to-spec", "/builtin/commands/to-spec.md"]]));
+    mockReadContentFile.mockReturnValue("Publish with {{TRACKER_CONFIGURATION}}");
+
+    const config = makeConfig();
+
+    registerCommands(config, ["/builtin/commands"]);
+
+    expect(config.command?.["to-spec"]).toMatchObject({
+      template: "Publish with No issue tracker is configured. Use project-local Markdown artifacts.",
+    });
+  });
 });

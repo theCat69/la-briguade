@@ -340,6 +340,71 @@ describe("loadConfig", () => {
     expect(result).toEqual({ ok: true, value: { auto_inject: { max_depth: 3 } } });
   });
 
+  it("should parse an issue tracker configuration", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) {
+        return JSON.stringify({ tracker: { provider: "github", project: "acme/la-briguade" } });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toEqual({
+      ok: true,
+      value: { tracker: { provider: "github", project: "acme/la-briguade" } },
+    });
+  });
+
+  it("should reject a tracker without a project identifier", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) return JSON.stringify({ tracker: { provider: "github" } });
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toMatchObject({ ok: false, error: { kind: "validation-error" } });
+  });
+
+  it("should reject an invalid GitHub tracker project", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) {
+        return JSON.stringify({ tracker: { provider: "github", project: "../.." } });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toMatchObject({ ok: false, error: { kind: "validation-error" } });
+  });
+
+  it("should reject an unsafe Linear tracker project", () => {
+    // Arrange
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith(".json")) {
+        return JSON.stringify({ tracker: { provider: "linear", project: "team; rm -rf /" } });
+      }
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+
+    // Act
+    const result = loadConfig("/home/user/la-briguade");
+
+    // Assert
+    expect(result).toMatchObject({ ok: false, error: { kind: "validation-error" } });
+  });
+
   it("should reject an invalid auto-inject detection depth", () => {
     // Arrange
     mockReadFileSync.mockImplementation((path) => {
