@@ -26,7 +26,7 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 
 ## Getting Started
 
-Open OpenCode in a project after installation. la-briguade registers its agents, skills, and commands in memory; it does not copy files into your project.
+Open OpenCode in a project after installation. la-briguade registers its agents, skills, and commands in memory at startup; it does not copy files into your project.
 
 Start with the **builder** agent for a focused implementation task, or use `/just-do-it` for an autonomous end-to-end workflow. Run `la-briguade doctor` if installation or configuration needs troubleshooting.
 

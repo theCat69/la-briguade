@@ -12,12 +12,16 @@ permission:
   edit:
     "*.md": "allow"
     "**/*.md": "allow"
+    "*.txt": "allow"
     "**/*.txt": "allow"
+    "*.adoc": "allow"
     "**/*.adoc": "allow"
   write:
     "*.md": "allow"
     "**/*.md": "allow"
+    "*.txt": "allow"
     "**/*.txt": "allow"
+    "*.adoc": "allow"
     "**/*.adoc": "allow"
   bash:
     "*": "deny"
