@@ -10,12 +10,18 @@ permission:
   glob: "allow"
   grep: "allow"
   edit:
+    "*.md": "allow"
     "**/*.md": "allow"
+    "*.txt": "allow"
     "**/*.txt": "allow"
+    "*.adoc": "allow"
     "**/*.adoc": "allow"
   write:
+    "*.md": "allow"
     "**/*.md": "allow"
+    "*.txt": "allow"
     "**/*.txt": "allow"
+    "*.adoc": "allow"
     "**/*.adoc": "allow"
   bash:
     "*": "deny"

@@ -1,16 +1,20 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 15 agents, 22 skills, 17 slash commands, and smart hooks.
+An [OpenCode](https://opencode.ai) plugin that adds a ready-to-use AI engineering team to your projects. It includes specialized agents, reusable skills, slash commands, and safeguards for common workflow failures.
 
-:> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
+Use it to plan work, implement changes, review code and security, and keep documentation aligned—without manually assembling an agent setup for every project.
+
+> [!IMPORTANT]
+> la-briguade currently expects [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to be available. Making these integrations optional is planned for a future release.
 
 ## Installation
 
 ```bash
+npm install -g la-briguade
 npx la-briguade install
 ```
 
-The `install` command adds `"la-briguade@latest"` to the `"plugin"` array in the global opencode config file (`~/.config/opencode/opencode.json`). If the file or its parent directories don't exist, they are created automatically.
+The first command installs the CLI. The second registers `la-briguade@latest` in OpenCode's global plugin configuration at `~/.config/opencode/opencode.json`. Missing directories and the configuration file are created automatically.
 
 To remove the plugin:
 
@@ -19,6 +23,12 @@ npx la-briguade uninstall
 ```
 
 The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-briguade"` entry) from the same global config file.
+
+## Getting Started
+
+Open OpenCode in a project after installation. la-briguade registers its agents, skills, and commands in memory at startup; it does not copy files into your project.
+
+Start with the **builder** agent for a focused implementation task, or use `/just-do-it` for an autonomous end-to-end workflow. Run `la-briguade doctor` if installation or configuration needs troubleshooting.
 
 ## What's Included
 
@@ -42,20 +52,15 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | feature-reviewer | subagent | Feature spec quality gate |
 | architect | subagent | Code structure analyst — maps module boundaries, dependency graphs, and produces architecture blueprints |
 
-### Custom tools
+### Built-in review tool
 
 | Tool | Description |
 |---|---|
 | sidekick-agent | Starts or resumes persistent code and security review sessions, or a documentation synchronization session. |
 
-Use `sidekick-agent` for persistent code-quality and security reviews, and documentation
-synchronization. First select every applicable review type, then invoke selected code and security
-reviews in parallel. After their findings are resolved, invoke documentation synchronization. The
-tool routes each type to a specialized sidekick agent and derives its session name from the calling
-session:
+`sidekick-agent` gives agents a persistent workspace for code reviews, security reviews, and documentation updates. It routes each review type to the appropriate specialist and resumes that specialist's prior session when possible.
 
-`DOCUMENTATION_SYNC` may edit only Markdown documentation, prompts, skills, and code examples; it
-must not edit source code, manifests, schemas, generated files, or non-documentation assets.
+Documentation synchronization can edit Markdown documentation, prompts, skills, and code examples only; it never edits source code, manifests, schemas, generated files, or other assets.
 
 | Review type | Agent | Session suffix |
 |---|---|---|
@@ -63,9 +68,7 @@ must not edit source code, manifests, schemas, generated files, or non-documenta
 | `SECURITY_REVIEW` | `sidekick-security-reviewer` | `_sec-review` |
 | `DOCUMENTATION_SYNC` | `sidekick-librarian` | `_doc-sync` |
 
-The tool reuses the newest matching session for that review type in the current project by default
-(`new_session: false`). Set `new_session` to `true` only when starting unrelated work for that type;
-the new isolated session remains active for later calls from the same calling session.
+The tool reuses the newest matching session for the current project by default. Set `new_session` to `true` only for unrelated work.
 
 | Argument | Required | Contract |
 |---|---|---|
@@ -74,6 +77,8 @@ the new isolated session remains active for later calls from the same calling se
 | `new_session` | No | Boolean; defaults to `false`. Set to `true` only to start an unrelated review task. |
 
 ### Skills
+
+Skills are focused guidance that agents load when a task calls for them. The project includes 13 auto-injected foundation skills and 12 on-demand skills.
 
 | Skill | Description |
 |---|---|
@@ -84,13 +89,17 @@ the new isolated session remains active for later calls from the same calling se
 | quarkus | Apply Quarkus service conventions for reactive I/O, CDI/resource boundaries, persistence/config patterns, and Quarkus test layering; do not use outside Quarkus codebases. |
 | rust | Apply Rust engineering rules for ownership, type modeling, async/concurrency, testing, and unsafe/safety boundaries in Rust code; do not use for non-Rust projects. |
 | frontend | Enforce browser-facing frontend standards and verification steps (semantic HTML, CSS architecture, playwright-cli checks) after UI changes; not applicable to backend-only work. |
+| axum | Apply Axum server and middleware conventions, including layering order and error handling. |
+| dioxus | Apply Dioxus component guidance, including hook correctness and rendering performance. |
+| flutter | Apply Flutter application architecture and performance best practices. |
+| nextjs | Apply Next.js App Router production guidance and use version-accurate local documentation. |
+| react | Apply React purity, immutability, and effect synchronization guidance. |
+| react-native | Apply React Native performance, navigation, and platform-boundary guidance. |
 | playwright-cli | Drive browser UI checks with playwright-cli commands, snapshots, and test/debug workflows; do not use for backend-only or non-browser tasks. |
 | git-commit | Stage and create commits using the repository message convention after implementation is complete; do not use for diff analysis or branch review. |
 | git-diff-review | Identify upstream branch and changed files with git diff for scoped code review; do not perform commit operations in this skill. |
 | deep-interview | Resolve ambiguous implementation requests through scored Socratic clarification; allow explicit forced proceed with documented assumptions. |
 | cache-ctrl-caller | How agents decide whether to call context gatherer subagents and control cache invalidation |
-| cache-ctrl-local | Detect file changes and manage the local context cache |
-| cache-ctrl-external | Check staleness, search, and manage the external context cache |
 | unslop | Perform sequential, validated slop-cleanup edits across seven categories in bounded changed-file scope; do not use for read-only scanning. |
 | unslop-coder | Apply structured unslop-reviewer findings as targeted in-scope edits, deferring stale, conflicting, or unsafe changes. |
 | unslop-reviewer | Run a read-only, pass-ordered slop scan covering abstraction and locally fixable boundary findings; never edit files. |
@@ -101,6 +110,8 @@ the new isolated session remains active for later calls from the same calling se
 | serena | Use LSP-backed semantic tools for repository navigation, editing, refactoring, and debugging. |
 
 ### Commands
+
+Slash commands provide guided workflows for common engineering tasks.
 
 | Command | Description |
 |---|---|
@@ -124,21 +135,13 @@ the new isolated session remains active for later calls from the same calling se
 
 ## Hooks
 
-The plugin registers six built-in hooks that run automatically:
+The plugin runs two safeguards automatically:
 
-1. **Tool Output Truncator** — Prevents context window bloat by truncating tool outputs exceeding 50K characters. Keeps the first 25K and last 10K characters with a marker showing how many characters were removed. Tool outputs with non-string content (e.g. structured MCP responses) are passed through unchanged.
+1. **Edit Error Recovery** — When an `edit` tool call fails with "oldString not found" or "Found multiple matches", appends a hint telling the agent to re-read the file before retrying.
 
-2. **Edit Error Recovery** — When an `edit` tool call fails with "oldString not found" or "Found multiple matches", appends a hint telling the agent to re-read the file before retrying.
+2. **Empty Response Detector** — Monitors completed `message.updated` events and warns when the assistant produces zero output tokens, catching silent failures early.
 
-3. **Empty Response Detector** — Monitors `message.updated` events and warns when the assistant produces zero output tokens, catching silent failures early.
-
-4. **Model Section Injector** — At chat time, inspects the active model ID and appends the matching model-family section from the agent body to its system prompt (see [Model-Specific Prompt Sections](#model-specific-prompt-sections) below).
-
-5. **Vendor Prompt Injector** — After the model section, appends the global vendor prompt for the matched model family (loaded from the built-in `content/vendor-prompts/` and any user overrides in `~/la_briguade/vendor-prompts/` or `<project_root>/.la_briguade/vendor-prompts/`) to every agent system prompt. Unlike model sections, vendor prompts live in separate files and apply uniformly to all agents — no per-agent markup needed. No fallback is applied; if no family matches the active model, nothing is injected.
-
-6. **Skill Access Gate** — Enforces `permission.skill` declarations from agent frontmatter. Uses `chat.params` to track which agent is active per session, then gates every `skill` tool call in `tool.execute.before`: if an agent declares `permission.skill["*"]: "deny"`, only explicitly allow-listed skill names pass through. Session state is cleaned up on `session.deleted` to prevent memory leaks.
-
-## CLI Commands
+## Command-Line Tools
 
 ```bash
 la-briguade install     # Register plugin in opencode config
@@ -149,7 +152,7 @@ la-briguade update      # Update to the latest version globally
 
 ## Configuration
 
-la-briguade supports a layered config system that lets you override agent settings without modifying the package.
+You can override agent settings without modifying the package. Global settings apply everywhere; project settings take precedence when both exist.
 
 ### Config file locations
 
@@ -160,13 +163,13 @@ la-briguade supports a layered config system that lets you override agent settin
 
 Both files are optional. When both are present, project values take precedence over global values.
 
-### Merge order (lowest to highest priority)
+### How settings are combined
 
 1. Internal plugin defaults (agent frontmatter in `content/agents/*.md`)
 2. Global user config (`~/.config/la_briguade/la-briguade.json`)
 3. Project-level config (`<project_root>/la-briguade.json`)
 
-### Supported fields
+### Available settings
 
 A top-level `model` field applies to all agents unless overridden per-agent. Per-agent overrides live under the `agents` key:
 
@@ -203,7 +206,7 @@ content.
 
 ```jsonc
 {
-  "$schema": "https://thecatmaincave.com/la-briguade-dev/la-briguade.schema.json",
+  "$schema": "./node_modules/la-briguade/schemas/la-briguade.schema.json",
   "model": "openai/gpt-4o",
   "auto_inject": {
     "max_depth": 3
@@ -233,9 +236,9 @@ configured, the commands publish tracker artifacts and apply `ready-for-agent`; 
 project-local Markdown under `.scratch/<feature-slug>/`. Use `/implement` only with an agreed spec
 or unblocked ticket; it follows the selected artifact's test seams and acceptance criteria.
 
-## Adding Custom Content
+## Adding Your Own Content
 
-All agents, skills, commands, vendor prompts, and auto-inject skills are plain Markdown files with YAML frontmatter. You can add your own without modifying the package by placing files in user content directories. The plugin resolves content in priority order (last-wins):
+Agents, skills, commands, and auto-inject skills are Markdown files with YAML frontmatter. Add your own without modifying the package by placing files in the directories below. When files share the same name, the later location wins.
 
 | Content type | Global user | Project user |
 |---|---|---|
@@ -243,15 +246,14 @@ All agents, skills, commands, vendor prompts, and auto-inject skills are plain M
 | Commands | `~/la_briguade/commands/` | `<project_root>/.la_briguade/commands/` |
 | Skills (regular) | `~/.config/opencode/skills/` or `~/la_briguade/skills/` | `<project_root>/.opencode/skills/` or `<project_root>/.la_briguade/skills/` |
 | Auto-inject skills | `~/la_briguade/auto-inject-skills/` | `<project_root>/.la_briguade/auto-inject-skills/` |
-| Vendor prompts | `~/la_briguade/vendor-prompts/` | `<project_root>/.la_briguade/vendor-prompts/` |
 
-**Priority chain by content type** (lowest → highest, last-wins):
+**Priority order** (lowest → highest):
 
-- **Agents / Commands / Vendor prompts**: built-in `content/<type>/` → `~/la_briguade/<type>/` → `<project_root>/.la_briguade/<type>/`
+- **Agents / Commands**: built-in `content/<type>/` → `~/la_briguade/<type>/` → `<project_root>/.la_briguade/<type>/`
 - **Skills (regular)**: built-in `content/skills/` → `~/.config/opencode/skills/` → `~/la_briguade/skills/` → `<project_root>/.opencode/skills/` → `<project_root>/.la_briguade/skills/`
 - **Auto-inject skills**: built-in `content/auto-inject-skills/` → `~/la_briguade/auto-inject-skills/` → `<project_root>/.la_briguade/auto-inject-skills/`
 
-> Note: auto-inject discovery now reads only `auto-inject-skills` roots. Legacy regular `skills/` roots are not scanned for auto-inject entries.
+> Auto-inject discovery reads only `auto-inject-skills` directories. Regular `skills/` directories are not scanned for auto-inject entries.
 
 Auto-inject prompt insertion uses two modes:
 
@@ -264,14 +266,14 @@ Auto-inject prompt insertion uses two modes:
 
 Files in higher-priority layers override built-in files with the same stem name. All directories are optional — missing paths are silently skipped.
 
-Any skill already installed at the opencode level (`~/.config/opencode/skills/` or `<project_root>/.opencode/skills/`) is automatically available to la-briguade agents without any extra configuration.
+Skills already installed for OpenCode in `~/.config/opencode/skills/` or `<project_root>/.opencode/skills/` are available to la-briguade agents automatically.
 
 > **Content Overrides**
-> Content placed in `~/la_briguade/` or project-level `.la_briguade/` directories can override built-in agents, skills, commands, and vendor prompts.
+> Content placed in `~/la_briguade/` or project-level `.la_briguade/` directories can override built-in agents, skills, and commands.
 
 **Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/agents/coder.md` (applies globally) or `<project_root>/.la_briguade/agents/coder.md` (applies to that project only).
 
-Content files have a maximum size of 50,000 characters — files exceeding this limit are skipped with a warning.
+Content files can contain up to 50,000 characters. Larger files are skipped with a warning.
 
 ### Agent
 
@@ -369,9 +371,9 @@ Command prompt template in markdown. Use $ARGUMENTS for user input.
 - **Node** >= 22
 - **`@opencode-ai/plugin`** ^1.4.0 (peer dependency)
 
-## Architecture
+## How It Works
 
-The plugin resolves content from three ordered layers (built-in package, global user `~/la_briguade/`, project `<root>/`) using a last-wins merge by filename stem. Content loaders use `collectFiles()` / `collectDirs()` from `src/utils/content/content-merge.ts`, with related parsing helpers grouped under `src/utils/content/`, runtime services under `src/utils/runtime/`, prompt logic under `src/utils/prompts/`, and shared pure helpers under `src/utils/support/`. No files are copied to your system — agents, skills, and commands are registered in-memory at runtime.
+At startup, la-briguade combines its built-in content with your global and project-specific customizations. Project content overrides global content, and global content overrides the built-in defaults. Nothing is copied into your project: agents, skills, and commands are registered in memory when OpenCode starts.
 
 ## License
 
