@@ -34,6 +34,8 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | critic | subagent | Adversarial design challenger |
 | reviewer | subagent | Code quality and architecture reviewer |
 | sidekick-reviewer | primary | Persistent code-quality reviewer used by the `sidekick-reviewer` tool |
+| sidekick-security-reviewer | primary | Persistent, read-only security reviewer used by the `sidekick-reviewer` tool |
+| sidekick-librarian | primary | Persistent, read-only documentation reviewer used by the `sidekick-reviewer` tool |
 | security-reviewer | subagent | Security auditor (CVEs, OWASP, Dependabot) |
 | librarian | subagent | Documentation keeper |
 | local-context-gatherer | subagent | Repository context extractor with caching |
@@ -46,19 +48,26 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 
 | Tool | Description |
 |---|---|
-| sidekick-reviewer | Starts or resumes a persistent, read-only code-review session using the `sidekick-reviewer` OpenCode agent. |
+| sidekick-reviewer | Starts or resumes persistent, read-only code, security, or documentation review sessions. |
 
-Use `sidekick-reviewer` for code-quality reviews instead of creating a `reviewer` subagent. Supply
-a `review_prompt`; the tool derives its name as `<calling-session-id>_review`. The tool reuses the
-newest matching review session in the current project by default (`new_session: false`). Set
-`new_session` to `true` only when starting work unrelated to the previous review; this starts a
-fresh, isolated derived session and retains it for later calls from the same calling session. The
-legacy `reviewer` agent remains available for
-feature-planning workflows.
+Use `sidekick-reviewer` for persistent code-quality, security, and documentation reviews. First
+select every applicable review type, then invoke one tool call per type in parallel. The tool routes
+each type to a read-only sidekick agent and derives its session name from the calling session:
+
+| Review type | Agent | Session suffix |
+|---|---|---|
+| `CODE_REVIEW` | `sidekick-reviewer` | `_review` |
+| `SECURITY_REVIEW` | `sidekick-security-reviewer` | `_sec-review` |
+| `DOCUMENTATION_REVIEW` | `sidekick-librarian` | `_doc-review` |
+
+The tool reuses the newest matching session for that review type in the current project by default
+(`new_session: false`). Set `new_session` to `true` only when starting unrelated work for that type;
+the new isolated session remains active for later calls from the same calling session.
 
 | Argument | Required | Contract |
 |---|---|---|
 | `review_prompt` | Yes | The review request, from 1 to 20,000 characters. |
+| `review_type` | Yes | `CODE_REVIEW`, `SECURITY_REVIEW`, or `DOCUMENTATION_REVIEW`. |
 | `new_session` | No | Boolean; defaults to `false`. Set to `true` only to start an unrelated review task. |
 
 ### Skills

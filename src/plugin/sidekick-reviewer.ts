@@ -4,13 +4,11 @@ import { randomUUID } from "node:crypto";
 import { tool } from "@opencode-ai/plugin";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 
-const SIDEKICK_AGENT = "sidekick-reviewer";
 const MAX_CLI_OUTPUT_LENGTH = 1_000_000;
 const FORCE_KILL_GRACE_MS = 5_000;
 const REVIEW_TIMEOUT_MS = 600_000;
 const SESSION_LIST_MAX_COUNT = 100;
 const SESSION_LIST_TIMEOUT_MS = 10_000;
-const REVIEW_SESSION_SUFFIX = "_review";
 const MAX_TRACKED_REVIEW_SESSIONS = 1_000;
 
 interface CommandResult {
@@ -31,11 +29,33 @@ type CommandRunner = (
   options: CommandOptions,
 ) => Promise<CommandResult>;
 
-type ReviewSessionNameFactory = (mainSessionId: string) => string;
+interface ReviewTypeConfig {
+  agent: string;
+  sessionSuffix: string;
+}
+
+const REVIEW_TYPE_CONFIG = {
+  CODE_REVIEW: {
+    agent: "sidekick-reviewer",
+    sessionSuffix: "_review",
+  },
+  SECURITY_REVIEW: {
+    agent: "sidekick-security-reviewer",
+    sessionSuffix: "_sec-review",
+  },
+  DOCUMENTATION_REVIEW: {
+    agent: "sidekick-librarian",
+    sessionSuffix: "_doc-review",
+  },
+} as const satisfies Record<string, ReviewTypeConfig>;
+
+type ReviewType = keyof typeof REVIEW_TYPE_CONFIG;
+type ReviewSessionNameFactory = (mainSessionId: string, reviewType: ReviewType) => string;
 
 interface SidekickReviewArgs {
   new_session: boolean;
   review_prompt: string;
+  review_type: ReviewType;
 }
 
 interface SessionSummary {
@@ -181,12 +201,16 @@ function throwIfAborted(abort: AbortSignal): void {
   }
 }
 
-function getReviewSessionName(mainSessionId: string): string {
-  return `${mainSessionId}${REVIEW_SESSION_SUFFIX}`;
+function getReviewSessionName(mainSessionId: string, reviewType: ReviewType): string {
+  return `${mainSessionId}${REVIEW_TYPE_CONFIG[reviewType].sessionSuffix}`;
 }
 
-function getUnrelatedReviewSessionName(mainSessionId: string): string {
-  return `${getReviewSessionName(mainSessionId)}_${randomUUID().slice(0, 8)}`;
+function getUnrelatedReviewSessionName(mainSessionId: string, reviewType: ReviewType): string {
+  return `${getReviewSessionName(mainSessionId, reviewType)}_${randomUUID().slice(0, 8)}`;
+}
+
+function getReviewSessionKey(mainSessionId: string, reviewType: ReviewType): string {
+  return `${mainSessionId}:${reviewType}`;
 }
 
 function rememberReviewSessionName(
@@ -227,7 +251,7 @@ function buildRunArgs(
 ): string[] {
   const commonArgs = [
     "--agent",
-    SIDEKICK_AGENT,
+    REVIEW_TYPE_CONFIG[args.review_type].agent,
     "--title",
     reviewSessionName,
     "--",
@@ -248,10 +272,15 @@ export function createSidekickReviewerTool(
 
   return tool({
     description:
-      "Request a persistent code-quality review from sidekick-reviewer. The review session name " +
-      "is derived from this session. Set new_session only when the review starts unrelated work.",
+      "Request a persistent code, security, or documentation review. The review session name is " +
+      "derived from this session and review type. Set new_session only for unrelated review work.",
     args: {
       review_prompt: tool.schema.string().trim().min(1).max(20_000),
+      review_type: tool.schema.enum([
+        "CODE_REVIEW",
+        "SECURITY_REVIEW",
+        "DOCUMENTATION_REVIEW",
+      ]),
       new_session: tool.schema.boolean().default(false),
     },
     async execute(args, context) {
@@ -262,10 +291,12 @@ export function createSidekickReviewerTool(
           cwd: context.directory,
           timeoutMs: REVIEW_TIMEOUT_MS,
         };
+        const reviewSessionKey = getReviewSessionKey(context.sessionID, args.review_type);
         const reviewSessionName = args.new_session
-          ? createUnrelatedReviewSessionName(context.sessionID)
-          : (reviewSessionNames.get(context.sessionID) ?? getReviewSessionName(context.sessionID));
-        rememberReviewSessionName(reviewSessionNames, context.sessionID, reviewSessionName);
+          ? createUnrelatedReviewSessionName(context.sessionID, args.review_type)
+          : (reviewSessionNames.get(reviewSessionKey) ??
+            getReviewSessionName(context.sessionID, args.review_type));
+        rememberReviewSessionName(reviewSessionNames, reviewSessionKey, reviewSessionName);
         const sessionId = args.new_session
           ? undefined
           : await resolveSessionId(reviewSessionName, commandOptions, commandRunner);
@@ -286,6 +317,7 @@ export function createSidekickReviewerTool(
           sessionName: reviewSessionName,
           sessionId,
           startedNewSession: sessionId === undefined,
+          reviewType: args.review_type,
         };
         context.metadata({ title: `Sidekick review: ${reviewSessionName}`, metadata });
 

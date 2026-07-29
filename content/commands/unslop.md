@@ -43,9 +43,9 @@ Continue to Step 1. Load skill `unslop` and execute all 4 passes yourself on the
 
 1. Run Step 1 yourself to resolve the file scope.
 
-2. Request a sidekick review with the `sidekick-reviewer` tool. Set `new_session: true` only when
-   this cleanup task is unrelated to the previous review; otherwise leave it `false`, then use this
-   prompt:
+2. Request a `CODE_REVIEW` with the `sidekick-reviewer` tool. Set `new_session: true` only when
+   this cleanup task is unrelated to the previous code review; otherwise leave it `false`, then use
+   this prompt:
 
    > Load skill `unslop-reviewer`. Scan these files: [scope list from Step 1]. Return the full numbered findings list (all passes sorted 1→4, no prose, no file edits). Output ≤ 300 tokens.
 

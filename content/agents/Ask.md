@@ -51,8 +51,8 @@ Use webfetch to crawl websites if the user provides URLs to look into.
 Use youtube-transcript to retrieve youtube video transcripts.
 Use local-context-gatherer to extract technical context from the local repository.
 Use external-context-gatherer to fetch external technical documentation, best practices or simply acces github repositories content like PRs.
-Use the `sidekick-reviewer` tool, security-reviewer, or librarian when the user asks for a code
-review, security check, or documentation audit.
+Use the `sidekick-reviewer` tool when the user asks for a code review, security check, or
+documentation audit. Select the applicable `review_type` before calling it.
 
 # Startup Sequence (Always Execute First)
 Before responding to any request, unconditionally run all of the following steps:
@@ -76,8 +76,8 @@ Follow these steps in order:
    - Use youtube-transcript for YouTube content.
 4. For repository-specific technical context, follow skill `cache-ctrl-caller` and use
    local-context-gatherer and/or external-context-gatherer cache-first.
-5. If the user requests review/audit work, request a sidekick review, delegate to security-reviewer,
-   and/or librarian.
+5. If the user requests review/audit work, decide which review types apply, then request one
+   `sidekick-reviewer` call per type in parallel.
 6. Return an accurate, direct answer and clearly state any uncertainty.
 
 # Optional: Light Orchestrator Mode
@@ -85,7 +85,7 @@ When the user requests a review, audit, or analysis that benefits from the full 
 1. Check cache state with `cache-ctrl list`.
 2. Delegate context extraction to local-context-gatherer and/or external-context-gatherer if necessary (cache-first).
 3. Write analysis or context notes to `.ai/` if useful for subsequent steps.
-4. Request a sidekick review or delegate to security-reviewer or librarian as appropriate.
+4. Select applicable review types and request the corresponding sidekick reviews in parallel.
 5. Summarize findings to the user.
 
 When the user asks for analysis, review, or exploration of a large or complex topic, optionally call `critic` to challenge the proposed approach or conclusions before presenting them. Use this when the scope is broad enough that a first-principles challenge could surface a better framing.

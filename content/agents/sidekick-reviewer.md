@@ -3,6 +3,7 @@ model:
 variant: high
 description: "Code quality and architecture reviewer for production systems"
 mode: primary 
+hidden: true
 permission:
   "*": "deny"
   read: "allow"

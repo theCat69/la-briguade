@@ -95,19 +95,17 @@ Critical Rules before writing code in step 4.
 4. Write the code yourself.
 5. Load skill `unslop` and run a cleanup pass on changed files.
 6. Run relevant validation for the changed code.
-7. Request a sidekick review with the `sidekick-reviewer` tool and provide the task's uncommitted
-   git diff while excluding unrelated pre-existing changes. The tool derives its review session
-   name from this agent session. Set `new_session: true` only when starting work unrelated to the
-   previous review; otherwise leave it `false` to continue the current review context. Address
-   substantiated findings, then rerun affected validation.
-8. Call `security-reviewer` with the task's uncommitted git diff if the pipeline was selected for
-   auth, security boundaries, or data integrity, or if the user explicitly requested security
-   review. Exclude unrelated pre-existing changes.
-9. If step 8 ran, re-call `security-reviewer` with a targeted question for each non-obvious
-   finding if needed. Classify every finding as Confirmed, Deferred, or Discarded before acting.
-10. If confirmed security findings change code, rerun affected validation.
-11. Call `librarian` to check for doc changes.
-12. Summarize results and ask the user to validate.
+7. Decide which review types apply before making any review call: `CODE_REVIEW` for implementation
+   quality, `SECURITY_REVIEW` for auth, security boundaries, data integrity, dependencies, or an
+   explicit security request, and `DOCUMENTATION_REVIEW` when code or behavior can affect docs.
+8. Invoke `sidekick-reviewer` once per selected `review_type` **in parallel**. Provide the task's
+   uncommitted git diff while excluding unrelated pre-existing changes. The tool derives a separate
+   session per review type; set `new_session: true` only when that type starts unrelated review
+   work, otherwise leave it `false`.
+9. Address substantiated findings. For non-obvious security findings, request a targeted follow-up
+   with `review_type: SECURITY_REVIEW`, then classify each as Confirmed, Deferred, or Discarded.
+10. Rerun affected validation after any code changes.
+11. Summarize results and ask the user to validate.
 
 # Output Format
 - Goal

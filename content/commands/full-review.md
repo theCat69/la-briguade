@@ -4,7 +4,7 @@ description: Run a full DEEP FULL REVIEW of the project — code quality, securi
 
 You are executing a comprehensive full-project review. Follow every step in order. Do NOT skip steps.
 
-> **DEEP FULL REVIEW mode is ACTIVE.** Every review prompt must receive the phrase "DEEP FULL REVIEW". This disables `git-diff-review` skill loading in sidekick-reviewer, security-reviewer, and librarian — they will scan the entire codebase instead of restricting to changed files.
+> **DEEP FULL REVIEW mode is ACTIVE.** Every review prompt must receive the phrase "DEEP FULL REVIEW". This disables `git-diff-review` skill loading in the sidekick review agents, so they scan the entire codebase instead of restricting to changed files.
 
 ---
 
@@ -27,11 +27,13 @@ Wait for the response before continuing.
 
 ---
 
-## Step 2 — Full Code Quality Review (MANDATORY)
+## Step 2 — Full Reviews (MANDATORY)
 
-Request a sidekick review with the `sidekick-reviewer` tool. The tool derives the session name from
-this agent session. Set `new_session: true` only if this full review starts work unrelated to the
-previous review; otherwise leave it `false` to reuse the existing review context:
+Select all three review types, then invoke the following `sidekick-reviewer` calls **in parallel**.
+The tool derives an isolated session for each type. Set `new_session: true` only if the full review
+is unrelated to that type's previous context; otherwise leave it `false`.
+
+**`CODE_REVIEW` prompt:**
 
 > **DEEP FULL REVIEW** — Review the ENTIRE codebase for code quality, maintainability, and correctness. Do NOT load git-diff-review. Do NOT restrict scope to changed files.
 >
@@ -49,13 +51,7 @@ previous review; otherwise leave it `false` to reuse the existing review context
 >
 > Return all findings with: file path, line range (if applicable), severity (Critical / High / Medium / Low), category, and a brief explanation.
 
-Wait for the response before continuing.
-
----
-
-## Step 3 — Full Security Review (MANDATORY)
-
-Call the `security-reviewer` sub-agent with this prompt:
+**`SECURITY_REVIEW` prompt:**
 
 > **DEEP FULL REVIEW** — Review the ENTIRE codebase for security vulnerabilities. Do NOT load git-diff-review. Do NOT restrict scope to changed files.
 >
@@ -69,19 +65,13 @@ Call the `security-reviewer` sub-agent with this prompt:
 > - Input validation and injection vulnerabilities
 > - Insecure cryptographic patterns
 >
-> Use `local-context-gatherer` to discover all relevant files.
+> Use the full context scan from Step 1 to identify relevant files.
 > Check all dependency manifests for CVEs.
 > Run `git remote -v` and check Dependabot alerts if the project is on GitHub.
 >
 > Return all findings with: file path, line range (if applicable), severity (Critical / High / Medium / Low), CVE ID (if applicable), and mitigation.
 
-Wait for the response before continuing.
-
----
-
-## Step 4 — Full Documentation Review (MANDATORY)
-
-Call the `librarian` sub-agent with this prompt:
+**`DOCUMENTATION_REVIEW` prompt:**
 
 > **DEEP FULL REVIEW** — Audit the ENTIRE project documentation for completeness, accuracy, and consistency with the codebase. Do NOT load git-diff-review. Do NOT restrict scope to recently changed files.
 >
@@ -94,15 +84,15 @@ Call the `librarian` sub-agent with this prompt:
 > - Inconsistencies between code and docs
 > - Missing documentation for public APIs or important modules
 >
-> Use `local-context-gatherer` to understand project structure and compare what exists vs what is documented.
+> Use the full context scan from Step 1 to compare the project structure with its documentation.
 >
 > Return all findings with: file path (if applicable), severity (Critical / High / Medium / Low), category, and what needs to be added or updated.
 
-Wait for the response before continuing.
+After all three calls complete, continue.
 
 ---
 
-## Step 5 — Consolidate and Analyze Findings
+## Step 3 — Consolidate and Analyze Findings
 
 Collect all findings from Steps 2, 3, and 4. For each finding, reason carefully about its validity:
 
@@ -124,7 +114,7 @@ Collect all findings from Steps 2, 3, and 4. For each finding, reason carefully 
 
 ---
 
-## Step 6 — Present Results to the User
+## Step 4 — Present Results to the User
 
 Present a clear, structured summary using the `question` tool. Use this format:
 
@@ -158,7 +148,7 @@ Present a clear, structured summary using the `question` tool. Use this format:
 
 ---
 
-## Step 7 — Ask the User for Next Action
+## Step 5 — Ask the User for Next Action
 
 Use the `question` tool to ask the user what they want to do:
 
@@ -171,7 +161,7 @@ Use the `question` tool to ask the user what they want to do:
 
 Based on the user's choice:
 
-- **Implement fixes now**: Follow the standard implementer workflow — call `coder` for each fix, then request a sidekick review and call `security-reviewer` to validate each change before moving to the next.
+- **Implement fixes now**: Follow the standard implementer workflow — call `coder` for each fix, then select the applicable review types and invoke their sidekick reviews in parallel before moving to the next.
 - **Write specs/tasks**: Call `coder` to write a structured markdown task file with all confirmed findings, their context, proposed mitigations, and acceptance criteria.
 - **Both**: Write the task file first, then start implementing.
 - **Review uncertain findings**: Present each uncertain finding one by one using `question` tool and ask the user to confirm, dismiss, or flag for later.

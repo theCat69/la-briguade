@@ -54,18 +54,25 @@ describe("prompt policy contracts", () => {
     expect(content).not.toContain("Content should live in exactly one place");
   });
 
-  it("should require explicit security-reviewer invocation in workflow prompts", () => {
+  it("should require typed parallel sidekick reviews in workflow prompts", () => {
     const orchestratorContent = readContentFile("content/agents/Orchestrator.md");
     const builderContent = readContentFile("content/agents/Builder.md");
     const justDoItContent = readContentFile("content/commands/just-do-it.md");
     const refactorContent = readContentFile("content/commands/refactor.md");
     const implementContent = readContentFile("content/commands/implement.md");
 
-    expect(orchestratorContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(builderContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(justDoItContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(refactorContent).toMatch(/security-reviewer[\s\S]*explicitly requests?/i);
-    expect(implementContent).toMatch(/security-reviewer[\s\S]*when applicable/i);
+    for (const content of [
+      orchestratorContent,
+      builderContent,
+      justDoItContent,
+      refactorContent,
+      implementContent,
+    ]) {
+      expect(content).toContain("CODE_REVIEW");
+      expect(content).toContain("SECURITY_REVIEW");
+      expect(content).toContain("DOCUMENTATION_REVIEW");
+      expect(content).toMatch(/parallel/i);
+    }
   });
 
   it("should provide the spec-to-ticket workflow without legacy planning commands", () => {

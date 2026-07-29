@@ -2,7 +2,7 @@
 description: "Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption."
 ---
 
-> **Requires**: `task→local-context-gatherer`, `task→architect`, `task→critic`, `task→coder`, `task→security-reviewer` (only when explicitly requested), `task→librarian`, access to the `sidekick-reviewer` tool, and `git-commit` skill permission. Safe to invoke from Orchestrator or Builder only. Running from a restricted agent will silently fail.
+> **Requires**: `task→local-context-gatherer`, `task→architect`, `task→critic`, `task→coder`, access to the `sidekick-reviewer` tool, and `git-commit` skill permission. Safe to invoke from Orchestrator or Builder only. Running from a restricted agent will silently fail.
 
 $ARGUMENTS
 
@@ -126,15 +126,15 @@ Call `coder` subagent with:
 
 Run `git diff HEAD` to capture all changes made in Step 6.
 
-Request a sidekick review with the `sidekick-reviewer` tool. Its session name is derived from this
-agent session. Set `new_session: true` only when starting work unrelated to the previous review;
-otherwise leave it `false` to preserve the current review context.
-
-Call `security-reviewer` **only if the user explicitly asked for a security review/audit** in the request (e.g. mentions "security review", "security audit", "vulnerability check").
+First decide which review types apply: always select `CODE_REVIEW`; select `SECURITY_REVIEW` for
+security-sensitive changes or an explicit security request; select `DOCUMENTATION_REVIEW` when code
+or behavior can affect documentation. Invoke `sidekick-reviewer` once per selected type **in
+parallel**. Its sessions are isolated per type. Set `new_session: true` only for review work
+unrelated to that type's previous context; otherwise leave it `false`.
 
 Use the following prompts:
 
-**sidekick review prompt:**
+**`CODE_REVIEW` prompt:**
 
 > Review the following implementation diff against the approved plan and project standards. Return ≤ 300 tokens: blocking issues first, then warnings, then green-lights.
 >
@@ -144,36 +144,29 @@ Use the following prompts:
 > **Diff:**
 > [diff captured above]
 
-**security-reviewer prompt:**
+**`SECURITY_REVIEW` prompt:**
 
 > Security-review the following implementation. Focus on: input validation, path traversal, injection risks, and any new dependencies introduced. Return ≤ 300 tokens.
 >
 > **Diff:**
 > [diff captured above]
 
-For each **blocking** finding from either reviewer:
+**`DOCUMENTATION_REVIEW` prompt:**
+
+> Review whether the following implementation requires documentation updates. Return ≤ 200 tokens:
+> files to update and what to change.
+>
+> **Diff:**
+> [diff captured above]
+
+For each **blocking** finding from the selected reviews:
 
 - Call the `coder` subagent with the specific fix, regardless of size.
 - If `coder` explicitly reports failure, returns an error, or produces no file changes in response to a blocking finding, classify it as a **Deferred blocking issue** and document it in the Completion report under a `⚠️ Deferred Issues` section. Do not request interactive input.
 
 ---
 
-## Step 8 — Documentation
-
-Run `git diff HEAD` to capture the final state of all changes (including any fixes applied in Step 7).
-
-Call the `librarian` subagent with:
-
-> Assess whether any documentation needs updating given the following implementation. Return ≤ 200 tokens: files to update and what to change.
->
-> **Diff:**
-> [current git diff HEAD]
-
-If documentation updates are needed, call the `coder` subagent with the specific changes.
-
----
-
-## Step 9 — Commit
+## Step 8 — Commit
 
 Load the `git-commit` skill.
 

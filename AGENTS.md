@@ -83,7 +83,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
 | `bounded-skill-loader.md` | Rejecting oversized auto-inject skill content before it enters memory or prompts |
-| `persistent-sidekick-tool.md` | Persistent CLI-backed reviewer tool with safe session reuse, bounded output, and cancellation |
+| `persistent-sidekick-tool.md` | Persistent CLI-backed multi-type reviewer tool with isolated per-type session reuse, bounded output, and cancellation |
 
 ---
 

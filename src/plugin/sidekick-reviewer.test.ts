@@ -50,7 +50,7 @@ describe("sidekick-reviewer tool", () => {
     const context = createToolContext();
 
     const result = await sidekickTool.execute(
-      { new_session: false, review_prompt: "Review the current diff." },
+      { new_session: false, review_prompt: "Review the current diff.", review_type: "CODE_REVIEW" },
       context as never,
     );
 
@@ -91,7 +91,7 @@ describe("sidekick-reviewer tool", () => {
     const context = createToolContext();
 
     await sidekickTool.execute(
-      { new_session: false, review_prompt: "Review the change." },
+      { new_session: false, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
       context as never,
     );
 
@@ -114,7 +114,7 @@ describe("sidekick-reviewer tool", () => {
     commandRunner.mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Fresh review." });
 
     await sidekickTool.execute(
-      { new_session: true, review_prompt: "Review another feature." },
+      { new_session: true, review_prompt: "Review another feature.", review_type: "CODE_REVIEW" },
       context as never,
     );
 
@@ -156,11 +156,11 @@ describe("sidekick-reviewer tool", () => {
     const context = createToolContext();
 
     await sidekickTool.execute(
-      { new_session: true, review_prompt: "Review another feature." },
+      { new_session: true, review_prompt: "Review another feature.", review_type: "CODE_REVIEW" },
       context as never,
     );
     await sidekickTool.execute(
-      { new_session: false, review_prompt: "Review its follow-up." },
+      { new_session: false, review_prompt: "Review its follow-up.", review_type: "CODE_REVIEW" },
       context as never,
     );
 
@@ -182,6 +182,79 @@ describe("sidekick-reviewer tool", () => {
     );
   });
 
+  it("should isolate sessions and agents by review type", async () => {
+    const commandRunner = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stderr: "",
+        stdout: JSON.stringify([
+          { directory: "/project", id: "ses_security", title: "ses_main_sec-review", updated: 1 },
+        ]),
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "No vulnerabilities." })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stderr: "",
+        stdout: JSON.stringify([
+          { directory: "/project", id: "ses_docs", title: "ses_main_doc-review", updated: 1 },
+        ]),
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Documentation is current." });
+    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const context = createToolContext();
+
+    await sidekickTool.execute(
+      {
+        new_session: false,
+        review_prompt: "Review the security impact.",
+        review_type: "SECURITY_REVIEW",
+      },
+      context as never,
+    );
+    await sidekickTool.execute(
+      {
+        new_session: false,
+        review_prompt: "Review the documentation impact.",
+        review_type: "DOCUMENTATION_REVIEW",
+      },
+      context as never,
+    );
+
+    expect(commandRunner).toHaveBeenNthCalledWith(
+      2,
+      "opencode",
+      [
+        "run",
+        "--session",
+        "ses_security",
+        "--agent",
+        "sidekick-security-reviewer",
+        "--title",
+        "ses_main_sec-review",
+        "--",
+        "Review the security impact.",
+      ],
+      { abort: abortController.signal, cwd: "/project", timeoutMs: 600_000 },
+    );
+    expect(commandRunner).toHaveBeenNthCalledWith(
+      4,
+      "opencode",
+      [
+        "run",
+        "--session",
+        "ses_docs",
+        "--agent",
+        "sidekick-librarian",
+        "--title",
+        "ses_main_doc-review",
+        "--",
+        "Review the documentation impact.",
+      ],
+      { abort: abortController.signal, cwd: "/project", timeoutMs: 600_000 },
+    );
+  });
+
   it("should return an actionable error when session lookup fails", async () => {
     const commandRunner = vi.fn().mockResolvedValue({
       exitCode: 1,
@@ -192,7 +265,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: false, review_prompt: "Review the change." },
+        { new_session: false, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         createToolContext() as never,
       ),
     ).rejects.toThrow("Sidekick review failed while listing sessions (exit 1)");
@@ -208,7 +281,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change." },
+        { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         createToolContext() as never,
       ),
     ).rejects.toThrow("Sidekick review failed while starting a session (exit 2)");
@@ -222,7 +295,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change." },
+        { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
     ).rejects.toThrow("Sidekick review was cancelled.");
@@ -239,7 +312,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change." },
+        { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
     ).rejects.toThrow("Sidekick review was cancelled.");
