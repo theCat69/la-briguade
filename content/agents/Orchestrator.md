@@ -44,6 +44,7 @@ permission:
   read: "allow"
   glob: "allow"
   grep: "allow"
+  "sidekick-reviewer": "allow"
   task:
     "*": "deny"
     "coder": "allow"

@@ -4,6 +4,7 @@ description: Catalog of project code examples — what patterns exist and where 
 agents:
   - coder
   - reviewer
+  - sidekick-reviewer
   - architect
   - builder
 ---

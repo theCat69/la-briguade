@@ -14,6 +14,8 @@ permission:
     "git status --short": "allow"
     "git branch -r": "allow"
     "git diff --no-ext-diff": "allow"
+    "git diff --no-ext-diff HEAD": "allow"
+    "git diff --no-ext-diff --name-only HEAD": "allow"
     "git diff --no-ext-diff --name-only origin/develop...HEAD": "allow"
     "git diff --no-ext-diff --name-only origin/main...HEAD": "allow"
     "git diff --no-ext-diff --name-only origin/master...HEAD": "allow"
@@ -28,6 +30,8 @@ permission:
     "rtk git status --short": "allow"
     "rtk git branch -r": "allow"
     "rtk git diff --no-ext-diff": "allow"
+    "rtk git diff --no-ext-diff HEAD": "allow"
+    "rtk git diff --no-ext-diff --name-only HEAD": "allow"
     "rtk git diff --no-ext-diff --name-only origin/develop...HEAD": "allow"
     "rtk git diff --no-ext-diff --name-only origin/main...HEAD": "allow"
     "rtk git diff --no-ext-diff --name-only origin/master...HEAD": "allow"
@@ -62,12 +66,10 @@ Check whether the calling prompt explicitly contains the phrase **"DEEP FULL REV
 
 - **If "DEEP FULL REVIEW" is present**: Do NOT load `git-diff-review`. Review the
   entire in-scope codebase, not just changed files.
-- **Otherwise (default — diff-based review)**: If the invoking prompt already
-  includes sufficient diff context (for example, explicit changed-file list and
-  relevant diff hunks), use that context directly and do not load
-  `git-diff-review`. If diff context is absent or insufficient, load
-  `git-diff-review` first to identify upstream and changed files. Restrict
-  review to that changed-file set.
+- **Otherwise (default — diff-based review)**: Review current tracked, uncommitted changes by
+  running `git diff --no-ext-diff HEAD` and its `--name-only` variant. This includes staged and
+  unstaged changes. If the invoking prompt instead explicitly requests a committed-range review,
+  use its supplied diff context or load `git-diff-review` to identify the upstream range.
 
 # Context Gathering
 - Use provided context, `cache-ctrl` read commands, `read`, `glob`, and `grep` directly.

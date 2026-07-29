@@ -29,8 +29,8 @@ Wait for the response before continuing.
 
 ## Step 2 — Full Code Quality Review (MANDATORY)
 
-Request a new sidekick review with the `sidekick-reviewer` tool using `session_name: "full-review"`
-and this prompt:
+Request a new sidekick review with the `sidekick-reviewer` tool using `session_name: "full-review"`,
+`new_session: true`, and this prompt:
 
 > **DEEP FULL REVIEW** — Review the ENTIRE codebase for code quality, maintainability, and correctness. Do NOT load git-diff-review. Do NOT restrict scope to changed files.
 >

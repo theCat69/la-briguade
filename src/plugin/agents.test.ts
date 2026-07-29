@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerAgents } from "./agents.js";
@@ -5,8 +7,10 @@ import { registerAgents } from "./agents.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content/content-merge.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
 import { readContentFile } from "../utils/content/read-content-file.js";
 import { logger } from "../utils/runtime/logger.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 vi.mock("../utils/content/content-merge.js");
 vi.mock("../utils/content/read-content-file.js");
@@ -247,4 +251,19 @@ describe("registerAgents", () => {
     expect(result).toBeUndefined();
     expect(config).toEqual(initialConfig);
   });
+
+  it.each(["Ask", "Orchestrator"])(
+    "should permit %s to request a sidekick review",
+    (agentName) => {
+      // Arrange
+      const content = readFileSync(`content/agents/${agentName}.md`, "utf8");
+
+      // Act
+      const { attributes } = parseFrontmatter(content);
+      const permission = attributes["permission"];
+
+      // Assert
+      expect(isRecord(permission) ? permission["sidekick-reviewer"] : undefined).toBe("allow");
+    },
+  );
 });

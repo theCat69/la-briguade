@@ -22,6 +22,7 @@ permission:
   websearch: "allow"
   "youtube-transcript_*": "allow"
   "github_*": "allow"
+  "sidekick-reviewer": "allow"
   bash:
     "*": "deny"
     "curl *": "allow"
