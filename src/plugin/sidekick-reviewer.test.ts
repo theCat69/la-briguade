@@ -87,7 +87,7 @@ describe("sidekick-reviewer tool", () => {
       .fn()
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "[]" })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Review complete." });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickReviewerTool(commandRunner, () => "ses_main_review_unrelated");
     const context = createToolContext();
 
     await sidekickTool.execute(
@@ -126,9 +126,57 @@ describe("sidekick-reviewer tool", () => {
         "--agent",
         "sidekick-reviewer",
         "--title",
-        "ses_main_review",
+        "ses_main_review_unrelated",
         "--",
         "Review another feature.",
+      ],
+      { abort: abortController.signal, cwd: "/project", timeoutMs: 600_000 },
+    );
+  });
+
+  it("should resume an unrelated review session after it starts", async () => {
+    const commandRunner = vi
+      .fn()
+      .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Fresh review." })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stderr: "",
+        stdout: JSON.stringify([
+          {
+            directory: "/project",
+            id: "ses_unrelated",
+            title: "ses_main_review_unrelated",
+            updated: 1,
+          },
+          { directory: "/project", id: "ses_default", title: "ses_main_review", updated: 2 },
+        ]),
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Follow-up review." });
+    const sidekickTool = createSidekickReviewerTool(commandRunner, () => "ses_main_review_unrelated");
+    const context = createToolContext();
+
+    await sidekickTool.execute(
+      { new_session: true, review_prompt: "Review another feature." },
+      context as never,
+    );
+    await sidekickTool.execute(
+      { new_session: false, review_prompt: "Review its follow-up." },
+      context as never,
+    );
+
+    expect(commandRunner).toHaveBeenNthCalledWith(
+      3,
+      "opencode",
+      [
+        "run",
+        "--session",
+        "ses_unrelated",
+        "--agent",
+        "sidekick-reviewer",
+        "--title",
+        "ses_main_review_unrelated",
+        "--",
+        "Review its follow-up.",
       ],
       { abort: abortController.signal, cwd: "/project", timeoutMs: 600_000 },
     );

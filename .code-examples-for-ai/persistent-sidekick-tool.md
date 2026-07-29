@@ -1,11 +1,15 @@
 <!-- Pattern: persistent-sidekick-tool — A bounded custom tool that resumes a caller-session-scoped CLI session safely. -->
 
 ```typescript
+import { randomUUID } from "node:crypto";
+
 import { tool } from "@opencode-ai/plugin";
 
 const MAX_OUTPUT_LENGTH = 1_000_000;
 
 export function createSidekickReviewerTool(runCommand: CommandRunner) {
+  const reviewSessionNames = new Map<string, string>();
+
   return tool({
     description: "Request a persistent, read-only code review.",
     args: {
@@ -13,7 +17,10 @@ export function createSidekickReviewerTool(runCommand: CommandRunner) {
       new_session: tool.schema.boolean().default(false),
     },
     async execute(args, context) {
-      const reviewSessionName = `${context.sessionID}_review`;
+      const reviewSessionName = args.new_session
+        ? `${context.sessionID}_review_${randomUUID().slice(0, 8)}`
+        : reviewSessionNames.get(context.sessionID) ?? `${context.sessionID}_review`;
+      reviewSessionNames.set(context.sessionID, reviewSessionName);
       // Use JSON, exact title matching, the active project directory, and updated timestamps.
       const sessionId = args.new_session
         ? undefined

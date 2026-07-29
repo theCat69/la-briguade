@@ -266,4 +266,22 @@ describe("registerAgents", () => {
       expect(isRecord(permission) ? permission["sidekick-reviewer"] : undefined).toBe("allow");
     },
   );
+
+  it("should permit sidekick to review the previous commit", () => {
+    // Arrange
+    const content = readFileSync("content/agents/sidekick-reviewer.md", "utf8");
+
+    // Act
+    const { attributes } = parseFrontmatter(content);
+    const permission = attributes["permission"];
+    const bashPermissions = isRecord(permission) && isRecord(permission["bash"])
+      ? permission["bash"]
+      : {};
+
+    // Assert
+    expect(bashPermissions["git diff --no-ext-diff HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["rtk git diff --no-ext-diff HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["rtk git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
+  });
 });

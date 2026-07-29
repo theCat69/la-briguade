@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 
 import { tool } from "@opencode-ai/plugin";
 import type { ToolDefinition } from "@opencode-ai/plugin";
@@ -10,6 +11,7 @@ const REVIEW_TIMEOUT_MS = 600_000;
 const SESSION_LIST_MAX_COUNT = 100;
 const SESSION_LIST_TIMEOUT_MS = 10_000;
 const REVIEW_SESSION_SUFFIX = "_review";
+const MAX_TRACKED_REVIEW_SESSIONS = 1_000;
 
 interface CommandResult {
   exitCode: number;
@@ -28,6 +30,8 @@ type CommandRunner = (
   args: string[],
   options: CommandOptions,
 ) => Promise<CommandResult>;
+
+type ReviewSessionNameFactory = (mainSessionId: string) => string;
 
 interface SidekickReviewArgs {
   new_session: boolean;
@@ -181,6 +185,24 @@ function getReviewSessionName(mainSessionId: string): string {
   return `${mainSessionId}${REVIEW_SESSION_SUFFIX}`;
 }
 
+function getUnrelatedReviewSessionName(mainSessionId: string): string {
+  return `${getReviewSessionName(mainSessionId)}_${randomUUID().slice(0, 8)}`;
+}
+
+function rememberReviewSessionName(
+  reviewSessionNames: Map<string, string>,
+  mainSessionId: string,
+  reviewSessionName: string,
+): void {
+  reviewSessionNames.delete(mainSessionId);
+  reviewSessionNames.set(mainSessionId, reviewSessionName);
+
+  if (reviewSessionNames.size > MAX_TRACKED_REVIEW_SESSIONS) {
+    const oldestMainSessionId = reviewSessionNames.keys().next().value;
+    if (oldestMainSessionId !== undefined) reviewSessionNames.delete(oldestMainSessionId);
+  }
+}
+
 async function resolveSessionId(
   sessionName: string,
   options: CommandOptions,
@@ -220,7 +242,10 @@ function buildRunArgs(
 /** Creates the tool used to run persistent sidekick review sessions. */
 export function createSidekickReviewerTool(
   commandRunner: CommandRunner = runCommand,
+  createUnrelatedReviewSessionName: ReviewSessionNameFactory = getUnrelatedReviewSessionName,
 ): ToolDefinition {
+  const reviewSessionNames = new Map<string, string>();
+
   return tool({
     description:
       "Request a persistent code-quality review from sidekick-reviewer. The review session name " +
@@ -237,7 +262,10 @@ export function createSidekickReviewerTool(
           cwd: context.directory,
           timeoutMs: REVIEW_TIMEOUT_MS,
         };
-        const reviewSessionName = getReviewSessionName(context.sessionID);
+        const reviewSessionName = args.new_session
+          ? createUnrelatedReviewSessionName(context.sessionID)
+          : (reviewSessionNames.get(context.sessionID) ?? getReviewSessionName(context.sessionID));
+        rememberReviewSessionName(reviewSessionNames, context.sessionID, reviewSessionName);
         const sessionId = args.new_session
           ? undefined
           : await resolveSessionId(reviewSessionName, commandOptions, commandRunner);

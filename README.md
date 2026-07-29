@@ -52,7 +52,8 @@ Use `sidekick-reviewer` for code-quality reviews instead of creating a `reviewer
 a `review_prompt`; the tool derives its name as `<calling-session-id>_review`. The tool reuses the
 newest matching review session in the current project by default (`new_session: false`). Set
 `new_session` to `true` only when starting work unrelated to the previous review; this starts a
-fresh session with the same derived name. The legacy `reviewer` agent remains available for
+fresh, isolated derived session and retains it for later calls from the same calling session. The
+legacy `reviewer` agent remains available for
 feature-planning workflows.
 
 | Argument | Required | Contract |
