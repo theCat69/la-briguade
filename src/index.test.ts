@@ -74,6 +74,7 @@ vi.mock("./plugin/mcp/index.js", () => ({
 vi.mock("./utils/runtime/logger.js", () => ({
   initLogger: vi.fn(),
   logger: {
+    debug: vi.fn(),
     setLevel: vi.fn(),
   },
 }));
@@ -106,6 +107,7 @@ const mockInjectSkillMcpPermissions = vi.mocked(injectSkillMcpPermissions);
 const mockMergeSkillMcps = vi.mocked(mergeSkillMcps);
 const mockInitLogger = vi.mocked(initLogger);
 const mockSetLevel = vi.mocked(logger.setLevel);
+const mockDebug = vi.mocked(logger.debug);
 const mockCollectDirs = vi.mocked(collectDirs);
 
 describe("LaBriguadePlugin", () => {
@@ -203,6 +205,31 @@ describe("LaBriguadePlugin", () => {
     ]);
     expect(mockResolveActiveSkills).toHaveBeenCalledWith(autoInjectEntries, "/project");
     expect(mockInjectAutoInjectSkills).toHaveBeenCalledWith(input, autoInjectEntries, activeSkills);
+  });
+
+  it("should log the final build agent prompt with an approximate token count", async () => {
+    mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
+    mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
+    mockResolveUserConfig.mockReturnValue({ log_level: "debug" });
+    mockCreateHooks.mockReturnValue({});
+    mockRegisterSkills.mockReturnValue({ dirs: [] });
+    mockCollectSkillAgents.mockReturnValue({});
+    mockCollectSkillExternalDirectories.mockReturnValue({});
+    mockCollectSkillMcps.mockReturnValue({ mcpMap: {}, skillMcpIndex: {} });
+    mockCollectSkillBashPermissions.mockReturnValue({});
+    mockCollectDirs.mockReturnValue(new Map());
+    mockCollectAutoInjectSkills.mockReturnValue(new Map());
+    mockResolveActiveSkills.mockReturnValue(new Set());
+    mockInjectAutoInjectSkills.mockImplementation((input) => {
+      input.agent = { builder: { prompt: "Base\nInjected" } };
+    });
+
+    const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
+    await plugin.config?.({} as never);
+
+    expect(mockDebug).toHaveBeenCalledWith(
+      'Build agent system prompt (4 approximate tokens; 4 characters/token): "Base\\nInjected"',
+    );
   });
 
   it("should include only canonical project auto-inject root", async () => {

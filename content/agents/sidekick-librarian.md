@@ -1,6 +1,6 @@
 ---
-model:
-variant: low
+model: github-copilot/gpt-5.6-luna
+variant: low 
 description: "Documentation synchronization agent for persistent sidekick sessions"
 mode: primary
 hidden: true

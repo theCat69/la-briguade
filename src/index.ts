@@ -29,6 +29,7 @@ import {
   injectAutoInjectSkills,
   resolveActiveSkills,
 } from "./plugin/auto-inject.js";
+import type { Config } from "./types/plugin.js";
 import { collectDirs } from "./utils/content/content-merge.js";
 import { initLogger, logger } from "./utils/runtime/logger.js";
 
@@ -40,6 +41,8 @@ const laBriguadeUserDir = "la_briguade";
 const laBriguadeProjectDir = "." + laBriguadeUserDir;
 const opencodeUserDir = "opencode";
 const opencodeProjectDir = "." + opencodeUserDir;
+const BUILD_AGENT_NAME = "builder";
+const CHARS_PER_APPROXIMATE_TOKEN = 4;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -116,10 +119,34 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         maxDepth === undefined
           ? resolveActiveSkills(autoInjectEntries, ctx.directory)
           : resolveActiveSkills(autoInjectEntries, ctx.directory, { maxDepth });
-      injectAutoInjectSkills(input, autoInjectEntries, activeSkills);
-    },
+       injectAutoInjectSkills(input, autoInjectEntries, activeSkills);
+       logBuildAgentPrompt(input);
+     },
     ...hooks,
   };
 };
+
+function logBuildAgentPrompt(input: Config): void {
+  const agents = input.agent;
+  if (agents === undefined || typeof agents !== "object" || Array.isArray(agents)) {
+    return;
+  }
+
+  const buildAgent = agents[BUILD_AGENT_NAME];
+  if (buildAgent === undefined || typeof buildAgent !== "object" || Array.isArray(buildAgent)) {
+    return;
+  }
+
+  const prompt = buildAgent["prompt"];
+  if (typeof prompt !== "string") {
+    return;
+  }
+
+  const approximateTokenCount = Math.ceil(prompt.length / CHARS_PER_APPROXIMATE_TOKEN);
+  logger.debug(
+    `Build agent system prompt (${approximateTokenCount} approximate tokens; ` +
+      `${CHARS_PER_APPROXIMATE_TOKEN} characters/token): ${JSON.stringify(prompt)}`,
+  );
+}
 
 export default LaBriguadePlugin;

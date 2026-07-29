@@ -10,8 +10,8 @@ import { logger } from "../utils/runtime/logger.js";
 import { isNodeError, isRecord } from "../utils/support/type-guards.js";
 import type { Config } from "../types/plugin.js";
 
-const AUTO_INJECT_START_MARKER = ">>>>> AUTO-INJECTED-SKILLS-START >>>>>";
-const AUTO_INJECT_END_MARKER = "<<<<< AUTO-INJECTED-SKILLS-END <<<<<";
+const AUTO_INJECT_START_MARKER = "<auto-injected-skills>";
+const AUTO_INJECT_END_MARKER = "</auto-injected-skills>";
 const AUTO_INJECT_PREFACE =
   "The following content is already-loaded auto-injected skills. " +
   "Each skill is shown as '#skill-name', then description, then body.";
