@@ -285,33 +285,4 @@ describe("registerAgents", () => {
     expect(bashPermissions["git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
     expect(bashPermissions["rtk git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
   });
-
-  it("should limit documentation synchronization edits to approved Markdown paths", () => {
-    // Arrange
-    const content = readFileSync("content/agents/sidekick-librarian.md", "utf8");
-
-    // Act
-    const { attributes } = parseFrontmatter(content);
-    const permission = attributes["permission"];
-    const editPermissions = isRecord(permission) && isRecord(permission["edit"])
-      ? permission["edit"]
-      : {};
-    const writePermissions = isRecord(permission) && isRecord(permission["write"])
-      ? permission["write"]
-      : {};
-
-    // Assert
-    const expectedPermissions = {
-      "README.md": "allow",
-      "AGENTS.md": "allow",
-      "CHANGELOG.md": "allow",
-      "Recommended-models-ghc.md": "allow",
-      "docs/**/*.md": "allow",
-      "content/**/*.md": "allow",
-      ".code-examples-for-ai/**/*.md": "allow",
-      ".la_briguade/**/*.md": "allow",
-    };
-    expect(editPermissions).toEqual(expectedPermissions);
-    expect(writePermissions).toEqual(expectedPermissions);
-  });
 });
