@@ -23,7 +23,7 @@ import {
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
-import { createSidekickReviewerTool } from "./plugin/sidekick-reviewer.js";
+import { createSidekickAgentTool } from "./plugin/sidekick-agent.js";
 import {
   collectAutoInjectSkills,
   injectAutoInjectSkills,
@@ -84,7 +84,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
 
   return {
     tool: {
-      "sidekick-reviewer": createSidekickReviewerTool(),
+      "sidekick-agent": createSidekickAgentTool(),
     },
     config: async (input) => {
       const userConfig = resolveUserConfig(ctx.directory);

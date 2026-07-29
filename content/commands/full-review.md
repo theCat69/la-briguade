@@ -29,9 +29,9 @@ Wait for the response before continuing.
 
 ## Step 2 — Full Reviews (MANDATORY)
 
-Select all three review types, then invoke the following `sidekick-reviewer` calls **in parallel**.
-The tool derives an isolated session for each type. Set `new_session: true` only if the full review
-is unrelated to that type's previous context; otherwise leave it `false`.
+Select all three review types. Invoke `sidekick-agent` for `CODE_REVIEW` and `SECURITY_REVIEW` **in
+parallel**. The tool derives an isolated session for each type. Set `new_session: true` only if the
+full review is unrelated to that type's previous context; otherwise leave it `false`.
 
 **`CODE_REVIEW` prompt:**
 
@@ -71,9 +71,10 @@ is unrelated to that type's previous context; otherwise leave it `false`.
 >
 > Return all findings with: file path, line range (if applicable), severity (Critical / High / Medium / Low), CVE ID (if applicable), and mitigation.
 
-**`DOCUMENTATION_REVIEW` prompt:**
+After resolving code and security findings, invoke `sidekick-agent` with this
+**`DOCUMENTATION_SYNC` prompt:**
 
-> **DEEP FULL REVIEW** — Audit the ENTIRE project documentation for completeness, accuracy, and consistency with the codebase. Do NOT load git-diff-review. Do NOT restrict scope to recently changed files.
+> **DEEP FULL REVIEW** — Synchronize the ENTIRE project documentation for completeness, accuracy, and consistency with the codebase. Do NOT load git-diff-review. Do NOT restrict scope to recently changed files.
 >
 > **Scope**: All documentation files — README.md, AGENTS.md, CLAUDE.md, /docs, .opencode/skills/, .code-examples-for-ai/, and any other markdown files.
 >
@@ -86,9 +87,9 @@ is unrelated to that type's previous context; otherwise leave it `false`.
 >
 > Use the full context scan from Step 1 to compare the project structure with its documentation.
 >
-> Return all findings with: file path (if applicable), severity (Critical / High / Medium / Low), category, and what needs to be added or updated.
+> Apply required Markdown documentation, prompt, skill, and code-example updates. Return the files changed and why each update was required.
 
-After all three calls complete, continue.
+After documentation synchronization completes, continue.
 
 ---
 

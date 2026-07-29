@@ -7,7 +7,6 @@ detect:
       contains: "dioxus ="
 agents:
   - coder
-  - reviewer
   - sidekick-reviewer
   - architect
   - feature-designer

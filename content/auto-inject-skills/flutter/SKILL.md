@@ -7,7 +7,6 @@ detect:
       contains: "flutter:"
 agents:
   - coder
-  - reviewer
   - sidekick-reviewer
   - architect
   - feature-designer

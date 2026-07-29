@@ -3,7 +3,6 @@ name: project-test
 description: Testing guidelines, Vitest conventions, patterns, and coverage requirements for la-briguade
 agents:
   - coder
-  - reviewer
   - builder
 ---
 

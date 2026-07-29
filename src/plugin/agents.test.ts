@@ -198,7 +198,7 @@ describe("registerAgents", () => {
     mockCollectFiles.mockReturnValue(
       new Map([
         ["local-context-gatherer", "/builtin/agents/local-context-gatherer.md"],
-        ["reviewer", "/builtin/agents/reviewer.md"],
+        ["sidekick-reviewer", "/builtin/agents/sidekick-reviewer.md"],
       ]),
     );
     mockReadContentFile.mockImplementation((filePath) => {
@@ -223,7 +223,7 @@ describe("registerAgents", () => {
     const userConfig: LaBriguadeConfig = {
       agents: {
         "local-context-gatherer": { model: "azure_foundry/gpt-5.4-mini" },
-        reviewer: { model: "azure_foundry/gpt-5.3-codex" },
+        "sidekick-reviewer": { model: "azure_foundry/gpt-5.3-codex" },
       },
     };
 
@@ -233,9 +233,10 @@ describe("registerAgents", () => {
     // Assert
     const localContextGatherer =
       config.agent?.["local-context-gatherer"] as Record<string, unknown> | undefined;
-    const reviewer = config.agent?.["reviewer"] as Record<string, unknown> | undefined;
+    const sidekickReviewer =
+      config.agent?.["sidekick-reviewer"] as Record<string, unknown> | undefined;
     expect(localContextGatherer?.["model"]).toBe("azure_foundry/gpt-5.4-mini");
-    expect(reviewer?.["model"]).toBe("azure_foundry/gpt-5.3-codex");
+    expect(sidekickReviewer?.["model"]).toBe("azure_foundry/gpt-5.3-codex");
   });
 
   it("should return early and keep config unchanged when no agent files are found", () => {
@@ -263,7 +264,7 @@ describe("registerAgents", () => {
       const permission = attributes["permission"];
 
       // Assert
-      expect(isRecord(permission) ? permission["sidekick-reviewer"] : undefined).toBe("allow");
+      expect(isRecord(permission) ? permission["sidekick-agent"] : undefined).toBe("allow");
     },
   );
 
@@ -283,5 +284,34 @@ describe("registerAgents", () => {
     expect(bashPermissions["rtk git diff --no-ext-diff HEAD^ HEAD"]).toBe("allow");
     expect(bashPermissions["git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
     expect(bashPermissions["rtk git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
+  });
+
+  it("should limit documentation synchronization edits to approved Markdown paths", () => {
+    // Arrange
+    const content = readFileSync("content/agents/sidekick-librarian.md", "utf8");
+
+    // Act
+    const { attributes } = parseFrontmatter(content);
+    const permission = attributes["permission"];
+    const editPermissions = isRecord(permission) && isRecord(permission["edit"])
+      ? permission["edit"]
+      : {};
+    const writePermissions = isRecord(permission) && isRecord(permission["write"])
+      ? permission["write"]
+      : {};
+
+    // Assert
+    const expectedPermissions = {
+      "README.md": "allow",
+      "AGENTS.md": "allow",
+      "CHANGELOG.md": "allow",
+      "Recommended-models-ghc.md": "allow",
+      "docs/**/*.md": "allow",
+      "content/**/*.md": "allow",
+      ".code-examples-for-ai/**/*.md": "allow",
+      ".la_briguade/**/*.md": "allow",
+    };
+    expect(editPermissions).toEqual(expectedPermissions);
+    expect(writePermissions).toEqual(expectedPermissions);
   });
 });

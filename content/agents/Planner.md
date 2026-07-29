@@ -24,9 +24,7 @@ permission:
     "external-context-gatherer": "allow"
     "feature-designer": "allow"
     "feature-reviewer": "allow"
-    "reviewer": "allow"
     "security-reviewer": "allow"
-    "librarian": "allow"
     "critic": "allow"
     "architect": "allow"
 ---

@@ -3,7 +3,6 @@ name: project-security
 description: Security guidelines for la-briguade — safe parsing, dependency hygiene, CLI input safety, and secret management
 agents:
   - coder
-  - reviewer
   - security-reviewer
 ---
 

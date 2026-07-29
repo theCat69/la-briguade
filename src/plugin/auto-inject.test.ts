@@ -111,7 +111,7 @@ describe("collectAutoInjectSkills", () => {
   it("should parse agents and body from a valid SKILL.md", () => {
     // Arrange
     mockReadFileSync.mockReturnValue(
-      makeSkillMd({ agents: ["coder", "reviewer"], body: "Best practices." }),
+        makeSkillMd({ agents: ["coder", "sidekick-reviewer"], body: "Best practices." }),
     );
 
     // Act
@@ -120,7 +120,7 @@ describe("collectAutoInjectSkills", () => {
     // Assert
     expect(result.size).toBe(1);
     const entry = result.get("general-coding");
-    expect(entry?.agents).toEqual(["coder", "reviewer"]);
+    expect(entry?.agents).toEqual(["coder", "sidekick-reviewer"]);
     expect(entry?.body).toBe("Best practices.");
     expect(entry?.detectFiles).toEqual([]);
     expect(entry?.detectContent).toEqual([]);
@@ -224,7 +224,7 @@ describe("collectAutoInjectSkills", () => {
       if (String(filePath).includes("general-coding")) {
         return makeSkillMd({ agents: ["coder"], body: "General body." });
       }
-      return makeSkillMd({ agents: ["reviewer"], body: "TypeScript body." });
+      return makeSkillMd({ agents: ["sidekick-reviewer"], body: "TypeScript body." });
     });
 
     // Act
@@ -465,8 +465,8 @@ describe("injectAutoInjectSkills", () => {
   it("should inject skill body into agent with explicit ask permission", () => {
     // Arrange
     const config = makeConfig({
-      reviewer: {
-        prompt: "Reviewer base.",
+      "sidekick-reviewer": {
+        prompt: "Sidekick reviewer base.",
         permission: { skill: { typescript: "ask" } },
       },
     });
@@ -483,8 +483,10 @@ describe("injectAutoInjectSkills", () => {
     injectAutoInjectSkills(config, entries, active);
 
     // Assert
-    const reviewer = config.agent?.["reviewer"] as Record<string, unknown>;
-    expect(reviewer["prompt"]).toBe(`Reviewer base.\n\n${makeGroupedWrappedAppend([entry])}`);
+    const sidekickReviewer = config.agent?.["sidekick-reviewer"] as Record<string, unknown>;
+    expect(sidekickReviewer["prompt"]).toBe(
+      `Sidekick reviewer base.\n\n${makeGroupedWrappedAppend([entry])}`,
+    );
   });
 
   it("should not inject skill body via wildcard permission", () => {

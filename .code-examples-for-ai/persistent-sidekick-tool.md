@@ -9,21 +9,23 @@ const MAX_OUTPUT_LENGTH = 1_000_000;
 const REVIEW_TYPES = {
   CODE_REVIEW: { agent: "sidekick-reviewer", suffix: "_review" },
   SECURITY_REVIEW: { agent: "sidekick-security-reviewer", suffix: "_sec-review" },
-  DOCUMENTATION_REVIEW: { agent: "sidekick-librarian", suffix: "_doc-review" },
+  DOCUMENTATION_SYNC: { agent: "sidekick-librarian", suffix: "_doc-sync" },
 } as const;
 
-export function createSidekickReviewerTool(runCommand: CommandRunner) {
+export function createSidekickAgentTool(runCommand: CommandRunner) {
   const reviewSessionNames = new Map<string, string>();
 
   return tool({
-    description: "Request a persistent, read-only code, security, or documentation review.",
+    description: "Request a persistent code or security review, or synchronize documentation.",
     args: {
       review_prompt: tool.schema.string().trim().min(1).max(20_000),
-      review_type: tool.schema.enum(["CODE_REVIEW", "SECURITY_REVIEW", "DOCUMENTATION_REVIEW"]),
+      review_type: tool.schema.enum(["CODE_REVIEW", "SECURITY_REVIEW", "DOCUMENTATION_SYNC"]),
       new_session: tool.schema.boolean().default(false),
     },
     async execute(args, context) {
       const reviewType = REVIEW_TYPES[args.review_type];
+      // Run DOCUMENTATION_SYNC only after review findings are resolved; its agent can edit only
+      // approved Markdown documentation, prompts, skills, and code examples.
       const sessionKey = `${context.sessionID}:${args.review_type}`;
       const reviewSessionName = args.new_session
         ? `${context.sessionID}${reviewType.suffix}_${randomUUID().slice(0, 8)}`

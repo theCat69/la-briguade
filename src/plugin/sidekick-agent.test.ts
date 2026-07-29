@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createSidekickReviewerTool, findLatestSessionId } from "./sidekick-reviewer.js";
+import { createSidekickAgentTool, findLatestSessionId } from "./sidekick-agent.js";
 
 const abortController = new AbortController();
 
@@ -33,7 +33,7 @@ describe("findLatestSessionId", () => {
   });
 });
 
-describe("sidekick-reviewer tool", () => {
+describe("sidekick-agent tool", () => {
   it("should resume the newest matching session", async () => {
     const commandRunner = vi
       .fn()
@@ -46,7 +46,7 @@ describe("sidekick-reviewer tool", () => {
         ]),
       })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "No blocking issues." });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
     const context = createToolContext();
 
     const result = await sidekickTool.execute(
@@ -87,7 +87,7 @@ describe("sidekick-reviewer tool", () => {
       .fn()
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "[]" })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Review complete." });
-    const sidekickTool = createSidekickReviewerTool(commandRunner, () => "ses_main_review_unrelated");
+    const sidekickTool = createSidekickAgentTool(commandRunner, () => "ses_main_review_unrelated");
     const context = createToolContext();
 
     await sidekickTool.execute(
@@ -152,7 +152,7 @@ describe("sidekick-reviewer tool", () => {
         ]),
       })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Follow-up review." });
-    const sidekickTool = createSidekickReviewerTool(commandRunner, () => "ses_main_review_unrelated");
+    const sidekickTool = createSidekickAgentTool(commandRunner, () => "ses_main_review_unrelated");
     const context = createToolContext();
 
     await sidekickTool.execute(
@@ -197,11 +197,11 @@ describe("sidekick-reviewer tool", () => {
         exitCode: 0,
         stderr: "",
         stdout: JSON.stringify([
-          { directory: "/project", id: "ses_docs", title: "ses_main_doc-review", updated: 1 },
+            { directory: "/project", id: "ses_docs", title: "ses_main_doc-sync", updated: 1 },
         ]),
       })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Documentation is current." });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
     const context = createToolContext();
 
     await sidekickTool.execute(
@@ -215,8 +215,8 @@ describe("sidekick-reviewer tool", () => {
     await sidekickTool.execute(
       {
         new_session: false,
-        review_prompt: "Review the documentation impact.",
-        review_type: "DOCUMENTATION_REVIEW",
+        review_prompt: "Synchronize documentation impacted by this change.",
+        review_type: "DOCUMENTATION_SYNC",
       },
       context as never,
     );
@@ -247,9 +247,9 @@ describe("sidekick-reviewer tool", () => {
         "--agent",
         "sidekick-librarian",
         "--title",
-        "ses_main_doc-review",
+        "ses_main_doc-sync",
         "--",
-        "Review the documentation impact.",
+        "Synchronize documentation impacted by this change.",
       ],
       { abort: abortController.signal, cwd: "/project", timeoutMs: 600_000 },
     );
@@ -261,14 +261,14 @@ describe("sidekick-reviewer tool", () => {
       stderr: "opencode: command not found",
       stdout: "",
     });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
 
     await expect(
       sidekickTool.execute(
         { new_session: false, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         createToolContext() as never,
       ),
-    ).rejects.toThrow("Sidekick review failed while listing sessions (exit 1)");
+    ).rejects.toThrow("Sidekick agent failed while listing sessions (exit 1)");
   });
 
   it("should return an actionable error when the reviewer exits non-zero", async () => {
@@ -277,28 +277,28 @@ describe("sidekick-reviewer tool", () => {
       stderr: "sidekick agent is unavailable",
       stdout: "",
     });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
 
     await expect(
       sidekickTool.execute(
         { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         createToolContext() as never,
       ),
-    ).rejects.toThrow("Sidekick review failed while starting a session (exit 2)");
+    ).rejects.toThrow("Sidekick agent failed while starting a session (exit 2)");
   });
 
   it("should report cancellation even when the child process exits successfully", async () => {
     const cancelledRequest = new AbortController();
     cancelledRequest.abort();
     const commandRunner = vi.fn();
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
 
     await expect(
       sidekickTool.execute(
         { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
-    ).rejects.toThrow("Sidekick review was cancelled.");
+    ).rejects.toThrow("Sidekick agent request was cancelled.");
     expect(commandRunner).not.toHaveBeenCalled();
   });
 
@@ -308,14 +308,14 @@ describe("sidekick-reviewer tool", () => {
       cancelledRequest.abort();
       return { exitCode: 0, stderr: "", stdout: "Review complete." };
     });
-    const sidekickTool = createSidekickReviewerTool(commandRunner);
+    const sidekickTool = createSidekickAgentTool(commandRunner);
 
     await expect(
       sidekickTool.execute(
         { new_session: true, review_prompt: "Review the change.", review_type: "CODE_REVIEW" },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
-    ).rejects.toThrow("Sidekick review was cancelled.");
+    ).rejects.toThrow("Sidekick agent request was cancelled.");
     expect(commandRunner).toHaveBeenCalledOnce();
   });
 });

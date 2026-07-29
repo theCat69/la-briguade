@@ -3,7 +3,6 @@ name: general-coding
 description: Apply cross-language engineering baselines for naming, testing, design principles, and error handling across repository work; defer to language/framework-specific skills for stack-specific rules.
 agents:
   - coder
-  - reviewer
   - sidekick-reviewer
   - architect
   - critic

@@ -43,16 +43,16 @@ const REVIEW_TYPE_CONFIG = {
     agent: "sidekick-security-reviewer",
     sessionSuffix: "_sec-review",
   },
-  DOCUMENTATION_REVIEW: {
+  DOCUMENTATION_SYNC: {
     agent: "sidekick-librarian",
-    sessionSuffix: "_doc-review",
+    sessionSuffix: "_doc-sync",
   },
 } as const satisfies Record<string, ReviewTypeConfig>;
 
 type ReviewType = keyof typeof REVIEW_TYPE_CONFIG;
 type ReviewSessionNameFactory = (mainSessionId: string, reviewType: ReviewType) => string;
 
-interface SidekickReviewArgs {
+interface SidekickAgentArgs {
   new_session: boolean;
   review_prompt: string;
   review_type: ReviewType;
@@ -187,17 +187,17 @@ function runCommand(command: string, args: string[], options: CommandOptions): P
 
 function formatCommandError(action: string, result: CommandResult): string {
   const detail = result.stderr.trim() || result.stdout.trim() || "no diagnostic output";
-  return `Sidekick review failed while ${action} (exit ${result.exitCode}): ${detail}`;
+  return `Sidekick agent failed while ${action} (exit ${result.exitCode}): ${detail}`;
 }
 
 function formatUnexpectedError(error: unknown): Error {
   const detail = error instanceof Error ? error.message : String(error);
-  return new Error(`Sidekick review failed: ${detail}`);
+  return new Error(`Sidekick agent failed: ${detail}`);
 }
 
 function throwIfAborted(abort: AbortSignal): void {
   if (abort.aborted) {
-    throw new Error("Sidekick review was cancelled.");
+    throw new Error("Sidekick agent request was cancelled.");
   }
 }
 
@@ -245,7 +245,7 @@ async function resolveSessionId(
 }
 
 function buildRunArgs(
-  args: SidekickReviewArgs,
+  args: SidekickAgentArgs,
   reviewSessionName: string,
   sessionId: string | undefined,
 ): string[] {
@@ -263,8 +263,8 @@ function buildRunArgs(
     : ["run", "--session", sessionId, ...commonArgs];
 }
 
-/** Creates the tool used to run persistent sidekick review sessions. */
-export function createSidekickReviewerTool(
+/** Creates the tool used to run persistent sidekick sessions. */
+export function createSidekickAgentTool(
   commandRunner: CommandRunner = runCommand,
   createUnrelatedReviewSessionName: ReviewSessionNameFactory = getUnrelatedReviewSessionName,
 ): ToolDefinition {
@@ -272,14 +272,14 @@ export function createSidekickReviewerTool(
 
   return tool({
     description:
-      "Request a persistent code, security, or documentation review. The review session name is " +
-      "derived from this session and review type. Set new_session only for unrelated review work.",
+      "Request a persistent code or security review, or synchronize documentation. The session " +
+      "name is derived from this session and review type. Set new_session only for unrelated work.",
     args: {
       review_prompt: tool.schema.string().trim().min(1).max(20_000),
       review_type: tool.schema.enum([
         "CODE_REVIEW",
         "SECURITY_REVIEW",
-        "DOCUMENTATION_REVIEW",
+        "DOCUMENTATION_SYNC",
       ]),
       new_session: tool.schema.boolean().default(false),
     },
@@ -319,11 +319,11 @@ export function createSidekickReviewerTool(
           startedNewSession: sessionId === undefined,
           reviewType: args.review_type,
         };
-        context.metadata({ title: `Sidekick review: ${reviewSessionName}`, metadata });
+        context.metadata({ title: `Sidekick agent: ${reviewSessionName}`, metadata });
 
         return {
-          title: `Sidekick review: ${reviewSessionName}`,
-          output: result.stdout.trim() || "Sidekick review completed without output.",
+          title: `Sidekick agent: ${reviewSessionName}`,
+          output: result.stdout.trim() || "Sidekick agent completed without output.",
           metadata,
         };
       } catch (error) {

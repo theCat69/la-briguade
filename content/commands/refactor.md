@@ -111,8 +111,10 @@ Route to the Orchestrator with the following context pre-loaded:
 > [critic output from Step 3]
 >
 > Proceed with the implementation pipeline. After coding, select the applicable sidekick review
-> types and invoke them in parallel: `CODE_REVIEW` always, `SECURITY_REVIEW` for security-sensitive
-> refactors or an explicit security request, and `DOCUMENTATION_REVIEW` for documentation impact.
+> types. Invoke `sidekick-agent` for `CODE_REVIEW` always and `SECURITY_REVIEW` for security-sensitive
+> refactors or an explicit security request in parallel. After their findings are resolved, invoke
+> `sidekick-agent` with `DOCUMENTATION_SYNC` for documentation impact. It may edit only Markdown
+> documentation, prompts, skills, and code examples.
 
 **Adjust the plan**:
 Use the `question` tool to collect the user's adjustments, then re-run from Step 2 with the amended scope/context.

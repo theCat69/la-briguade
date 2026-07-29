@@ -83,7 +83,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
 | `bounded-skill-loader.md` | Rejecting oversized auto-inject skill content before it enters memory or prompts |
-| `persistent-sidekick-tool.md` | Persistent CLI-backed multi-type reviewer tool with isolated per-type session reuse, bounded output, and cancellation |
+| `persistent-sidekick-tool.md` | Persistent CLI-backed multi-type review and documentation-sync tool with isolated per-type session reuse, bounded output, and cancellation |
 
 ---
 
@@ -91,11 +91,12 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 
 ```
 src/
-  index.ts           ← Plugin entry point — wires config() + hooks
+  index.ts           ← Plugin entry point — wires config(), hooks, and the sidekick-agent custom tool
   plugin/
     agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides; returns { agentSections, agentSkillPerms }
     commands.ts      ← registerCommands(config, commandDirs[]) — merges .md files across builtin + user dirs via collectFiles()
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
+    sidekick-agent.ts ← createSidekickAgentTool() — persistent code/security review and documentation-sync routing
     mcp/
       index.ts       ← barrel re-export
       collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() / collectSkillExternalDirectories() — reads mcp:, permission.bash, agents:, and skill-dir external-directory grants from SKILL.md files

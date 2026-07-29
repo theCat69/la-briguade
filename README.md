@@ -32,12 +32,10 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | ask | primary | Personal assistant — Q&A with context gathering |
 | coder | subagent | Code implementation from context snapshots |
 | critic | subagent | Adversarial design challenger |
-| reviewer | subagent | Code quality and architecture reviewer |
-| sidekick-reviewer | primary | Persistent code-quality reviewer used by the `sidekick-reviewer` tool |
-| sidekick-security-reviewer | primary | Persistent, read-only security reviewer used by the `sidekick-reviewer` tool |
-| sidekick-librarian | primary | Persistent, read-only documentation reviewer used by the `sidekick-reviewer` tool |
+| sidekick-reviewer | primary | Persistent code-quality reviewer used by the `sidekick-agent` tool |
+| sidekick-security-reviewer | primary | Persistent, read-only security reviewer used by the `sidekick-agent` tool |
+| sidekick-librarian | primary | Persistent documentation synchronization agent used by the `sidekick-agent` tool |
 | security-reviewer | subagent | Security auditor (CVEs, OWASP, Dependabot) |
-| librarian | subagent | Documentation keeper |
 | local-context-gatherer | subagent | Repository context extractor with caching |
 | external-context-gatherer | subagent | External docs/API fetcher with caching |
 | feature-designer | subagent | Feature specification writer |
@@ -48,17 +46,22 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 
 | Tool | Description |
 |---|---|
-| sidekick-reviewer | Starts or resumes persistent, read-only code, security, or documentation review sessions. |
+| sidekick-agent | Starts or resumes persistent code and security review sessions, or a documentation synchronization session. |
 
-Use `sidekick-reviewer` for persistent code-quality, security, and documentation reviews. First
-select every applicable review type, then invoke one tool call per type in parallel. The tool routes
-each type to a read-only sidekick agent and derives its session name from the calling session:
+Use `sidekick-agent` for persistent code-quality and security reviews, and documentation
+synchronization. First select every applicable review type, then invoke selected code and security
+reviews in parallel. After their findings are resolved, invoke documentation synchronization. The
+tool routes each type to a specialized sidekick agent and derives its session name from the calling
+session:
+
+`DOCUMENTATION_SYNC` may edit only Markdown documentation, prompts, skills, and code examples; it
+must not edit source code, manifests, schemas, generated files, or non-documentation assets.
 
 | Review type | Agent | Session suffix |
 |---|---|---|
 | `CODE_REVIEW` | `sidekick-reviewer` | `_review` |
 | `SECURITY_REVIEW` | `sidekick-security-reviewer` | `_sec-review` |
-| `DOCUMENTATION_REVIEW` | `sidekick-librarian` | `_doc-review` |
+| `DOCUMENTATION_SYNC` | `sidekick-librarian` | `_doc-sync` |
 
 The tool reuses the newest matching session for that review type in the current project by default
 (`new_session: false`). Set `new_session` to `true` only when starting unrelated work for that type;
@@ -67,7 +70,7 @@ the new isolated session remains active for later calls from the same calling se
 | Argument | Required | Contract |
 |---|---|---|
 | `review_prompt` | Yes | The review request, from 1 to 20,000 characters. |
-| `review_type` | Yes | `CODE_REVIEW`, `SECURITY_REVIEW`, or `DOCUMENTATION_REVIEW`. |
+| `review_type` | Yes | `CODE_REVIEW`, `SECURITY_REVIEW`, or `DOCUMENTATION_SYNC`. |
 | `new_session` | No | Boolean; defaults to `false`. Set to `true` only to start an unrelated review task. |
 
 ### Skills
@@ -215,7 +218,7 @@ content.
       "systemPromptSuffix": "Always use PNPM instead of NPM.",
       "temperature": 0.2
     },
-    "reviewer": {
+    "sidekick-reviewer": {
       "systemPromptSuffix": "Focus on security vulnerabilities."
     }
   }
@@ -339,7 +342,7 @@ name: my-skill
 description: My skill description
 agents:
   - coder
-  - reviewer
+  - coder
 ---
 ```
 

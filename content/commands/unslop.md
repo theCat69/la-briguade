@@ -39,11 +39,11 @@ Continue to Step 1. Load skill `unslop` and execute all 4 passes yourself on the
 - If mode is **edit**: apply all 4 passes with full edits as defined in the skill.
 
 **Orchestrator context** (agent cannot edit files; has `task` access to `coder` and the
-`sidekick-reviewer` tool):
+`sidekick-agent` tool):
 
 1. Run Step 1 yourself to resolve the file scope.
 
-2. Request a `CODE_REVIEW` with the `sidekick-reviewer` tool. Set `new_session: true` only when
+2. Request a `CODE_REVIEW` with the `sidekick-agent` tool. Set `new_session: true` only when
    this cleanup task is unrelated to the previous code review; otherwise leave it `false`, then use
    this prompt:
 

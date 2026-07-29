@@ -66,7 +66,7 @@ export type AgentSectionsEntry = {
 
 // 3. POPULATE THE SEGMENTS MAP IN registerAgents (src/plugin/agents.ts)
 // After parseFrontmatter(), call parseModelSections() to split base from segments.
-// Store entry keyed by AGENT NAME (e.g. "coder", "reviewer") — not by base text.
+// Store entry keyed by AGENT NAME (e.g. "coder", "sidekick-reviewer") — not by base text.
 
 const { base, segments } = parseModelSections(body);
 agentConfig.prompt = base;                    // register base-only prompt

@@ -10,10 +10,8 @@ tags:
   - diff
   - review
 agents:
-  - reviewer
   - sidekick-reviewer
   - security-reviewer
-  - librarian
 ---
 
 # Git Diff Review Skill

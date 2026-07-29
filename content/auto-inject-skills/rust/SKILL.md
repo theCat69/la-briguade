@@ -6,7 +6,6 @@ detect:
     - Cargo.toml
 agents:
   - coder
-  - reviewer
   - sidekick-reviewer
   - architect
   - feature-designer

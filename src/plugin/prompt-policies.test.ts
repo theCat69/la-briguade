@@ -17,7 +17,6 @@ const FRAMEWORK_SKILL_PATHS = [
 ] as const;
 const EXPECTED_FRAMEWORK_AGENTS = [
   "coder",
-  "reviewer",
   "architect",
   "feature-designer",
   "feature-reviewer",
@@ -54,7 +53,7 @@ describe("prompt policy contracts", () => {
     expect(content).not.toContain("Content should live in exactly one place");
   });
 
-  it("should require typed parallel sidekick reviews in workflow prompts", () => {
+  it("should require parallel reviews before documentation synchronization in workflow prompts", () => {
     const orchestratorContent = readContentFile("content/agents/Orchestrator.md");
     const builderContent = readContentFile("content/agents/Builder.md");
     const justDoItContent = readContentFile("content/commands/just-do-it.md");
@@ -70,7 +69,7 @@ describe("prompt policy contracts", () => {
     ]) {
       expect(content).toContain("CODE_REVIEW");
       expect(content).toContain("SECURITY_REVIEW");
-      expect(content).toContain("DOCUMENTATION_REVIEW");
+      expect(content).toContain("DOCUMENTATION_SYNC");
       expect(content).toMatch(/parallel/i);
     }
   });

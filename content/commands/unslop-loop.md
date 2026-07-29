@@ -2,7 +2,7 @@
 description: Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup. Stops when all code is unslopped (default) or after N commits.
 ---
 
-> **Requires**: `task→coder`, access to the `sidekick-reviewer` tool, and `git-commit` skill permission. In Orchestrator context, bash rights must include only the git commands used directly by this workflow: `git diff --name-only HEAD`, `git diff --name-only HEAD~1`, `git diff --name-only`, `git checkout -- <scope files>`, `git tag`, `git add <scope files>`, and `git commit -m ...`.
+> **Requires**: `task→coder`, access to the `sidekick-agent` tool, and `git-commit` skill permission. In Orchestrator context, bash rights must include only the git commands used directly by this workflow: `git diff --name-only HEAD`, `git diff --name-only HEAD~1`, `git diff --name-only`, `git checkout -- <scope files>`, `git tag`, `git add <scope files>`, and `git commit -m ...`.
 
 $ARGUMENTS
 
@@ -90,7 +90,7 @@ Identify which execution context applies **before starting the loop**.
 Proceed to **Step 3-B — Builder Loop**. You own all file edits, git operations, and loop state.
 
 **Orchestrator context** (agent cannot edit files; has `task` access to `coder` and the
-`sidekick-reviewer` tool):
+`sidekick-agent` tool):
 Proceed to **Step 3-O — Orchestrator Loop**. You manage loop state, git operations, and termination logic. You must NOT edit any files yourself.
 
 **Fallback** (neither context available — e.g. run from `ask` or `Planner`):
@@ -196,7 +196,7 @@ Otherwise: increment `iteration` and go back to Pass 1.
 
 ### SETUP Phase (runs before each loop cycle — re-entered whenever the previous cycle exhausted its batches without reaching `max_commits`)
 
-Request a `CODE_REVIEW` with the `sidekick-reviewer` tool. Set `new_session: true` only when the
+Request a `CODE_REVIEW` with the `sidekick-agent` tool. Set `new_session: true` only when the
 cleanup task is unrelated to the previous code review; otherwise leave it `false` for every cycle
 so it reuses the derived review session. Use this prompt:
 

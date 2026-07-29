@@ -39,14 +39,14 @@ describe("collectFiles", () => {
     const first = makeTempDir();
     const second = makeTempDir();
     writeFileSync(join(first, "coder.md"), "# coder");
-    writeFileSync(join(second, "reviewer.md"), "# reviewer");
+    writeFileSync(join(second, "auditor.md"), "# auditor");
 
     const result = collectFiles([first, second], ".md");
 
     expect(result).toEqual(
       new Map([
         ["coder", join(first, "coder.md")],
-        ["reviewer", join(second, "reviewer.md")],
+        ["auditor", join(second, "auditor.md")],
       ]),
     );
   });

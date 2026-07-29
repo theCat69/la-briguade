@@ -46,12 +46,12 @@ describe("resolveAgentConfig", () => {
     const userConfig: LaBriguadeConfig = {
       model: "github-copilot/claude-opus-4.6",
       agents: {
-        reviewer: { model: "github-copilot/gpt-5.3-codex" },
+        "sidekick-reviewer": { model: "github-copilot/gpt-5.3-codex" },
       },
     };
 
     // Act
-    const result = resolveAgentConfig("reviewer", base, userConfig);
+    const result = resolveAgentConfig("sidekick-reviewer", base, userConfig);
 
     // Assert
     expect(result.model).toBe("github-copilot/gpt-5.3-codex");

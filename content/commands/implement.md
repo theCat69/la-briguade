@@ -20,9 +20,10 @@ outside that root. If no usable spec or ticket is provided, ask the user to prov
    suite before completion.
 3. Keep implementation within the accepted scope. Return to `/grilling` or `/to-spec` when a
    requirement or architectural decision is missing rather than inventing it during implementation.
-4. Decide which review types apply, then request one `sidekick-reviewer` call per selected type in
-   parallel: `CODE_REVIEW` for implementation quality, `SECURITY_REVIEW` for security-sensitive
-   work, and `DOCUMENTATION_REVIEW` for documentation impact. Its sessions are derived per type;
+4. Decide which review types apply. Request selected `CODE_REVIEW` and `SECURITY_REVIEW` calls with
+   `sidekick-agent` in parallel; select `DOCUMENTATION_SYNC` for documentation impact and call it
+   only after implementation and review findings are resolved. Documentation synchronization may
+   edit only Markdown documentation, prompts, skills, and code examples. Its sessions are derived per type;
    set `new_session: true` only for work unrelated to that type's previous review, otherwise leave
    it `false`. Address substantiated findings and update the ticket's acceptance checklist or
    configured tracker status only after validated completion.

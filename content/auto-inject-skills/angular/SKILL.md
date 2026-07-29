@@ -6,7 +6,6 @@ detect:
     - angular.json
 agents:
   - coder
-  - reviewer
   - sidekick-reviewer
   - architect
   - feature-designer

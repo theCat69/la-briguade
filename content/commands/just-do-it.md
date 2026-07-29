@@ -2,7 +2,7 @@
 description: "Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption."
 ---
 
-> **Requires**: `task→local-context-gatherer`, `task→architect`, `task→critic`, `task→coder`, access to the `sidekick-reviewer` tool, and `git-commit` skill permission. Safe to invoke from Orchestrator or Builder only. Running from a restricted agent will silently fail.
+> **Requires**: `task→local-context-gatherer`, `task→architect`, `task→critic`, `task→coder`, access to the `sidekick-agent` tool, and `git-commit` skill permission. Safe to invoke from Orchestrator or Builder only. Running from a restricted agent will silently fail.
 
 $ARGUMENTS
 
@@ -127,9 +127,9 @@ Call `coder` subagent with:
 Run `git diff HEAD` to capture all changes made in Step 6.
 
 First decide which review types apply: always select `CODE_REVIEW`; select `SECURITY_REVIEW` for
-security-sensitive changes or an explicit security request; select `DOCUMENTATION_REVIEW` when code
-or behavior can affect documentation. Invoke `sidekick-reviewer` once per selected type **in
-parallel**. Its sessions are isolated per type. Set `new_session: true` only for review work
+security-sensitive changes or an explicit security request; select `DOCUMENTATION_SYNC` when code
+or behavior can affect documentation. Invoke `sidekick-agent` for selected code and security reviews
+**in parallel**. Its sessions are isolated per type. Set `new_session: true` only for review work
 unrelated to that type's previous context; otherwise leave it `false`.
 
 Use the following prompts:
@@ -151,10 +151,12 @@ Use the following prompts:
 > **Diff:**
 > [diff captured above]
 
-**`DOCUMENTATION_REVIEW` prompt:**
+After resolving the code and security review findings, use this **`DOCUMENTATION_SYNC` prompt** when
+selected:
 
-> Review whether the following implementation requires documentation updates. Return ≤ 200 tokens:
-> files to update and what to change.
+> Synchronize documentation required by the following implementation. Inspect documentation impact,
+> update only permitted Markdown documentation, prompts, skills, and code examples, then report the
+> files changed. Return ≤ 200 tokens.
 >
 > **Diff:**
 > [diff captured above]
