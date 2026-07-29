@@ -23,6 +23,7 @@ import {
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
+import { createSidekickAgentTool } from "./plugin/sidekick-agent.js";
 import {
   collectAutoInjectSkills,
   injectAutoInjectSkills,
@@ -82,6 +83,9 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
   const hooks = createHooks(ctx);
 
   return {
+    tool: {
+      "sidekick-agent": createSidekickAgentTool(),
+    },
     config: async (input) => {
       const userConfig = resolveUserConfig(ctx.directory);
       logger.setLevel(userConfig.log_level ?? "warn");
@@ -90,7 +94,7 @@ const LaBriguadePlugin: Plugin = async (ctx) => {
         [builtinAgentsDir, ...userAgentsDirs],
         userConfig,
       );
-      registerCommands(input, [builtinCommandsDir, ...userCommandsDirs]);
+      registerCommands(input, [builtinCommandsDir, ...userCommandsDirs], userConfig);
       const { dirs: skillDirs } = registerSkills(
         input,
         [builtinSkillsDir, ...userSkillRoots],

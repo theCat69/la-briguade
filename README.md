@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 14 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 15 agents, 22 skills, 17 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -28,18 +28,50 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 |---|---|---|
 | orchestrator | primary | Multi-agent pipeline coordinator — delegates to specialized subagents |
 | builder | primary | Single-agent implementation — writes code directly |
-| planner | primary | Feature planning orchestrator with designer + reviewer subagents |
+| planner | primary | Feature planning orchestrator with designer and review subagents |
 | ask | primary | Personal assistant — Q&A with context gathering |
 | coder | subagent | Code implementation from context snapshots |
 | critic | subagent | Adversarial design challenger |
-| reviewer | subagent | Code quality and architecture reviewer |
+| sidekick-reviewer | primary | Persistent code-quality reviewer used by the `sidekick-agent` tool |
+| sidekick-security-reviewer | primary | Persistent, read-only security reviewer used by the `sidekick-agent` tool |
+| sidekick-librarian | primary | Persistent documentation synchronization agent used by the `sidekick-agent` tool |
 | security-reviewer | subagent | Security auditor (CVEs, OWASP, Dependabot) |
-| librarian | subagent | Documentation keeper |
 | local-context-gatherer | subagent | Repository context extractor with caching |
 | external-context-gatherer | subagent | External docs/API fetcher with caching |
 | feature-designer | subagent | Feature specification writer |
 | feature-reviewer | subagent | Feature spec quality gate |
 | architect | subagent | Code structure analyst — maps module boundaries, dependency graphs, and produces architecture blueprints |
+
+### Custom tools
+
+| Tool | Description |
+|---|---|
+| sidekick-agent | Starts or resumes persistent code and security review sessions, or a documentation synchronization session. |
+
+Use `sidekick-agent` for persistent code-quality and security reviews, and documentation
+synchronization. First select every applicable review type, then invoke selected code and security
+reviews in parallel. After their findings are resolved, invoke documentation synchronization. The
+tool routes each type to a specialized sidekick agent and derives its session name from the calling
+session:
+
+`DOCUMENTATION_SYNC` may edit only Markdown documentation, prompts, skills, and code examples; it
+must not edit source code, manifests, schemas, generated files, or non-documentation assets.
+
+| Review type | Agent | Session suffix |
+|---|---|---|
+| `CODE_REVIEW` | `sidekick-reviewer` | `_review` |
+| `SECURITY_REVIEW` | `sidekick-security-reviewer` | `_sec-review` |
+| `DOCUMENTATION_SYNC` | `sidekick-librarian` | `_doc-sync` |
+
+The tool reuses the newest matching session for that review type in the current project by default
+(`new_session: false`). Set `new_session` to `true` only when starting unrelated work for that type;
+the new isolated session remains active for later calls from the same calling session.
+
+| Argument | Required | Contract |
+|---|---|---|
+| `review_prompt` | Yes | The review request, from 1 to 20,000 characters. |
+| `review_type` | Yes | `CODE_REVIEW`, `SECURITY_REVIEW`, or `DOCUMENTATION_SYNC`. |
+| `new_session` | No | Boolean; defaults to `false`. Set to `true` only to start an unrelated review task. |
 
 ### Skills
 
@@ -82,10 +114,13 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
-| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
-| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
-| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
+| `/to-spec` | Turn the current conversation into a spec and publish it to the configured tracker or local Markdown |
+| `/to-tickets` | Break a spec, plan, or conversation into approved tracer-bullet tickets with dependency edges |
+| `/implement` | Implement approved work from a spec or unblocked ticket using its agreed test seams |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
+| `/grilling` | Stress-test a plan, decision, or idea through a decision-tree interview before acting |
+| `/handoff` | Create a compact, redacted Markdown handoff for a future agent or session |
+| `/learn` | Teach a topic through a focused lesson, with optional persistent artifacts outside the project workspace |
 
 ## Hooks
 
@@ -149,6 +184,8 @@ A top-level `model` field applies to all agents unless overridden per-agent. Per
 | `tools` | `Record<string, boolean>` | Enable or disable specific tools |
 | `log_level` | `"off" \| "error" \| "warn" \| "info" \| "debug"` | Logger verbosity. All output goes to the per-session log file only (`~/.local/share/opencode/log/la-briguade-<timestamp>.log`, respects `$XDG_DATA_HOME`). Default: `"warn"`. |
 | `auto_inject.max_depth` | `integer` (0–10) | Maximum subdirectory depth scanned for auto-inject file and content detection. `0` (default) checks only the project root. A bare filename such as `package.json` matches at any scanned depth; paths containing a directory separator stay exact. |
+| `tracker.provider` | `"github" \| "linear"` | Optional issue tracker used by `/to-spec` and `/to-tickets` to publish specs and tickets. |
+| `tracker.project` | `string` | GitHub requires `owner/repository`; Linear accepts a non-empty team or project identifier. |
 
 `systemPromptSuffix` is append-only — it is concatenated after the agent's built-in system prompt. When both global and project configs define a suffix for the same agent, both are chained in order (global first, project second).
 
@@ -171,18 +208,30 @@ content.
   "auto_inject": {
     "max_depth": 3
   },
+  "tracker": {
+    "provider": "github",
+    "project": "acme/example"
+  },
   "agents": {
     "coder": {
       "model": "anthropic/claude-opus-4",
       "systemPromptSuffix": "Always use PNPM instead of NPM.",
       "temperature": 0.2
     },
-    "reviewer": {
+    "sidekick-reviewer": {
       "systemPromptSuffix": "Focus on security vulnerabilities."
     }
   }
 }
 ```
+
+### Planning and implementation workflow
+
+Use `/grilling` to settle a change, then `/to-spec` to publish a shared specification and
+`/to-tickets` to create dependency-aware tracer-bullet implementation slices. When `tracker` is
+configured, the commands publish tracker artifacts and apply `ready-for-agent`; otherwise they use
+project-local Markdown under `.scratch/<feature-slug>/`. Use `/implement` only with an agreed spec
+or unblocked ticket; it follows the selected artifact's test seams and acceptance criteria.
 
 ## Adding Custom Content
 
@@ -217,9 +266,8 @@ Files in higher-priority layers override built-in files with the same stem name.
 
 Any skill already installed at the opencode level (`~/.config/opencode/skills/` or `<project_root>/.opencode/skills/`) is automatically available to la-briguade agents without any extra configuration.
 
-> **Security / Trust Boundary**
+> **Content Overrides**
 > Content placed in `~/la_briguade/` or project-level `.la_briguade/` directories can override built-in agents, skills, commands, and vendor prompts.
-> Only place files from trusted sources in these override directories.
 
 **Example**: to override the built-in `coder` agent with a custom version, create `~/la_briguade/agents/coder.md` (applies globally) or `<project_root>/.la_briguade/agents/coder.md` (applies to that project only).
 
@@ -294,7 +342,7 @@ name: my-skill
 description: My skill description
 agents:
   - coder
-  - reviewer
+  - coder
 ---
 ```
 

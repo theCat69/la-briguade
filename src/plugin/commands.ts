@@ -1,4 +1,5 @@
 import type { Config } from "../types/plugin.js";
+import type { LaBriguadeConfig } from "../config/schema.js";
 import { parseFrontmatter } from "../utils/content/frontmatter.js";
 import { loadContentFiles } from "../utils/content/load-content.js";
 import { readContentFile } from "../utils/content/read-content-file.js";
@@ -19,14 +20,18 @@ const MAX_COMMAND_FILE_LENGTH = 50_000;
  * Reads .md files with YAML frontmatter, parses them into command config objects,
  * and merges them into `config.command`.
  */
-export function registerCommands(config: Config, commandDirs: string[]): void {
+export function registerCommands(
+  config: Config,
+  commandDirs: string[],
+  userConfig: LaBriguadeConfig = {},
+): void {
   const parsedCommands = loadContentFiles(commandDirs, ".md", (filePath, stem) => {
     const raw = readContentFile(filePath, MAX_COMMAND_FILE_LENGTH, "command");
 
     const { attributes, body } = parseFrontmatter(raw);
 
     const commandConfig: CommandConfig = {
-      template: body,
+      template: resolveTrackerConfiguration(body, userConfig),
     };
 
     const description = attributes["description"];
@@ -64,4 +69,14 @@ export function registerCommands(config: Config, commandDirs: string[]): void {
 
   const existingCommands = isRecord(config.command) ? config.command : {};
   config.command = { ...existingCommands, ...nextCommands };
+}
+
+function resolveTrackerConfiguration(template: string, userConfig: LaBriguadeConfig): string {
+  const tracker = userConfig.tracker;
+  const trackerConfiguration =
+    tracker === undefined
+      ? "No issue tracker is configured. Use project-local Markdown artifacts."
+      : `Use the host's ${tracker.provider} tracker integration for '${tracker.project}'.`;
+
+  return template.replaceAll("{{TRACKER_CONFIGURATION}}", trackerConfiguration);
 }

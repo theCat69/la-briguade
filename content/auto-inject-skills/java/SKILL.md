@@ -8,7 +8,7 @@ detect:
     - build.gradle.kts
 agents:
   - coder
-  - reviewer
+  - sidekick-reviewer
   - architect
   - feature-designer
   - feature-reviewer

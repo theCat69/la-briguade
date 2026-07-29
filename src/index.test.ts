@@ -18,6 +18,7 @@ import {
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
+import { createSidekickAgentTool } from "./plugin/sidekick-agent.js";
 import {
   collectAutoInjectSkills,
   injectAutoInjectSkills,
@@ -46,6 +47,10 @@ vi.mock("./plugin/commands.js", () => ({
 
 vi.mock("./plugin/skills.js", () => ({
   registerSkills: vi.fn(),
+}));
+
+vi.mock("./plugin/sidekick-agent.js", () => ({
+  createSidekickAgentTool: vi.fn(),
 }));
 
 vi.mock("./plugin/auto-inject.js", () => ({
@@ -84,6 +89,7 @@ const mockCreateHooks = vi.mocked(createHooks);
 const mockRegisterAgents = vi.mocked(registerAgents);
 const mockRegisterCommands = vi.mocked(registerCommands);
 const mockRegisterSkills = vi.mocked(registerSkills);
+const mockCreateSidekickAgentTool = vi.mocked(createSidekickAgentTool);
 const mockCollectAutoInjectSkills = vi.mocked(collectAutoInjectSkills);
 const mockInjectAutoInjectSkills = vi.mocked(injectAutoInjectSkills);
 const mockResolveActiveSkills = vi.mocked(resolveActiveSkills);
@@ -111,7 +117,9 @@ describe("LaBriguadePlugin", () => {
     mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
     mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
     const eventHook = vi.fn();
+    const sidekickTool = vi.fn();
     mockCreateHooks.mockReturnValue({ event: eventHook });
+    mockCreateSidekickAgentTool.mockReturnValue(sidekickTool as never);
 
     const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
 
@@ -119,6 +127,8 @@ describe("LaBriguadePlugin", () => {
     expect(mockCreateHooks).toHaveBeenCalledOnce();
     expect(mockCreateHooks).toHaveBeenCalledWith({ directory: "/project" });
     expect(plugin.event).toBe(eventHook);
+    expect(plugin.tool?.["sidekick-agent"]).toBe(sidekickTool);
+    expect(plugin.tool?.["sidekick-reviewer"]).toBeUndefined();
     expect(typeof plugin.config).toBe("function");
   });
 
@@ -154,11 +164,15 @@ describe("LaBriguadePlugin", () => {
       ],
       { log_level: "info" },
     );
-    expect(mockRegisterCommands).toHaveBeenCalledWith(input, [
-      expect.stringMatching(/\/content\/commands$/),
-      "/global/commands",
-      "/project/.la_briguade/commands",
-    ]);
+    expect(mockRegisterCommands).toHaveBeenCalledWith(
+      input,
+      [
+        expect.stringMatching(/\/content\/commands$/),
+        "/global/commands",
+        "/project/.la_briguade/commands",
+      ],
+      { log_level: "info" },
+    );
     expect(mockRegisterSkills).toHaveBeenCalledWith(input, [
       expect.stringMatching(/\/content\/skills$/),
       "/config/opencode/skills",

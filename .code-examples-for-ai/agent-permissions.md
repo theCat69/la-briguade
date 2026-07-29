@@ -60,7 +60,7 @@ function gateSkillAccess(agentName: string, requestedSkill: string): boolean {
 ---
 name: playwright-cli
 description: Browser automation tooling
-agents: [coder, reviewer]
+agents: [coder, sidekick-reviewer]
 ---
 ```
 

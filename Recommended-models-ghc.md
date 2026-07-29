@@ -81,7 +81,8 @@ Each agent was matched to a model based on four dimensions:
 
 | Agent | Recommended Model | Multiplier | Rationale |
 |---|---|---|---|
-| **reviewer** | `github-copilot/claude-sonnet-4.6` | **1×** | Full-codebase review for correctness, architecture, and maintainability. Requires deep understanding of TypeScript ESM patterns, plugin conventions, and the project's SOLID principles. Sonnet 4.6 has the best code comprehension at 1×. |
+| **sidekick-reviewer** | `github-copilot/claude-sonnet-4.6` | **1×** | Persistent code review for correctness, architecture, and maintainability. Requires deep understanding of TypeScript ESM patterns, plugin conventions, and the project's SOLID principles. Sonnet 4.6 has the best code comprehension at 1×. |
+| **sidekick-security-reviewer** | `github-copilot/gemini-2.5-pro` | **1×** | Persistent security review for code and dependency changes. Gemini 2.5 Pro's large context window handles evidence-based security analysis while preserving follow-up session context. |
 | **security-reviewer** | `github-copilot/gemini-2.5-pro` | **1×** | CVE lookup via GitHub Advisory Database, OWASP pattern matching, full-codebase security sweeps. Gemini 2.5 Pro's large context window handles whole-codebase analysis with nuanced threat reasoning. Strong alternative to Sonnet 4.6 for this read-heavy analytical task. |
 | **critic** | `github-copilot/claude-opus-4.6` | **3×** | Adversarial first-principles challenger — surfaces hidden assumptions, questions necessity, proposes simpler alternatives. This is the highest-order reasoning task in the pipeline. Even though output is bounded at ≤300 tokens, generating a genuinely sharp challenge requires Opus-depth. The 3× cost is justified by the value of blocking bad designs early. |
 | **feature-reviewer** | `github-copilot/claude-sonnet-4.6` | **1×** | Spec quality gate: blocks ambiguous, non-implementable, or production-unsafe features. Requires strong language understanding to evaluate specs against production-readiness criteria. Sonnet 4.6 is the right fit at 1×. |
@@ -102,7 +103,7 @@ Each agent was matched to a model based on four dimensions:
 |---|---|---|---|
 | **local-context-gatherer** | `github-copilot/grok-code-fast-1` | **0.25×** | Mechanical task: read files, extract facts, write cache via `cache_ctrl_write`. Pure throughput — no creative reasoning needed. Grok Code Fast 1 is the cheapest code-capable model in the list at 0.25×, ideal for parallel batch scans where multiple instances run concurrently. |
 | **external-context-gatherer** | `github-copilot/gpt-5.4-mini` | **0.33×** | Web search + MCP tool calls (context7, GitHub Advisory Database) + cache writes. Fast, tool-use capable, no deep reasoning required. GPT-5.4-mini handles tool-heavy workflows efficiently at low cost. |
-| **librarian** | `github-copilot/claude-sonnet-4.6` | **1×** | Keeps README, AGENTS.md, and `.code-examples-for-ai/` in sync with code changes. Requires understanding *what changed* and *why it matters* for documentation — language quality is essential. Sonnet 4.6 is the right fit. |
+| **sidekick-librarian** | `github-copilot/claude-sonnet-4.6` | **1×** | Synchronizes README, AGENTS.md, prompts, skills, and `.code-examples-for-ai/` with code changes. Requires understanding *what changed* and *why it matters* for documentation — language quality is essential. Sonnet 4.6 is the right fit. |
 
 ---
 
@@ -119,7 +120,8 @@ ask:           github-copilot/claude-sonnet-4.6     # 1×
 coder:         github-copilot/gpt-5.3-codex         # 1×
 
 # Review subagents
-reviewer:              github-copilot/claude-sonnet-4.6    # 1×
+sidekick-reviewer:     github-copilot/claude-sonnet-4.6    # 1×
+sidekick-security-reviewer: github-copilot/gemini-2.5-pro  # 1×
 security-reviewer:     github-copilot/gemini-2.5-pro       # 1×
 critic:                github-copilot/claude-opus-4.6      # 3×
 feature-reviewer:      github-copilot/claude-sonnet-4.6    # 1×
@@ -130,7 +132,7 @@ feature-designer:      github-copilot/gemini-2.5-pro       # 1×
 # Context & docs subagents
 local-context-gatherer:    github-copilot/grok-code-fast-1  # 0.25×
 external-context-gatherer: github-copilot/gpt-5.4-mini      # 0.33×
-librarian:                 github-copilot/claude-sonnet-4.6  # 1×
+sidekick-librarian:        github-copilot/claude-sonnet-4.6  # 1×
 ```
 
 ---
@@ -149,11 +151,11 @@ Assuming a typical active development session: 1 Orchestrator run, 3 Builder tas
 | builder (Sonnet 4.6) | 3 | 1× | 3 |
 | ask (Sonnet 4.6) | 10 | 1× | 10 |
 | coder (GPT-5.3-Codex) | 3 | 1× | 3 |
-| reviewer (Sonnet 4.6) | 3 | 1× | 3 |
+| sidekick-reviewer (Sonnet 4.6) | 3 | 1× | 3 |
 | security-reviewer (Gemini 2.5 Pro) | 2 | 1× | 2 |
 | feature-reviewer (Sonnet 4.6) | 2 | 1× | 2 |
 | feature-designer (Gemini 2.5 Pro) | 1 | 1× | 1 |
-| librarian (Sonnet 4.6) | 2 | 1× | 2 |
+| sidekick-librarian (Sonnet 4.6) | 2 | 1× | 2 |
 | local-context-gatherer (Grok Fast) | 10 | 0.25× | 2.5 |
 | external-context-gatherer (GPT-5.4-mini) | 5 | 0.33× | 1.65 |
 | **Total** | | | **~38 req / session** |

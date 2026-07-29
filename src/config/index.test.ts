@@ -169,7 +169,7 @@ describe("resolveUserConfig", () => {
       }
       if (filePath.includes("/project")) {
         return inspection(
-          okResult({ agents: { reviewer: { temperature: 0.1 } } }),
+          okResult({ agents: { "sidekick-reviewer": { temperature: 0.1 } } }),
           "/project/la-briguade.json",
         );
       }
@@ -181,7 +181,7 @@ describe("resolveUserConfig", () => {
 
     // Assert — both agents present
     expect(result.agents?.["coder"]?.model).toBe("global-coder-model");
-    expect(result.agents?.["reviewer"]?.temperature).toBe(0.1);
+    expect(result.agents?.["sidekick-reviewer"]?.temperature).toBe(0.1);
   });
 
   it("should warn and skip global config on parse error", () => {
@@ -336,7 +336,7 @@ describe("resolveUserConfig", () => {
       }
 
       return inspection(
-        okResult({ agents: { reviewer: { model: "project-model" } } }),
+        okResult({ agents: { "sidekick-reviewer": { model: "project-model" } } }),
         "/project/la-briguade.json",
       );
     });
@@ -349,7 +349,7 @@ describe("resolveUserConfig", () => {
     expect(result.global.resolvedPath).toBe("/home/user/.config/la_briguade/la-briguade.json");
     expect(result.project.resolvedPath).toBe("/project/la-briguade.json");
     expect(result.config.model).toBe("global-model");
-    expect(result.config.agents?.["reviewer"]?.model).toBe("project-model");
+    expect(result.config.agents?.["sidekick-reviewer"]?.model).toBe("project-model");
   });
 });
 

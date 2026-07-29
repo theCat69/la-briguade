@@ -11,7 +11,7 @@ detect:
       contains: quarkus
 agents:
   - coder
-  - reviewer
+  - sidekick-reviewer
   - architect
   - feature-designer
   - feature-reviewer

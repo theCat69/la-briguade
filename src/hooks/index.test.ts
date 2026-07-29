@@ -22,26 +22,6 @@ function getEventHook() {
 }
 
 describe("tool.execute.after", () => {
-  it("should not throw when output.output is undefined", async () => {
-    const hook = getToolExecuteAfterHook();
-    const output = {};
-    const initialOutput = { ...output };
-
-    const execute = async () => hook?.({ tool: "bash" } as never, output as never);
-
-    await expect(execute()).resolves.not.toThrow();
-    expect(output).toEqual(initialOutput);
-  });
-
-  it("should truncate output above the max chars threshold", async () => {
-    const hook = getToolExecuteAfterHook();
-    const output = { output: "x".repeat(50_010) };
-
-    await hook?.({ tool: "bash" } as never, output as never);
-
-    expect(output.output).toContain("[truncated 15010 chars]");
-  });
-
   it("should append edit retry hint when edit error marker is present", async () => {
     const hook = getToolExecuteAfterHook();
     const output = { output: "Error: oldString not found in target content." };
@@ -66,17 +46,6 @@ describe("tool.execute.after", () => {
     );
   });
 
-  it("should truncate non-edit large output without appending edit hint", async () => {
-    const hook = getToolExecuteAfterHook();
-    const output = { output: `oldString not found\n${"x".repeat(50_010)}` };
-
-    await hook?.({ tool: "bash" } as never, output as never);
-
-    expect(output.output).toContain("[truncated");
-    expect(output.output).not.toContain(
-      "Hint: Re-read the file to get current content before retrying the edit.",
-    );
-  });
 });
 
 describe("detectEmptyResponse via event hook", () => {

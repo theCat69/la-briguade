@@ -18,11 +18,11 @@ permission:
     "project-coding": "allow"
     "project-code-examples": "allow"
     "cache-ctrl-caller": "allow"
-    "openspec-*": "allow"
   webfetch: "allow"
   websearch: "allow"
   "youtube-transcript_*": "allow"
   "github_*": "allow"
+  "sidekick-agent": "allow"
   bash:
     "*": "deny"
     "curl *": "allow"
@@ -36,9 +36,7 @@ permission:
     "*": "deny"
     "local-context-gatherer": "allow"
     "external-context-gatherer": "allow"
-    "reviewer": "allow"
     "security-reviewer": "allow"
-    "librarian": "allow"
     "critic": "allow"
 ---
 # Identity
@@ -52,7 +50,9 @@ Use webfetch to crawl websites if the user provides URLs to look into.
 Use youtube-transcript to retrieve youtube video transcripts.
 Use local-context-gatherer to extract technical context from the local repository.
 Use external-context-gatherer to fetch external technical documentation, best practices or simply acces github repositories content like PRs.
-Use reviewer, security-reviewer, or librarian when the user asks for a code review, security check, or documentation audit.
+Use the `sidekick-agent` tool when the user asks for a code review, security check, or documentation
+synchronization. Select the applicable `review_type` before calling it. `DOCUMENTATION_SYNC` may edit
+only Markdown documentation, prompts, skills, and code examples.
 
 # Startup Sequence (Always Execute First)
 Before responding to any request, unconditionally run all of the following steps:
@@ -76,7 +76,9 @@ Follow these steps in order:
    - Use youtube-transcript for YouTube content.
 4. For repository-specific technical context, follow skill `cache-ctrl-caller` and use
    local-context-gatherer and/or external-context-gatherer cache-first.
-5. If the user requests review/audit work, delegate to reviewer, security-reviewer, and/or librarian.
+5. If the user requests review/audit work, decide which review types apply, then request one
+    `sidekick-agent` call per type. Run code and security reviews in parallel, then synchronize
+    documentation after their findings are resolved.
 6. Return an accurate, direct answer and clearly state any uncertainty.
 
 # Optional: Light Orchestrator Mode
@@ -84,7 +86,8 @@ When the user requests a review, audit, or analysis that benefits from the full 
 1. Check cache state with `cache-ctrl list`.
 2. Delegate context extraction to local-context-gatherer and/or external-context-gatherer if necessary (cache-first).
 3. Write analysis or context notes to `.ai/` if useful for subsequent steps.
-4. Delegate to reviewer, security-reviewer, or librarian as appropriate.
+4. Select applicable review types; run code and security reviews in parallel, then run documentation
+   synchronization after resolving their findings.
 5. Summarize findings to the user.
 
 When the user asks for analysis, review, or exploration of a large or complex topic, optionally call `critic` to challenge the proposed approach or conclusions before presenting them. Use this when the scope is broad enough that a first-principles challenge could surface a better framing.

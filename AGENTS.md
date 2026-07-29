@@ -39,7 +39,7 @@ Load the relevant canonical skill before starting any task.
 
 ## Slash Commands
 
-la-briguade currently ships **14 slash commands**.
+la-briguade currently ships **17 slash commands**.
 
 | Command | Description |
 |---|---|
@@ -53,10 +53,13 @@ la-briguade currently ships **14 slash commands**.
 | `/unslop-loop` | Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup |
 | `/refactor` | Structured refactoring workflow — architect analysis, critic challenge, user approval, then Orchestrator-led implementation |
 | `/local-context-full-gathering` | Parallel full context re-scan batched across multiple local-context-gatherers |
-| `/openspec-init` | Initialize and verify repository-local OpenSpec setup, then additively fill `openspec/config.yaml`/`openspec/config.yml` from repo context (or minimal interview fallback) with explicit repair guidance |
-| `/plan-prd` | OpenSpec-first planning workflow gated on CLI + config readiness; hard-stops when setup is missing and redirects to `/openspec-init` |
-| `/implement-prd` | OpenSpec-first implementation workflow gated on CLI + config readiness and apply-status checks before execution |
+| `/to-spec` | Turn the current conversation into a spec and publish it to the configured tracker or local Markdown |
+| `/to-tickets` | Break a spec, plan, or conversation into approved tracer-bullet tickets with dependency edges |
+| `/implement` | Implement approved work from a spec or unblocked ticket using its agreed test seams |
 | `/just-do-it` | Zero-ceremony, fully autonomous implementation workflow — understand intent, gather context, architect a plan, challenge it, implement the full pipeline, and commit without interruption |
+| `/grilling` | Stress-test a plan, decision, or idea through a decision-tree interview before acting |
+| `/handoff` | Create a compact, redacted Markdown handoff for a future agent or session |
+| `/learn` | Teach a topic through a focused lesson, with optional persistent artifacts outside the project workspace |
 
 ---
 
@@ -80,6 +83,7 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 | `logger-notifier.md` | Logger singleton two-phase init and toast notifier with logger fallback |
 | `skill-access-gating.md` | Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup |
 | `bounded-skill-loader.md` | Rejecting oversized auto-inject skill content before it enters memory or prompts |
+| `persistent-sidekick-tool.md` | Persistent CLI-backed multi-type review and documentation-sync tool with isolated per-type session reuse, bounded output, and cancellation |
 
 ---
 
@@ -87,11 +91,12 @@ Concrete, annotated TypeScript snippets live in `.code-examples-for-ai/`. Refere
 
 ```
 src/
-  index.ts           ← Plugin entry point — wires config() + hooks
+  index.ts           ← Plugin entry point — wires config(), hooks, and the sidekick-agent custom tool
   plugin/
     agents.ts        ← registerAgents(config, agentDirs[]) — merges .md files across builtin + user dirs via collectFiles(); applies user overrides; returns { agentSections, agentSkillPerms }
     commands.ts      ← registerCommands(config, commandDirs[]) — merges .md files across builtin + user dirs via collectFiles()
     skills.ts        ← registerSkills(config, skillRoots[]) — discovers skill subdirs across builtin + user roots via collectDirs(); returns { dirs }
+    sidekick-agent.ts ← createSidekickAgentTool() — persistent code/security review and documentation-sync routing
     mcp/
       index.ts       ← barrel re-export
       collect.ts     ← collectSkillMcps() / collectSkillBashPermissions() / collectSkillAgents() / collectSkillExternalDirectories() — reads mcp:, permission.bash, agents:, and skill-dir external-directory grants from SKILL.md files

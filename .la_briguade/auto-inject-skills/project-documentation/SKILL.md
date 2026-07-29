@@ -3,7 +3,6 @@ name: project-documentation
 description: Documentation standards for code, README, API docs, and changelog for la-briguade
 agents:
   - coder
-  - reviewer
 ---
 
 ## Scope

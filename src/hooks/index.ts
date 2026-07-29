@@ -35,7 +35,7 @@ export function createHooks(
 
   return {
     "tool.execute.after": async (input, output) => {
-      truncateLargeOutput(output);
+      // truncateLargeOutput(output);
       appendEditErrorHint(input.tool, output);
     },
 

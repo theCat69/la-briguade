@@ -6,7 +6,7 @@ detect:
     - Cargo.toml
 agents:
   - coder
-  - reviewer
+  - sidekick-reviewer
   - architect
   - feature-designer
   - feature-reviewer
@@ -115,7 +115,7 @@ Keep unit tests in `#[cfg(test)]` modules and integration tests in `tests/`. Use
 - `#[derive(Serialize, Deserialize)]` is idiomatic for data types crossing process/network/storage boundaries.
 - Set casing explicitly with `#[serde(rename_all = "camelCase")]` or `#[serde(rename_all = "snake_case")]`; never rely on implicit casing.
 - Use `#[serde(skip_serializing_if = "Option::is_none")]` for optional wire-format fields.
-- Validate untrusted data after deserialization; `serde` validates structure, not business rules.
+- Validate deserialized data; `serde` validates structure, not business rules.
 
 ## Cargo Workspaces and Dependency Hygiene
 Use workspace roots with shared `[workspace.dependencies]` and explicit crate editions (`2021` or `2024`). Match resolver to edition: use `resolver = "2"` for edition 2021 and `resolver = "3"` for edition 2024. Use feature flags for optional dependencies and keep default features minimal.

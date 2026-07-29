@@ -3,7 +3,6 @@ name: project-coding
 description: Project-specific coding guidelines, naming conventions, architecture patterns, and code examples for la-briguade
 agents:
   - coder
-  - reviewer
   - architect
   - feature-designer
   - feature-reviewer

@@ -1,0 +1,334 @@
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+
+import { tool } from "@opencode-ai/plugin";
+import type { ToolDefinition } from "@opencode-ai/plugin";
+
+const MAX_CLI_OUTPUT_LENGTH = 1_000_000;
+const FORCE_KILL_GRACE_MS = 5_000;
+const REVIEW_TIMEOUT_MS = 600_000;
+const SESSION_LIST_MAX_COUNT = 100;
+const SESSION_LIST_TIMEOUT_MS = 10_000;
+const MAX_TRACKED_REVIEW_SESSIONS = 1_000;
+
+interface CommandResult {
+  exitCode: number;
+  stderr: string;
+  stdout: string;
+}
+
+interface CommandOptions {
+  abort: AbortSignal;
+  cwd: string;
+  timeoutMs: number;
+}
+
+type CommandRunner = (
+  command: string,
+  args: string[],
+  options: CommandOptions,
+) => Promise<CommandResult>;
+
+interface ReviewTypeConfig {
+  agent: string;
+  sessionSuffix: string;
+}
+
+const REVIEW_TYPE_CONFIG = {
+  CODE_REVIEW: {
+    agent: "sidekick-reviewer",
+    sessionSuffix: "_review",
+  },
+  SECURITY_REVIEW: {
+    agent: "sidekick-security-reviewer",
+    sessionSuffix: "_sec-review",
+  },
+  DOCUMENTATION_SYNC: {
+    agent: "sidekick-librarian",
+    sessionSuffix: "_doc-sync",
+  },
+} as const satisfies Record<string, ReviewTypeConfig>;
+
+type ReviewType = keyof typeof REVIEW_TYPE_CONFIG;
+type ReviewSessionNameFactory = (mainSessionId: string, reviewType: ReviewType) => string;
+
+interface SidekickAgentArgs {
+  new_session: boolean;
+  review_prompt: string;
+  review_type: ReviewType;
+}
+
+interface SessionSummary {
+  directory: string;
+  id: string;
+  title: string;
+  updated: number;
+}
+
+function isSessionSummary(value: unknown): value is SessionSummary {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "id" in value &&
+    "title" in value &&
+    "directory" in value &&
+    "updated" in value &&
+    typeof value.id === "string" &&
+    typeof value.title === "string" &&
+    typeof value.directory === "string" &&
+    typeof value.updated === "number"
+  );
+}
+
+/** Returns the newest exact-title session in the active project from OpenCode's JSON session list. */
+export function findLatestSessionId(
+  sessionList: string,
+  sessionName: string,
+  directory: string,
+): string | undefined {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(sessionList);
+  } catch {
+    throw new Error("OpenCode returned an invalid JSON session list.");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("OpenCode returned a session list with an unexpected format.");
+  }
+
+  const matchingSessions = parsed.filter(
+    (session): session is SessionSummary =>
+      isSessionSummary(session) && session.title === sessionName && session.directory === directory,
+  );
+  const latestSession = matchingSessions.reduce<SessionSummary | undefined>(
+    (latest, session) => (latest === undefined || session.updated > latest.updated ? session : latest),
+    undefined,
+  );
+
+  return latestSession?.id;
+}
+
+function runCommand(command: string, args: string[], options: CommandOptions): Promise<CommandResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      signal: options.abort,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    let outputLimitExceeded = false;
+    let timedOut = false;
+    let outputLength = 0;
+    let forceKillTimeout: ReturnType<typeof setTimeout> | undefined;
+    const scheduleForceKill = () => {
+      if (forceKillTimeout !== undefined) return;
+
+      forceKillTimeout = setTimeout(() => {
+        child.kill("SIGKILL");
+      }, FORCE_KILL_GRACE_MS);
+    };
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill();
+      scheduleForceKill();
+    }, options.timeoutMs);
+    const handleAbort = () => {
+      child.kill();
+      scheduleForceKill();
+    };
+    options.abort.addEventListener("abort", handleAbort, { once: true });
+
+    const appendOutput = (current: string, chunk: Buffer): string => {
+      if (outputLimitExceeded) return current;
+
+      const output = chunk.toString();
+      const remainingLength = MAX_CLI_OUTPUT_LENGTH - outputLength;
+      if (output.length <= remainingLength) {
+        outputLength += output.length;
+        return current + output;
+      }
+
+      outputLimitExceeded = true;
+      child.kill();
+      scheduleForceKill();
+      return current + output.slice(0, Math.max(remainingLength, 0));
+    };
+
+    child.stdout.on("data", (chunk: Buffer) => {
+      stdout = appendOutput(stdout, chunk);
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr = appendOutput(stderr, chunk);
+    });
+    child.on("error", (error) => {
+      clearTimeout(timeout);
+      if (!options.abort.aborted && forceKillTimeout !== undefined) clearTimeout(forceKillTimeout);
+      reject(error);
+    });
+    child.on("close", (exitCode) => {
+      clearTimeout(timeout);
+      if (forceKillTimeout !== undefined) clearTimeout(forceKillTimeout);
+      options.abort.removeEventListener("abort", handleAbort);
+      resolve({
+        exitCode: outputLimitExceeded || timedOut ? 1 : (exitCode ?? 1),
+        stderr: outputLimitExceeded
+          ? "OpenCode output exceeded 1,000,000 characters."
+          : timedOut
+            ? `OpenCode timed out after ${options.timeoutMs} ms.`
+            : stderr,
+        stdout,
+      });
+    });
+  });
+}
+
+function formatCommandError(action: string, result: CommandResult): string {
+  const detail = result.stderr.trim() || result.stdout.trim() || "no diagnostic output";
+  return `Sidekick agent failed while ${action} (exit ${result.exitCode}): ${detail}`;
+}
+
+function formatUnexpectedError(error: unknown): Error {
+  const detail = error instanceof Error ? error.message : String(error);
+  return new Error(`Sidekick agent failed: ${detail}`);
+}
+
+function throwIfAborted(abort: AbortSignal): void {
+  if (abort.aborted) {
+    throw new Error("Sidekick agent request was cancelled.");
+  }
+}
+
+function getReviewSessionName(mainSessionId: string, reviewType: ReviewType): string {
+  return `${mainSessionId}${REVIEW_TYPE_CONFIG[reviewType].sessionSuffix}`;
+}
+
+function getUnrelatedReviewSessionName(mainSessionId: string, reviewType: ReviewType): string {
+  return `${getReviewSessionName(mainSessionId, reviewType)}_${randomUUID().slice(0, 8)}`;
+}
+
+function getReviewSessionKey(mainSessionId: string, reviewType: ReviewType): string {
+  return `${mainSessionId}:${reviewType}`;
+}
+
+function rememberReviewSessionName(
+  reviewSessionNames: Map<string, string>,
+  mainSessionId: string,
+  reviewSessionName: string,
+): void {
+  reviewSessionNames.delete(mainSessionId);
+  reviewSessionNames.set(mainSessionId, reviewSessionName);
+
+  if (reviewSessionNames.size > MAX_TRACKED_REVIEW_SESSIONS) {
+    const oldestMainSessionId = reviewSessionNames.keys().next().value;
+    if (oldestMainSessionId !== undefined) reviewSessionNames.delete(oldestMainSessionId);
+  }
+}
+
+async function resolveSessionId(
+  sessionName: string,
+  options: CommandOptions,
+  commandRunner: CommandRunner,
+): Promise<string | undefined> {
+  const result = await commandRunner(
+    "opencode",
+    ["session", "list", "--format", "json", "--max-count", String(SESSION_LIST_MAX_COUNT)],
+    { ...options, timeoutMs: SESSION_LIST_TIMEOUT_MS },
+  );
+  if (result.exitCode !== 0) {
+    throw new Error(formatCommandError("listing sessions", result));
+  }
+
+  return findLatestSessionId(result.stdout, sessionName, options.cwd);
+}
+
+function buildRunArgs(
+  args: SidekickAgentArgs,
+  reviewSessionName: string,
+  sessionId: string | undefined,
+): string[] {
+  const commonArgs = [
+    "--agent",
+    REVIEW_TYPE_CONFIG[args.review_type].agent,
+    "--title",
+    reviewSessionName,
+    "--",
+    args.review_prompt,
+  ];
+
+  return sessionId === undefined
+    ? ["run", ...commonArgs]
+    : ["run", "--session", sessionId, ...commonArgs];
+}
+
+/** Creates the tool used to run persistent sidekick sessions. */
+export function createSidekickAgentTool(
+  commandRunner: CommandRunner = runCommand,
+  createUnrelatedReviewSessionName: ReviewSessionNameFactory = getUnrelatedReviewSessionName,
+): ToolDefinition {
+  const reviewSessionNames = new Map<string, string>();
+
+  return tool({
+    description:
+      "Request a persistent code or security review, or synchronize documentation. The session " +
+      "name is derived from this session and review type. Set new_session only for unrelated work.",
+    args: {
+      review_prompt: tool.schema.string().trim().min(1).max(20_000),
+      review_type: tool.schema.enum([
+        "CODE_REVIEW",
+        "SECURITY_REVIEW",
+        "DOCUMENTATION_SYNC",
+      ]),
+      new_session: tool.schema.boolean().default(false),
+    },
+    async execute(args, context) {
+      try {
+        throwIfAborted(context.abort);
+        const commandOptions = {
+          abort: context.abort,
+          cwd: context.directory,
+          timeoutMs: REVIEW_TIMEOUT_MS,
+        };
+        const reviewSessionKey = getReviewSessionKey(context.sessionID, args.review_type);
+        const reviewSessionName = args.new_session
+          ? createUnrelatedReviewSessionName(context.sessionID, args.review_type)
+          : (reviewSessionNames.get(reviewSessionKey) ??
+            getReviewSessionName(context.sessionID, args.review_type));
+        rememberReviewSessionName(reviewSessionNames, reviewSessionKey, reviewSessionName);
+        const sessionId = args.new_session
+          ? undefined
+          : await resolveSessionId(reviewSessionName, commandOptions, commandRunner);
+        throwIfAborted(context.abort);
+        const action = sessionId === undefined ? "starting a session" : "resuming a session";
+        const result = await commandRunner(
+          "opencode",
+          buildRunArgs(args, reviewSessionName, sessionId),
+          commandOptions,
+        );
+        throwIfAborted(context.abort);
+
+        if (result.exitCode !== 0) {
+          throw new Error(formatCommandError(action, result));
+        }
+
+        const metadata = {
+          sessionName: reviewSessionName,
+          sessionId,
+          startedNewSession: sessionId === undefined,
+          reviewType: args.review_type,
+        };
+        context.metadata({ title: `Sidekick agent: ${reviewSessionName}`, metadata });
+
+        return {
+          title: `Sidekick agent: ${reviewSessionName}`,
+          output: result.stdout.trim() || "Sidekick agent completed without output.",
+          metadata,
+        };
+      } catch (error) {
+        throw formatUnexpectedError(error);
+      }
+    },
+  });
+}

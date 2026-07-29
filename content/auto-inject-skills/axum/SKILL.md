@@ -7,7 +7,7 @@ detect:
       contains: "axum ="
 agents:
   - coder
-  - reviewer
+  - sidekick-reviewer
   - architect
   - feature-designer
   - feature-reviewer

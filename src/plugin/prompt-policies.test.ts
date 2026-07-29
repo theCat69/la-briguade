@@ -17,7 +17,6 @@ const FRAMEWORK_SKILL_PATHS = [
 ] as const;
 const EXPECTED_FRAMEWORK_AGENTS = [
   "coder",
-  "reviewer",
   "architect",
   "feature-designer",
   "feature-reviewer",
@@ -54,18 +53,37 @@ describe("prompt policy contracts", () => {
     expect(content).not.toContain("Content should live in exactly one place");
   });
 
-  it("should require explicit security-reviewer invocation in workflow prompts", () => {
+  it("should require parallel reviews before documentation synchronization in workflow prompts", () => {
     const orchestratorContent = readContentFile("content/agents/Orchestrator.md");
     const builderContent = readContentFile("content/agents/Builder.md");
     const justDoItContent = readContentFile("content/commands/just-do-it.md");
     const refactorContent = readContentFile("content/commands/refactor.md");
-    const implementPrdContent = readContentFile("content/commands/implement-prd.md");
+    const implementContent = readContentFile("content/commands/implement.md");
 
-    expect(orchestratorContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(builderContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(justDoItContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
-    expect(refactorContent).toMatch(/security-reviewer[\s\S]*explicitly requests?/i);
-    expect(implementPrdContent).toMatch(/security-reviewer[\s\S]*explicitly requested/i);
+    for (const content of [
+      orchestratorContent,
+      builderContent,
+      justDoItContent,
+      refactorContent,
+      implementContent,
+    ]) {
+      expect(content).toContain("CODE_REVIEW");
+      expect(content).toContain("SECURITY_REVIEW");
+      expect(content).toContain("DOCUMENTATION_SYNC");
+      expect(content).toMatch(/parallel/i);
+    }
+  });
+
+  it("should provide the spec-to-ticket workflow without legacy planning commands", () => {
+    const toSpecContent = readContentFile("content/commands/to-spec.md");
+    const toTicketsContent = readContentFile("content/commands/to-tickets.md");
+    const implementContent = readContentFile("content/commands/implement.md");
+
+    expect(toSpecContent).toContain("Do not restart requirements discovery");
+    expect(toSpecContent).toContain(".scratch/<feature-slug>/spec.md");
+    expect(toTicketsContent).toContain("tracer-bullet vertical slices");
+    expect(toTicketsContent).toContain(".scratch/<feature-slug>/issues/<NN>-<slug>.md");
+    expect(implementContent).toContain("unblocked frontier ticket");
   });
 
   it("should keep AGENTS.md canonical pointer on auto-inject skills", () => {

@@ -3,19 +3,18 @@ name: project-security
 description: Security guidelines for la-briguade — safe parsing, dependency hygiene, CLI input safety, and secret management
 agents:
   - coder
-  - reviewer
   - security-reviewer
 ---
 
 ## Scope
 
-- **In scope**: secret handling, untrusted input boundaries, dependency/audit policy,
+- **In scope**: secret handling, input-boundary validation, dependency/audit policy,
   command/path safety, and vulnerability prevention patterns in this plugin.
 - **Out of scope**: unrelated product policy or speculative threat models without repository impact.
 
 ## Invariants
 
-- Untrusted content **MUST** be validated at parsing boundaries before use.
+- Content **MUST** be validated at parsing boundaries before use.
 - Secrets **MUST NOT** be committed to source, copied into skills, or written to logs.
 - File paths from variable input **MUST** be sanitized before filesystem joins.
 - Security checks **MUST** fail closed for critical release gates (audit/build/test).
@@ -39,7 +38,7 @@ Manually verify for touched security-sensitive areas:
 
 ## Failure Handling
 
-- If validation of untrusted input cannot be guaranteed, block the change and request redesign.
+- If input validation cannot be guaranteed, block the change and request redesign.
 - If audit reports high/critical vulnerabilities, block release until mitigated or explicitly risk-accepted.
 - If a potential secret leak is detected, redact immediately and rotate compromised credential if applicable.
 - If command/path safety checks fail, stop execution path and emit actionable warning/error context.
@@ -55,7 +54,7 @@ Manually verify for touched security-sensitive areas:
 ## Input Validation
 
 ### YAML Frontmatter
-All YAML frontmatter from `.md` files is **untrusted input**:
+All YAML frontmatter from `.md` files is input that requires validation:
 - Parse with `yaml` library using the default `schema: "core"` — this avoids YAML 1.1 quirks (`on`/`off` → boolean, etc.) and disallows custom tags that could execute code
 - Set `maxAliasCount` to a safe limit (default is 100) to prevent DoS via YAML alias bombs
 - **Always validate the parsed value** before casting — never assume `parseYaml()` returns an object:
@@ -114,7 +113,7 @@ Skill frontmatter MCP entries may include a `permission:` block declaring tool-l
 
 ## Prototype Pollution Prevention
 
-- Avoid `Object.assign({}, untrustedObject)` with deeply nested untrusted objects
+- Avoid `Object.assign({}, inputObject)` with deeply nested objects
 - When merging frontmatter attributes into config, **explicitly extract allowed properties** rather than spreading unknown objects:
   ```typescript
   // Good — explicit extraction

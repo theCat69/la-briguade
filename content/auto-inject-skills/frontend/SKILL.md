@@ -72,6 +72,8 @@ playwright-cli screenshot --filename=page.png
 Load the "read-image" skill if available and follow its instructions.
 Read the image.
 
+Fix the layout if it does not macth the intended one.
+
 ---
 
 ## HTML Semantics Checklist

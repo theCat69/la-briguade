@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { registerAgents } from "./agents.js";
@@ -5,8 +7,10 @@ import { registerAgents } from "./agents.js";
 import type { LaBriguadeConfig } from "../config/schema.js";
 import type { Config } from "../types/plugin.js";
 import { collectFiles } from "../utils/content/content-merge.js";
+import { parseFrontmatter } from "../utils/content/frontmatter.js";
 import { readContentFile } from "../utils/content/read-content-file.js";
 import { logger } from "../utils/runtime/logger.js";
+import { isRecord } from "../utils/support/type-guards.js";
 
 vi.mock("../utils/content/content-merge.js");
 vi.mock("../utils/content/read-content-file.js");
@@ -194,7 +198,7 @@ describe("registerAgents", () => {
     mockCollectFiles.mockReturnValue(
       new Map([
         ["local-context-gatherer", "/builtin/agents/local-context-gatherer.md"],
-        ["reviewer", "/builtin/agents/reviewer.md"],
+        ["sidekick-reviewer", "/builtin/agents/sidekick-reviewer.md"],
       ]),
     );
     mockReadContentFile.mockImplementation((filePath) => {
@@ -219,7 +223,7 @@ describe("registerAgents", () => {
     const userConfig: LaBriguadeConfig = {
       agents: {
         "local-context-gatherer": { model: "azure_foundry/gpt-5.4-mini" },
-        reviewer: { model: "azure_foundry/gpt-5.3-codex" },
+        "sidekick-reviewer": { model: "azure_foundry/gpt-5.3-codex" },
       },
     };
 
@@ -229,9 +233,10 @@ describe("registerAgents", () => {
     // Assert
     const localContextGatherer =
       config.agent?.["local-context-gatherer"] as Record<string, unknown> | undefined;
-    const reviewer = config.agent?.["reviewer"] as Record<string, unknown> | undefined;
+    const sidekickReviewer =
+      config.agent?.["sidekick-reviewer"] as Record<string, unknown> | undefined;
     expect(localContextGatherer?.["model"]).toBe("azure_foundry/gpt-5.4-mini");
-    expect(reviewer?.["model"]).toBe("azure_foundry/gpt-5.3-codex");
+    expect(sidekickReviewer?.["model"]).toBe("azure_foundry/gpt-5.3-codex");
   });
 
   it("should return early and keep config unchanged when no agent files are found", () => {
@@ -246,5 +251,38 @@ describe("registerAgents", () => {
     // Assert
     expect(result).toBeUndefined();
     expect(config).toEqual(initialConfig);
+  });
+
+  it.each(["Ask", "Orchestrator"])(
+    "should permit %s to request a sidekick review",
+    (agentName) => {
+      // Arrange
+      const content = readFileSync(`content/agents/${agentName}.md`, "utf8");
+
+      // Act
+      const { attributes } = parseFrontmatter(content);
+      const permission = attributes["permission"];
+
+      // Assert
+      expect(isRecord(permission) ? permission["sidekick-agent"] : undefined).toBe("allow");
+    },
+  );
+
+  it("should permit sidekick to review the previous commit", () => {
+    // Arrange
+    const content = readFileSync("content/agents/sidekick-reviewer.md", "utf8");
+
+    // Act
+    const { attributes } = parseFrontmatter(content);
+    const permission = attributes["permission"];
+    const bashPermissions = isRecord(permission) && isRecord(permission["bash"])
+      ? permission["bash"]
+      : {};
+
+    // Assert
+    expect(bashPermissions["git diff --no-ext-diff HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["rtk git diff --no-ext-diff HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
+    expect(bashPermissions["rtk git diff --no-ext-diff --name-only HEAD^ HEAD"]).toBe("allow");
   });
 });
