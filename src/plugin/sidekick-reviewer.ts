@@ -9,7 +9,7 @@ const FORCE_KILL_GRACE_MS = 5_000;
 const REVIEW_TIMEOUT_MS = 600_000;
 const SESSION_LIST_MAX_COUNT = 100;
 const SESSION_LIST_TIMEOUT_MS = 10_000;
-const SESSION_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._ -]*$/;
+const REVIEW_SESSION_SUFFIX = "_review";
 
 interface CommandResult {
   exitCode: number;
@@ -32,7 +32,6 @@ type CommandRunner = (
 interface SidekickReviewArgs {
   new_session: boolean;
   review_prompt: string;
-  session_name: string;
 }
 
 interface SessionSummary {
@@ -178,6 +177,10 @@ function throwIfAborted(abort: AbortSignal): void {
   }
 }
 
+function getReviewSessionName(mainSessionId: string): string {
+  return `${mainSessionId}${REVIEW_SESSION_SUFFIX}`;
+}
+
 async function resolveSessionId(
   sessionName: string,
   options: CommandOptions,
@@ -195,12 +198,16 @@ async function resolveSessionId(
   return findLatestSessionId(result.stdout, sessionName, options.cwd);
 }
 
-function buildRunArgs(args: SidekickReviewArgs, sessionId: string | undefined): string[] {
+function buildRunArgs(
+  args: SidekickReviewArgs,
+  reviewSessionName: string,
+  sessionId: string | undefined,
+): string[] {
   const commonArgs = [
     "--agent",
     SIDEKICK_AGENT,
     "--title",
-    args.session_name,
+    reviewSessionName,
     "--",
     args.review_prompt,
   ];
@@ -216,15 +223,9 @@ export function createSidekickReviewerTool(
 ): ToolDefinition {
   return tool({
     description:
-      "Request a persistent code-quality review from sidekick-reviewer. Reuse a session only for " +
-      "the same feature or code area; set new_session for unrelated work or a fresh review.",
+      "Request a persistent code-quality review from sidekick-reviewer. The review session name " +
+      "is derived from this session. Set new_session only when the review starts unrelated work.",
     args: {
-      session_name: tool.schema
-        .string()
-        .trim()
-        .min(1)
-        .max(120)
-        .regex(SESSION_NAME_PATTERN, "session_name contains unsupported characters"),
       review_prompt: tool.schema.string().trim().min(1).max(20_000),
       new_session: tool.schema.boolean().default(false),
     },
@@ -236,14 +237,15 @@ export function createSidekickReviewerTool(
           cwd: context.directory,
           timeoutMs: REVIEW_TIMEOUT_MS,
         };
+        const reviewSessionName = getReviewSessionName(context.sessionID);
         const sessionId = args.new_session
           ? undefined
-          : await resolveSessionId(args.session_name, commandOptions, commandRunner);
+          : await resolveSessionId(reviewSessionName, commandOptions, commandRunner);
         throwIfAborted(context.abort);
         const action = sessionId === undefined ? "starting a session" : "resuming a session";
         const result = await commandRunner(
           "opencode",
-          buildRunArgs(args, sessionId),
+          buildRunArgs(args, reviewSessionName, sessionId),
           commandOptions,
         );
         throwIfAborted(context.abort);
@@ -253,14 +255,14 @@ export function createSidekickReviewerTool(
         }
 
         const metadata = {
-          sessionName: args.session_name,
+          sessionName: reviewSessionName,
           sessionId,
           startedNewSession: sessionId === undefined,
         };
-        context.metadata({ title: `Sidekick review: ${args.session_name}`, metadata });
+        context.metadata({ title: `Sidekick review: ${reviewSessionName}`, metadata });
 
         return {
-          title: `Sidekick review: ${args.session_name}`,
+          title: `Sidekick review: ${reviewSessionName}`,
           output: result.stdout.trim() || "Sidekick review completed without output.",
           metadata,
         };

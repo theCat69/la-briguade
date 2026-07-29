@@ -9,6 +9,7 @@ function createToolContext() {
     abort: abortController.signal,
     directory: "/project",
     metadata: vi.fn(),
+    sessionID: "ses_main",
   };
 }
 
@@ -40,8 +41,8 @@ describe("sidekick-reviewer tool", () => {
         exitCode: 0,
         stderr: "",
         stdout: JSON.stringify([
-          { directory: "/project", id: "ses_latest", title: "feature-auth", updated: 2 },
-          { directory: "/project", id: "ses_old", title: "feature-auth", updated: 1 },
+          { directory: "/project", id: "ses_latest", title: "ses_main_review", updated: 2 },
+          { directory: "/project", id: "ses_old", title: "ses_main_review", updated: 1 },
         ]),
       })
       .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "No blocking issues." });
@@ -49,7 +50,7 @@ describe("sidekick-reviewer tool", () => {
     const context = createToolContext();
 
     const result = await sidekickTool.execute(
-      { new_session: false, review_prompt: "Review the current diff.", session_name: "feature-auth" },
+      { new_session: false, review_prompt: "Review the current diff." },
       context as never,
     );
 
@@ -69,7 +70,7 @@ describe("sidekick-reviewer tool", () => {
         "--agent",
         "sidekick-reviewer",
         "--title",
-        "feature-auth",
+        "ses_main_review",
         "--",
         "Review the current diff.",
       ],
@@ -90,7 +91,7 @@ describe("sidekick-reviewer tool", () => {
     const context = createToolContext();
 
     await sidekickTool.execute(
-      { new_session: false, review_prompt: "Review the change.", session_name: "feature-auth" },
+      { new_session: false, review_prompt: "Review the change." },
       context as never,
     );
 
@@ -102,7 +103,7 @@ describe("sidekick-reviewer tool", () => {
         "--agent",
         "sidekick-reviewer",
         "--title",
-        "feature-auth",
+        "ses_main_review",
         "--",
         "Review the change.",
       ],
@@ -113,7 +114,7 @@ describe("sidekick-reviewer tool", () => {
     commandRunner.mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "Fresh review." });
 
     await sidekickTool.execute(
-      { new_session: true, review_prompt: "Review another feature.", session_name: "feature-api" },
+      { new_session: true, review_prompt: "Review another feature." },
       context as never,
     );
 
@@ -125,7 +126,7 @@ describe("sidekick-reviewer tool", () => {
         "--agent",
         "sidekick-reviewer",
         "--title",
-        "feature-api",
+        "ses_main_review",
         "--",
         "Review another feature.",
       ],
@@ -143,7 +144,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: false, review_prompt: "Review the change.", session_name: "feature-auth" },
+        { new_session: false, review_prompt: "Review the change." },
         createToolContext() as never,
       ),
     ).rejects.toThrow("Sidekick review failed while listing sessions (exit 1)");
@@ -159,7 +160,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change.", session_name: "feature-auth" },
+        { new_session: true, review_prompt: "Review the change." },
         createToolContext() as never,
       ),
     ).rejects.toThrow("Sidekick review failed while starting a session (exit 2)");
@@ -173,7 +174,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change.", session_name: "feature-auth" },
+        { new_session: true, review_prompt: "Review the change." },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
     ).rejects.toThrow("Sidekick review was cancelled.");
@@ -190,7 +191,7 @@ describe("sidekick-reviewer tool", () => {
 
     await expect(
       sidekickTool.execute(
-        { new_session: true, review_prompt: "Review the change.", session_name: "feature-auth" },
+        { new_session: true, review_prompt: "Review the change." },
         { ...createToolContext(), abort: cancelledRequest.signal } as never,
       ),
     ).rejects.toThrow("Sidekick review was cancelled.");

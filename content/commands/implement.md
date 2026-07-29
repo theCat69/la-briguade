@@ -20,8 +20,9 @@ outside that root. If no usable spec or ticket is provided, ask the user to prov
    suite before completion.
 3. Keep implementation within the accepted scope. Return to `/grilling` or `/to-spec` when a
    requirement or architectural decision is missing rather than inventing it during implementation.
-4. Request a sidekick review with a feature-scoped session name, run `security-reviewer` when applicable, address
-   substantiated findings, and update the ticket's acceptance checklist or configured tracker
-   status only after validated completion.
+4. Request a sidekick review. Its session name is derived from this agent session; set
+   `new_session: true` only for work unrelated to the previous review, otherwise leave it `false`.
+   Run `security-reviewer` when applicable, address substantiated findings, and update the ticket's
+   acceptance checklist or configured tracker status only after validated completion.
 5. Load `git-commit` and commit the completed work to the current branch when the repository and
    user workflow permit it. Report the implemented artifact, validation, review outcome, and commit.

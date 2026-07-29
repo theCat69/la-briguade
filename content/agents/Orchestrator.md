@@ -216,8 +216,9 @@ Re-read your Critical Rules and Delegation Map before step 5 and again before st
 9. Write the Context Snapshot (≤ 1,000 tokens) to `.ai/context-snapshots/current.json`. Do not
    include raw logs, diffs, or web pages in the snapshot.
 10. Call `coder` with the snapshot path and a brief summary. Never write code yourself.
-11. Request a sidekick review with the snapshot path and git diff. Use a feature-scoped session
-    name, reuse it only for the same code area, and never analyse the diff yourself.
+11. Request a sidekick review with the snapshot path and git diff. The tool derives its review
+    session name from this agent session; set `new_session: true` only for work unrelated to the
+    previous review, otherwise leave it `false`. Never analyse the diff yourself.
 12. Call `security-reviewer` with the snapshot path and git diff only when the user explicitly
     requested security review. Never perform security analysis yourself.
 13. If step 12 ran, for each finding from step 12 that is not clearly Critical or High severity with an obvious

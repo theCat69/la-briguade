@@ -196,8 +196,9 @@ Otherwise: increment `iteration` and go back to Pass 1.
 
 ### SETUP Phase (runs before each loop cycle — re-entered whenever the previous cycle exhausted its batches without reaching `max_commits`)
 
-Request a sidekick review with the `sidekick-reviewer` tool. Use the same `unslop-` prefixed,
-scope-specific `session_name` for each loop cycle and this prompt:
+Request a sidekick review with the `sidekick-reviewer` tool. Set `new_session: true` only when the
+cleanup task is unrelated to the previous review; otherwise leave it `false` for every cycle so it
+reuses the derived review session. Use this prompt:
 
 > Load skill `unslop-reviewer`. Scan these files: [scope list from Step 1]. Test-writing override is active — include pass-4 findings for behaviors that would need test coverage. If `cleanup_objective = reduce`, reduction override is active: prioritize findings that shrink code size (duplication, redundant helpers/wrappers, useless comments, dead code) and de-prioritize rename-only findings unless they directly reduce code. Return the full numbered findings list (all passes sorted 1→4, no prose, no file edits). Output ≤ 400 tokens.
 

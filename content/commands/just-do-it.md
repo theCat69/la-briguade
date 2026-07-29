@@ -126,8 +126,9 @@ Call `coder` subagent with:
 
 Run `git diff HEAD` to capture all changes made in Step 6.
 
-Request a sidekick review with the `sidekick-reviewer` tool. Set `session_name` to a stable,
-feature-scoped name and set `new_session` only when this is an unrelated code area.
+Request a sidekick review with the `sidekick-reviewer` tool. Its session name is derived from this
+agent session. Set `new_session: true` only when starting work unrelated to the previous review;
+otherwise leave it `false` to preserve the current review context.
 
 Call `security-reviewer` **only if the user explicitly asked for a security review/audit** in the request (e.g. mentions "security review", "security audit", "vulnerability check").
 

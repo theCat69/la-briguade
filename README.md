@@ -49,16 +49,16 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | sidekick-reviewer | Starts or resumes a persistent, read-only code-review session using the `sidekick-reviewer` OpenCode agent. |
 
 Use `sidekick-reviewer` for code-quality reviews instead of creating a `reviewer` subagent. Supply
-a stable, feature-scoped `session_name` and a `review_prompt`. The tool reuses the newest matching
-session in the current project by default (`new_session: false`); set `new_session` to `true` for
-unrelated work or when a fresh review context is needed. The legacy `reviewer` agent remains
-available for feature-planning workflows.
+a `review_prompt`; the tool derives its name as `<calling-session-id>_review`. The tool reuses the
+newest matching review session in the current project by default (`new_session: false`). Set
+`new_session` to `true` only when starting work unrelated to the previous review; this starts a
+fresh session with the same derived name. The legacy `reviewer` agent remains available for
+feature-planning workflows.
 
 | Argument | Required | Contract |
 |---|---|---|
-| `session_name` | Yes | A 1–120 character feature-scoped name using letters, numbers, spaces, `.`, `_`, or `-`. |
 | `review_prompt` | Yes | The review request, from 1 to 20,000 characters. |
-| `new_session` | No | Boolean; defaults to `false`. Set to `true` to bypass lookup and start a fresh session. |
+| `new_session` | No | Boolean; defaults to `false`. Set to `true` only to start an unrelated review task. |
 
 ### Skills
 
