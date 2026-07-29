@@ -1,5 +1,5 @@
 ---
-model: github-copilot/gpt-5.6-terra 
+model: github-copilot/gpt-5.6-terra
 variant: high
 description: "Code structure analyst — maps module boundaries, dependency graphs, and produces before/after architecture blueprints for refactoring and restructuring"
 mode: subagent

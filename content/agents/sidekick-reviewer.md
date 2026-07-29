@@ -1,5 +1,5 @@
 ---
-model: 
+model: github-copilot/gpt-5.6-terra
 variant: high
 description: "Code quality and architecture reviewer for production systems"
 mode: primary 

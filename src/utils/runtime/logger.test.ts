@@ -88,6 +88,18 @@ describe("logger", () => {
     expect(String(lineArg)).toContain("[DEBUG] trace line");
   });
 
+  it("should not write debug to file below debug level", () => {
+    // Arrange
+    initLogger();
+    logger.setLevel("info");
+
+    // Act
+    logger.debug("hidden trace line");
+
+    // Assert
+    expect(mockAppendFileSync).not.toHaveBeenCalled();
+  });
+
   it("should write error to file at error level", () => {
     // Arrange
     initLogger();

@@ -1,6 +1,6 @@
 ---
-model:
-variant: high
+model: github-copilot/gpt-5.6-terra
+variant: medium 
 description: "Read-only security reviewer for persistent sidekick sessions"
 mode: primary
 hidden: true
