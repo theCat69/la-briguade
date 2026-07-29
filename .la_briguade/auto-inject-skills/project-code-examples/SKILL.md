@@ -53,6 +53,7 @@ These examples demonstrate the coding patterns used in this project. Reference t
 - `skill-access-gating.md` — Session-aware skill tool gating using `chat.params`, `tool.execute.before`, and `session.deleted` cleanup
 - `auto-inject-prompt-wrapping.md` — Auto-inject prompt merge behavior: wrapped append for existing non-whitespace prompts, raw first-skill body when prompt is empty/whitespace-only
 - `bounded-skill-loader.md` — Rejecting oversized auto-inject skill content before it enters memory or prompts
+- `persistent-sidekick-tool.md` — Persistent CLI-backed reviewer tool with safe session reuse, bounded output, and cancellation
 
 ## Location
 

@@ -1,6 +1,6 @@
 # la-briguade
 
-An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 14 agents, 22 skills, 17 slash commands, and smart hooks.
+An [opencode](https://opencode.ai) plugin that provides a production-grade multi-agent AI engineering pipeline with 15 agents, 22 skills, 17 slash commands, and smart hooks.
 
 :> [!WARNING] This project, at this stage needs [cache-ctrl](https://github.com/theCat69/cache-ctrl) and [playwright-cli](https://github.com/microsoft/playwright-cli) to function properly. It is planned to make them optional in the futur
 
@@ -28,11 +28,12 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 |---|---|---|
 | orchestrator | primary | Multi-agent pipeline coordinator — delegates to specialized subagents |
 | builder | primary | Single-agent implementation — writes code directly |
-| planner | primary | Feature planning orchestrator with designer + reviewer subagents |
+| planner | primary | Feature planning orchestrator with designer and review subagents |
 | ask | primary | Personal assistant — Q&A with context gathering |
 | coder | subagent | Code implementation from context snapshots |
 | critic | subagent | Adversarial design challenger |
 | reviewer | subagent | Code quality and architecture reviewer |
+| sidekick-reviewer | primary | Persistent code-quality reviewer used by the `sidekick-reviewer` tool |
 | security-reviewer | subagent | Security auditor (CVEs, OWASP, Dependabot) |
 | librarian | subagent | Documentation keeper |
 | local-context-gatherer | subagent | Repository context extractor with caching |
@@ -40,6 +41,24 @@ The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-brigu
 | feature-designer | subagent | Feature specification writer |
 | feature-reviewer | subagent | Feature spec quality gate |
 | architect | subagent | Code structure analyst — maps module boundaries, dependency graphs, and produces architecture blueprints |
+
+### Custom tools
+
+| Tool | Description |
+|---|---|
+| sidekick-reviewer | Starts or resumes a persistent, read-only code-review session using the `sidekick-reviewer` OpenCode agent. |
+
+Use `sidekick-reviewer` for code-quality reviews instead of creating a `reviewer` subagent. Supply
+a stable, feature-scoped `session_name` and a `review_prompt`. The tool reuses the newest matching
+session in the current project by default (`new_session: false`); set `new_session` to `true` for
+unrelated work or when a fresh review context is needed. The legacy `reviewer` agent remains
+available for feature-planning workflows.
+
+| Argument | Required | Contract |
+|---|---|---|
+| `session_name` | Yes | A 1–120 character feature-scoped name using letters, numbers, spaces, `.`, `_`, or `-`. |
+| `review_prompt` | Yes | The review request, from 1 to 20,000 characters. |
+| `new_session` | No | Boolean; defaults to `false`. Set to `true` to bypass lookup and start a fresh session. |
 
 ### Skills
 

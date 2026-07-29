@@ -7,7 +7,7 @@ agents:
 
 # Unslop Coder
 
-**Purpose**: apply a pre-computed findings list from `unslop-reviewer`.
+**Purpose**: apply a pre-computed findings list from an `unslop-reviewer` sidekick review.
 
 This skill is implementation-only: it **edits files** to apply listed findings.
 It is not a scanning skill.

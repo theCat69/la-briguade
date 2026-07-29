@@ -2,7 +2,7 @@
 description: Run AI slop cleanup in a loop — auto-validates, writes tests, commits after each cycle, and supports `--reduce` for size-focused cleanup. Stops when all code is unslopped (default) or after N commits.
 ---
 
-> **Requires**: `task→coder`, `task→reviewer`, and `git-commit` skill permission. In Orchestrator context, bash rights must include only the git commands used directly by this workflow: `git diff --name-only HEAD`, `git diff --name-only HEAD~1`, `git diff --name-only`, `git checkout -- <scope files>`, `git tag`, `git add <scope files>`, and `git commit -m ...`.
+> **Requires**: `task→coder`, access to the `sidekick-reviewer` tool, and `git-commit` skill permission. In Orchestrator context, bash rights must include only the git commands used directly by this workflow: `git diff --name-only HEAD`, `git diff --name-only HEAD~1`, `git diff --name-only`, `git checkout -- <scope files>`, `git tag`, `git add <scope files>`, and `git commit -m ...`.
 
 $ARGUMENTS
 
@@ -89,7 +89,8 @@ Identify which execution context applies **before starting the loop**.
 **Builder context** (agent has `unslop` skill permission and can edit files directly):
 Proceed to **Step 3-B — Builder Loop**. You own all file edits, git operations, and loop state.
 
-**Orchestrator context** (agent cannot edit files; has `task` access to `coder` and `reviewer`):
+**Orchestrator context** (agent cannot edit files; has `task` access to `coder` and the
+`sidekick-reviewer` tool):
 Proceed to **Step 3-O — Orchestrator Loop**. You manage loop state, git operations, and termination logic. You must NOT edit any files yourself.
 
 **Fallback** (neither context available — e.g. run from `ask` or `Planner`):
@@ -195,11 +196,12 @@ Otherwise: increment `iteration` and go back to Pass 1.
 
 ### SETUP Phase (runs before each loop cycle — re-entered whenever the previous cycle exhausted its batches without reaching `max_commits`)
 
-Call `reviewer` as a task with this prompt:
+Request a sidekick review with the `sidekick-reviewer` tool. Use the same `unslop-` prefixed,
+scope-specific `session_name` for each loop cycle and this prompt:
 
 > Load skill `unslop-reviewer`. Scan these files: [scope list from Step 1]. Test-writing override is active — include pass-4 findings for behaviors that would need test coverage. If `cleanup_objective = reduce`, reduction override is active: prioritize findings that shrink code size (duplication, redundant helpers/wrappers, useless comments, dead code) and de-prioritize rename-only findings unless they directly reduce code. Return the full numbered findings list (all passes sorted 1→4, no prose, no file edits). Output ≤ 400 tokens.
 
-Once reviewer returns:
+Once the sidekick review returns:
 
 1. **If 0 findings returned**: report *"No slop found — all clean."* and stop.
 
@@ -265,7 +267,7 @@ If `commit_count >= max_commits`:
 - Report: *"Reached commit limit of `<max_commits>`. Stopping."*
 - **Stop.**
 
-If `batch_index > total_batches`: all batches processed but `commit_count` has not reached `max_commits` — **re-enter the SETUP Phase** (call `reviewer` again on the same scope, generate fresh findings, and start a new batch cycle). `commit_count` and `max_commits` are carried over; only `batch_index` and `total_batches` are reset.
+If `batch_index > total_batches`: all batches processed but `commit_count` has not reached `max_commits` — **re-enter the SETUP Phase** (reuse the sidekick review session on the same scope, generate fresh findings, and start a new batch cycle). `commit_count` and `max_commits` are carried over; only `batch_index` and `total_batches` are reset.
 
 Otherwise: continue to next batch.
 

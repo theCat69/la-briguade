@@ -14,6 +14,7 @@ permission:
   todoread: "allow"
   question: "allow"
   "angular-cli_*": "allow"
+  sidekick-reviewer: "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
@@ -27,7 +28,6 @@ permission:
     "*": "deny"
     "local-context-gatherer": "allow"
     "external-context-gatherer": "allow"
-    "reviewer": "allow"
     "security-reviewer": "allow"
     "librarian": "allow"
 ---
@@ -95,8 +95,10 @@ Critical Rules before writing code in step 4.
 4. Write the code yourself.
 5. Load skill `unslop` and run a cleanup pass on changed files.
 6. Run relevant validation for the changed code.
-7. Call `reviewer` with the task's uncommitted git diff; exclude unrelated pre-existing changes.
-   Address substantiated findings, then rerun affected validation.
+7. Request a sidekick review with the `sidekick-reviewer` tool. Use a feature-scoped
+   `session_name`, reuse it only for the same code area, and provide the task's uncommitted git
+   diff while excluding unrelated pre-existing changes. Address substantiated findings, then rerun
+   affected validation.
 8. Call `security-reviewer` with the task's uncommitted git diff if the pipeline was selected for
    auth, security boundaries, or data integrity, or if the user explicitly requested security
    review. Exclude unrelated pre-existing changes.

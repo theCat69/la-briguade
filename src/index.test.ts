@@ -18,6 +18,7 @@ import {
   mergeSkillMcps,
 } from "./plugin/mcp/index.js";
 import { registerSkills } from "./plugin/skills.js";
+import { createSidekickReviewerTool } from "./plugin/sidekick-reviewer.js";
 import {
   collectAutoInjectSkills,
   injectAutoInjectSkills,
@@ -46,6 +47,10 @@ vi.mock("./plugin/commands.js", () => ({
 
 vi.mock("./plugin/skills.js", () => ({
   registerSkills: vi.fn(),
+}));
+
+vi.mock("./plugin/sidekick-reviewer.js", () => ({
+  createSidekickReviewerTool: vi.fn(),
 }));
 
 vi.mock("./plugin/auto-inject.js", () => ({
@@ -84,6 +89,7 @@ const mockCreateHooks = vi.mocked(createHooks);
 const mockRegisterAgents = vi.mocked(registerAgents);
 const mockRegisterCommands = vi.mocked(registerCommands);
 const mockRegisterSkills = vi.mocked(registerSkills);
+const mockCreateSidekickReviewerTool = vi.mocked(createSidekickReviewerTool);
 const mockCollectAutoInjectSkills = vi.mocked(collectAutoInjectSkills);
 const mockInjectAutoInjectSkills = vi.mocked(injectAutoInjectSkills);
 const mockResolveActiveSkills = vi.mocked(resolveActiveSkills);
@@ -111,7 +117,9 @@ describe("LaBriguadePlugin", () => {
     mockResolveConfigBaseDirs.mockReturnValue({ globalDir: "/global", projectDir: "/project" });
     mockResolveOpencodeConfigDir.mockReturnValue("/config/opencode");
     const eventHook = vi.fn();
+    const sidekickTool = vi.fn();
     mockCreateHooks.mockReturnValue({ event: eventHook });
+    mockCreateSidekickReviewerTool.mockReturnValue(sidekickTool as never);
 
     const plugin = await LaBriguadePlugin({ directory: "/project" } as never);
 
@@ -119,6 +127,7 @@ describe("LaBriguadePlugin", () => {
     expect(mockCreateHooks).toHaveBeenCalledOnce();
     expect(mockCreateHooks).toHaveBeenCalledWith({ directory: "/project" });
     expect(plugin.event).toBe(eventHook);
+    expect(plugin.tool?.["sidekick-reviewer"]).toBe(sidekickTool);
     expect(typeof plugin.config).toBe("function");
   });
 

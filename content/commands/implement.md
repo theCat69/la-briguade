@@ -20,7 +20,7 @@ outside that root. If no usable spec or ticket is provided, ask the user to prov
    suite before completion.
 3. Keep implementation within the accepted scope. Return to `/grilling` or `/to-spec` when a
    requirement or architectural decision is missing rather than inventing it during implementation.
-4. Run the required review pipeline, including `security-reviewer` when applicable, address
+4. Request a sidekick review with a feature-scoped session name, run `security-reviewer` when applicable, address
    substantiated findings, and update the ticket's acceptance checklist or configured tracker
    status only after validated completion.
 5. Load `git-commit` and commit the completed work to the current branch when the repository and

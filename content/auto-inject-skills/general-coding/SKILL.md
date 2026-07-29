@@ -4,6 +4,7 @@ description: Apply cross-language engineering baselines for naming, testing, des
 agents:
   - coder
   - reviewer
+  - sidekick-reviewer
   - architect
   - critic
   - feature-designer

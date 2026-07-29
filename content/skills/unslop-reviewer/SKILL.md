@@ -3,6 +3,7 @@ name: unslop-reviewer
 description: Run a read-only, pass-ordered slop scan covering abstraction and locally fixable boundary findings; never edit files.
 agents:
   - reviewer
+  - sidekick-reviewer
 ---
 
 # Unslop Reviewer
