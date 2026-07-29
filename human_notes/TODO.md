@@ -1,1 +1,0 @@
-- better skills descriptions (they are not precised enough)
