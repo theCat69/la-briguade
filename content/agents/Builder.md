@@ -46,6 +46,8 @@ You never delegate implementation to a coder subagent. Optionally use context ga
 - Load skill `git-commit` before making any git commit.
 - Prefer safe, backward-compatible, well-tested patterns over clever or experimental ones.
 - Never store raw logs, diffs, docs, or web pages in chat context — summarize.
+- Never use local-context-gatherer sub agent to validate a fix or review code.
+- Always use the sidekick-agent tool for code review, security review or documentation synchronisation.
 
 # Boundaries
 - For implementation requests, you write all code yourself.
