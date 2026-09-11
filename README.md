@@ -24,6 +24,22 @@ npx la-briguade uninstall
 
 The `uninstall` command removes `"la-briguade@latest"` (or the legacy `"la-briguade"` entry) from the same global config file.
 
+### DeepSeek Harness (experimental)
+
+la-briguade also ships a native [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) profile bundle. It is **not** an OpenCode compatibility wrapper: it uses DSH skills, agent presets, tools, and subagent services directly.
+
+```bash
+# From the published package (when available)
+dsh plugin --profile tui add la-briguade-dsh
+
+# Or, from this checkout after preparing the bundle
+dsh plugin --profile tui add ./dsh
+```
+
+The initial DSH MVP has four selectable agent presets (`builder`, `orchestrator`, `planner`, and `ask`), the bundled la-briguade skills, a user-invocable `la-briguade-just-do-it` workflow skill, and a bounded `coder` delegation tool. It requires a DSH profile containing the standard `skills`, `tools`, `agents`, `subagents`, and `agent-presets` services. It has been designed against DSH `0.1.5-rc.2` and is intentionally marked experimental while DSH remains pre-1.0.
+
+DSH does **not automatically** import OpenCode agent permissions, embedded MCP definitions, or OpenCode hooks. DSH sandbox and approval policies remain controlled by the active DSH profile. Project and user DSH skill roots (`.dsh/skills` and `.agents/skills`) continue to work through DSH's standard skill provider. See [DeepSeek Harness support and capability status](DEEPSEEK.md) for the complete DSH feature matrix, MCP-port rationale, and security boundary.
+
 ## Getting Started
 
 Open OpenCode in a project after installation. la-briguade registers its agents, skills, and commands in memory at startup; it does not copy files into your project.

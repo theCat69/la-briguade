@@ -1,0 +1,18 @@
+# Native la-briguade extension for DeepSeek Harness (DSH) profiles.
+# This package is a profile bundle: `dsh plugin --profile <profile> add la-briguade-dsh`
+# appends this layer and mounts the backend plus the selectable personas.
+
+- insert:
+    - id: la-briguade-dsh
+      name: la-briguade-dsh
+      config:
+        maxDelegationDepth: 1
+
+    # The packaged root is read-only system content. The standard shipped and
+    # user preset roots remain enabled by dsh-agent-presets defaults.
+    - id: agent-presets
+      name: '@deepseek-ai/dsh-agent-presets'
+      config:
+        roots:
+          - path: !!js new URL('presets/', baseUrl).pathname
+            trust: system

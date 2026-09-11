@@ -18,7 +18,9 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && node scripts/generate-schema.mjs",
     "generate-schema": "npm run build && node scripts/generate-schema.mjs",
-    "test": "vitest run",
+    "build:dsh": "node dsh/scripts/prepare.mjs",
+    "test:dsh": "npm run build:dsh && npm --prefix dsh test",
+    "test": "vitest run && npm run test:dsh",
     "test:watch": "vitest"
   },
   "files": [
