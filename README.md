@@ -36,9 +36,9 @@ dsh plugin --profile tui add la-briguade-dsh
 dsh plugin --profile tui add ./dsh
 ```
 
-The initial DSH MVP has four selectable agent presets (`builder`, `orchestrator`, `planner`, and `ask`), the bundled la-briguade skills, a user-invocable `la-briguade-just-do-it` workflow skill, and a bounded `coder` delegation tool. It requires a DSH profile containing the standard `skills`, `tools`, `agents`, `subagents`, and `agent-presets` services. It has been designed against DSH `0.1.5-rc.2` and is intentionally marked experimental while DSH remains pre-1.0.
+The DSH bundle generates all 17 la-briguade workflows, four selectable primary presets (`builder`, `orchestrator`, `planner`, and `ask`), and every canonical specialist prompt. It includes policy-scoped delegation, continuable DSH-native sidekick reviews, safe diagnostics, and opt-in stdio/Streamable HTTP MCP configuration. It requires a DSH profile containing the standard `skills`, `tools`, `agents`, `subagents`, and `agent-presets` services. It has been designed against the DSH `0.1.5-rc.2` package family and is intentionally experimental while DSH remains pre-1.0.
 
-DSH does **not automatically** import OpenCode agent permissions, embedded MCP definitions, or OpenCode hooks. DSH sandbox and approval policies remain controlled by the active DSH profile. Project and user DSH skill roots (`.dsh/skills` and `.agents/skills`) continue to work through DSH's standard skill provider. See [DeepSeek Harness support and capability status](DEEPSEEK.md) for the complete DSH feature matrix, MCP-port rationale, and security boundary.
+DSH does **not automatically** import OpenCode agent permissions, shell/external-directory grants, or model routes. DSH sandbox and approval policies remain controlled by the active DSH profile. MCP servers are enabled only through explicit DSH adapter configuration, never from an implicit source permission. Project and user DSH skill roots (`.dsh/skills` and `.agents/skills`) continue to work through DSH's standard skill provider. See [DeepSeek Harness support and capability status](DEEPSEEK.md) for the complete DSH feature matrix, MCP-port rationale, and security boundary.
 
 ## Getting Started
 

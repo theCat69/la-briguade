@@ -1,39 +1,46 @@
-# DeepSeek Harness Compatibility Spike Decision Record
+# DeepSeek Harness Compatibility Decision Record
 
-**Validated against:** installed DeepSeek Harness `0.1.5-rc.2`.
+**Adapter baseline:** DSH package family `0.1.5-rc.2`.
 
-## Decisions
+## Verified public seams
 
-1. **Packaging:** publish a dedicated `la-briguade-dsh` DSH profile bundle under `dsh/`.
-   Its `dsh.bundle.patch` mounts the adapter and contributes an `agent-presets` system root.
-   This keeps the OpenCode package entry point independent and lets users install with
-   `dsh plugin --profile <profile> add la-briguade-dsh`.
+The installed package typings for `0.1.5-rc.2` verify:
 
-2. **Skills:** register packaged Markdown skills through `ctx.skills.register()` with
-   `source: "bundled"`. This uses the public `@deepseek-ai/dsh-skill` registry and avoids
-   patching the host's filesystem-skill provider configuration. The DSH provider continues
-   to supply `.dsh/skills` and `.agents/skills` overrides independently.
+1. Cordis plugins use `name`, `inject`, `Config`, and `apply(ctx, config)`; `ctx.plugin()` owns
+   nested plugin lifecycle.
+2. `ctx.skills.register()` and `ctx.tools.register()` return effect disposers.
+3. `ctx.subagents.start(provider, request)` supports a child persona, tool filter, maximum depth,
+   cancellation signal, and an owned run disposer. Provider names `spawn` and `fork` are supplied
+   by their respective standard DSH compositions.
+4. `ctx.subagents.startContinuable()`, `sendMessage()`, `interrupt()`, and
+   `drainContinuableChildren()` provide durable sidekick lifecycle behavior.
+5. DSH exposes `tools/post-execute` as a result waterfall and `tools/result` as a final observer.
+6. `@deepseek-ai/dsh-mcp-client` supports one stdio or Streamable HTTP server per plugin instance,
+   with qualified `mcp__<server>__<tool>` names and disposal-managed connection cleanup.
+7. System-prompt sections are supplied by `ctx.systemPrompt.section()` when the profile composes
+   the system-prompt service.
 
-3. **Personas:** use DSH agent presets. The build preparation script derives four read-only
-   system presets (`builder`, `orchestrator`, `planner`, `ask`) from the canonical agent
-   Markdown and writes `preset.yml` plus `agent.cordis.yml` compositions using
-   `@deepseek-ai/dsh-persona`. This is the DSH-native selectable-persona seam.
+The top-level local DSH launcher package previously reported `0.1.5-rc.1`, while the inspected
+component package family reports `0.1.5-rc.2`. Consumers must pin the complete profile package
+family rather than infer compatibility from the launcher alone.
 
-4. **Delegation:** expose a dedicated `la_briguade_delegate` tool. It starts a fresh `spawn`
-   subagent via `ctx.subagents.start()` with a fixed coder persona, an explicit tool allowlist,
-   a validated self-contained task, and a bounded maximum depth. It always disposes the run.
+## Adapter decisions
 
-5. **Workflow:** derive OpenCode's `/just-do-it` prompt into the user-invocable DSH skill
-   `la-briguade-just-do-it`. A workflow tool is deferred because DSH's own `workflow` tool is
-   intended for model-authored JavaScript orchestration rather than a fixed slash-command prompt.
+- The DSH bundle remains separately packageable under `dsh/`; OpenCode runtime code remains
+  untouched.
+- Canonical commands and agent prompt bodies are generated into a manifest, workflow skills,
+  specialist prompt files, and primary-preset compositions. The generated manifest retains source
+  provenance but does not transfer source permissions.
+- All specialist children use explicit role policies. No OpenCode permission map is inherited.
+- DSH model-route selection remains profile-owned. Source model metadata is diagnostic-only until
+  a provider-specific mapping is verified.
+- Sidekick reviews use DSH continuable children; no OpenCode CLI process/session lookup is used.
+- MCP requires explicit DSH configuration and accepts only native stdio and Streamable HTTP tools.
+  Secret tokens resolve only in memory and are not reported in diagnostics.
+- Output truncation remains host-provided because the source OpenCode truncation hook was disabled.
 
-6. **Security:** OpenCode `permission`, `mcp`, `agents`, and `detect` frontmatter are never
-   converted into DSH authority. DSH sandbox and approval settings remain profile-owned.
+## Validation record
 
-## Deferred items
-
-- Porting commands beyond `/just-do-it`.
-- Persistent sidekick sessions.
-- Model-option mapping for OpenCode model/temperature/top-p/max-steps metadata.
-- OpenCode output, edit-error, and empty-response hooks.
-- A custom DSH Web client extension.
+- `npm run build:dsh`
+- `npm run test:dsh`
+- DSH static import and recording-registry composition smoke test

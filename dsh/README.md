@@ -1,45 +1,61 @@
 # la-briguade-dsh
 
-Native DeepSeek Harness (DSH) profile bundle for la-briguade.
+Native DeepSeek Harness (DSH) profile bundle for la-briguade's canonical engineering
+workflows and personas.
 
-## Install
-
-```bash
-dsh plugin --profile tui add la-briguade-dsh
-```
-
-For local development from the repository root:
+## Local install
 
 ```bash
-node dsh/scripts/prepare.mjs
+# From the repository root
+npm run build:dsh
 dsh plugin --profile tui add ./dsh
 ```
 
-The package requires a DSH profile providing `agents`, `agent-presets`, `skills`,
-`tools`, and `subagents` services. It targets DSH `0.1.5-rc.2` and is experimental
-while DSH is pre-1.0.
+The bundle targets the DSH `0.1.5-rc.2` package family and requires the profile's `agents`,
+`agent-presets`, `skills`, `tools`, and `subagents` services. It is experimental while DSH
+is pre-1.0.
 
-## Included MVP
+## Included catalog
 
-- Read-only selectable DSH presets: `builder`, `orchestrator`, `planner`, and `ask`.
-- The la-briguade Markdown skill catalog, registered as bundled DSH skills.
-- A user-invocable `la-briguade-just-do-it` skill derived from the OpenCode workflow.
-- `la_briguade_personas`, which lists available personas.
-- `la_briguade_delegate`, which starts a bounded, fresh `coder` specialist child.
+- All 17 canonical commands as user-invocable `la-briguade-*` workflow skills.
+- Selectable primary presets: `builder`, `orchestrator`, `planner`, and `ask`.
+- Generated canonical specialist prompts for coder, architecture, design, review, security,
+  context gathering, and sidekick roles.
+- `la_briguade_delegate`, a cancellable `spawn`/`fork` delegation tool with per-role tool
+  filters and a configurable maximum delegation depth.
+- `la_briguade_sidekick`, which creates or resumes DSH continuable code-review,
+  security-review, and documentation-sync children.
+- `la_briguade_personas` and `la_briguade_status` diagnostics.
+- Native edit-mismatch recovery through DSH tool lifecycle interception.
 
-The preparation script copies canonical source content and generates DSH preset
-compositions at package build/pack time. Do not edit `content/` or `presets/` in this
-package manually; edit the repository's top-level `content/` sources instead.
+The generation script emits `content/manifest.json`, generated workflow skills, specialist
+prompt artifacts, and selectable preset compositions. Edit the repository's top-level
+`content/` source only; package `content/` and `presets/` are generated.
 
 ## Security model
 
-This bundle does not transfer OpenCode permissions, MCP declarations, shell grants,
-or hooks into DSH. DSH profile sandbox and approval policies remain authoritative.
-The delegation tool supplies a fixed, narrow tool allowlist and validates its task
-length and specialist name before starting a child.
+This bundle does **not** import OpenCode permissions, shell grants, external-directory
+permissions, model routes, or skill metadata as DSH authority. DSH's profile sandbox and
+approval policy remain authoritative. The adapter applies a conservative role matrix: coding
+is allowed only the ordinary core tools that the profile permits; reviewers/context roles are
+read/search only; and documentation sidekicks are constrained to documentation work.
+
+MCP is disabled unless explicitly configured. The bridge supports DSH-native stdio and
+Streamable HTTP MCP tool servers only. `{env:NAME}` placeholders are resolved at activation
+without logging or generating their values. MCP Resources, Prompts, and legacy SSE-only
+endpoints are not supported.
 
 ## Test
 
 ```bash
+npm run test:dsh
+```
+
+For a release check, also run from the repository root:
+
+```bash
+npm run build
 npm test
+npm audit
+npm_config_cache=/tmp/la-briguade-npm-cache npm pack --dry-run
 ```
