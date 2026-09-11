@@ -8,12 +8,14 @@ workflows and personas. It is not an OpenCode compatibility layer.
 ```bash
 # From the repository root
 npm run build:dsh
-dsh plugin --profile tui add ./dsh
+dsh plugin --profile web add ./dsh
+dsh web
 ```
 
-The adapter was exercised against the DSH component package family `0.1.5-rc.2`. The profile
-must provide `agents`, `agent-presets`, `skills`, `tools`, and `subagents`; configured MCP
-servers additionally require the native DSH MCP client services.
+Use the shipped `web` profile for an interactive UI. The adapter was exercised against the DSH
+component package family `0.1.5-rc.2`. It needs `agents`, `skills`, `tools`, and `subagents`.
+Selectable primary presets additionally need a host `agent-presets` service; the Web profile
+provides it. Configured MCP servers additionally require the native DSH MCP client services.
 
 ## Included catalog
 

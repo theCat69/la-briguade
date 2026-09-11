@@ -12,10 +12,14 @@ la-briguade includes an experimental, native DeepSeek Harness (DSH) profile bund
 
 ```bash
 npm run build:dsh
-dsh plugin --profile tui add ./dsh
+dsh plugin --profile web add ./dsh
+dsh web
 ```
 
-The active profile must provide `agents`, `agent-presets`, `skills`, `tools`, and `subagents`.
+Use the shipped `web` profile for an interactive user interface. The bundle needs `agents`,
+`skills`, `tools`, and `subagents`; its selectable primary presets additionally require a host
+`agent-presets` row. The Web profile supplies that row. A bare profile with no preset roster can
+still load the adapter's skills and tools, but cannot expose la-briguade's selectable presets.
 Configured MCP servers additionally require the DSH MCP client and its services. The profile's
 sandbox, approval, network, and process policies always remain authoritative.
 

@@ -30,13 +30,16 @@ la-briguade also ships a native [DeepSeek Harness (DSH)](https://github.com/deep
 
 ```bash
 # From the published package (when available)
-dsh plugin --profile tui add la-briguade-dsh
+dsh plugin --profile web add la-briguade-dsh
+dsh web
 
 # Or, from this checkout after preparing the bundle
-dsh plugin --profile tui add ./dsh
+npm run build:dsh
+dsh plugin --profile web add ./dsh
+dsh web
 ```
 
-The DSH bundle generates all 17 la-briguade workflows, four selectable primary presets (`builder`, `orchestrator`, `planner`, and `ask`), and the canonical specialist prompts. It provides policy-scoped `spawn`/`fork` delegation, continuable DSH-native sidekick reviews, safe diagnostics, edit-mismatch reread feedback, and opt-in stdio/Streamable HTTP MCP configuration. It requires a DSH profile containing `skills`, `tools`, `agents`, `subagents`, and `agent-presets` services. It was exercised against the DSH `0.1.5-rc.2` component package family and remains experimental while DSH is pre-1.0.
+The DSH bundle generates all 17 la-briguade workflows, four selectable primary presets (`builder`, `orchestrator`, `planner`, and `ask`), and the canonical specialist prompts. It provides policy-scoped `spawn`/`fork` delegation, continuable DSH-native sidekick reviews, safe diagnostics, edit-mismatch reread feedback, and opt-in stdio/Streamable HTTP MCP configuration. Use the shipped `web` profile for the interactive UI and preset roster. The adapter requires `skills`, `tools`, `agents`, and `subagents`; primary-preset selection additionally needs `agent-presets`. It was exercised against the DSH `0.1.5-rc.2` component package family and remains experimental while DSH is pre-1.0.
 
 DSH does **not** import OpenCode agent permissions, shell/external-directory grants, agent/model selections, or embedded MCP declarations as DSH authority. DSH sandbox and approval policies remain controlled by the active profile. MCP servers are enabled only through explicit adapter configuration, never from an implicit source permission. DSH's ordinary project and user skill roots (`.dsh/skills` and `.agents/skills`) remain host-provided. Content overrides, auto-injection, vendor/model prompt sections, model-field mapping, and persona-scoped MCP visibility are not currently implemented by this adapter. See [DeepSeek Harness support and capability status](DEEPSEEK.md) for the complete capability matrix and security boundary.
 

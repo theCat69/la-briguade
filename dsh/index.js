@@ -66,7 +66,7 @@ function registerSkillFile(ctx, filePath, disposers, state) {
   try {
     const parsed = parseMarkdown(readBounded(filePath), filePath, state.diagnostics);
     if (parsed === undefined || typeof parsed.attributes.name !== "string" || typeof parsed.attributes.description !== "string") return;
-    disposers.push(ctx.skills.register({ name: parsed.attributes.name, description: parsed.attributes.description, content: parsed.body, source: "bundled", invocation: { modelInvocable: parsed.attributes["disable-model-invocation"] !== true, userInvocable: parsed.attributes["user-invocable"] !== false }, resourceBase: dirname(filePath) }));
+    disposers.push(ctx.skills.register({ name: parsed.attributes.name, description: parsed.attributes.description, content: parsed.body, source: "bundled", invocation: { modelInvocable: parsed.attributes["disable-model-invocation"] !== true, userInvocable: parsed.attributes["user-invocable"] !== false }, resourceBase: { kind: "directory", path: dirname(filePath) } }));
   } catch (error) { state.diagnostics.push({ sourcePath: filePath, message: `skill was not registered (${errorMessage(error)})` }); }
 }
 

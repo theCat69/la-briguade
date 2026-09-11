@@ -1,6 +1,7 @@
 # Native la-briguade extension for DeepSeek Harness (DSH) profiles.
-# This package is a profile bundle: `dsh plugin --profile <profile> add la-briguade-dsh`
-# appends this layer and mounts the backend plus the selectable personas.
+# The adapter itself can run in any profile with its required services. Generated
+# selectable presets are added only when the host profile already owns the
+# `agent-presets` roster (for example, the shipped Web profile).
 
 - insert:
     - id: la-briguade-dsh
@@ -8,11 +9,13 @@
       config:
         maxDelegationDepth: 1
 
-    # The packaged root is read-only system content. The standard shipped and
-    # user preset roots remain enabled by dsh-agent-presets defaults.
-    - id: agent-presets
-      name: '@deepseek-ai/dsh-agent-presets'
-      config:
-        roots:
-          - path: !!js new URL('presets/', baseUrl).pathname
-            trust: system
+# Do not insert a second agent-presets service: the Web profile already mounts
+# this row and Cordis rejects duplicate loader IDs. A missing row is a safe
+# no-op, so a bare/headless profile still loads the adapter's skills and tools.
+- id: agent-presets
+  config:
+    # DSH 0.1.5-rc.2 requires a default whenever this roster is mounted.
+    default: builder
+    roots:
+      - path: !!js new URL('presets/', baseUrl).pathname
+        trust: system
