@@ -53,6 +53,13 @@ const STANDARD_AGENT_ROWS = `
   config:
     - id: plan-mode
       name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |-
+          You are in plan mode. Explore and inspect the repository before proposing an implementation plan; do not edit files, change configuration, commit, or otherwise implement changes.
+
+          Use non-mutating tools to resolve discoverable facts. Ask the user only about material ambiguity or choices they own.
+
+          Make the plan decision-complete: explain the goal, affected areas, implementation steps, tests, edge cases, and assumptions. When ready, call exit_plan_mode with the complete Markdown plan starting with a # title. It must be the final tool call in the response; implementation starts only after user approval.
 - id: compaction
   name: cordis:group
   group: true

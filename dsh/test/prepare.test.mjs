@@ -28,6 +28,7 @@ for (const name of ["builder", "orchestrator", "planner", "ask"]) {
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs'/u);
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs-search'/u);
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-skill'/u);
+    assert.match(composition, /name: '@deepseek-ai\/dsh-plan-mode'\n      config:\n        section: \|-\n          You are in plan mode\./u);
   });
 }
 
