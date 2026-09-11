@@ -1,7 +1,7 @@
 # la-briguade-dsh
 
-Native DeepSeek Harness (DSH) profile bundle for la-briguade's canonical engineering
-workflows and personas.
+Experimental native DeepSeek Harness (DSH) profile bundle for la-briguade's canonical
+workflows and personas. It is not an OpenCode compatibility layer.
 
 ## Local install
 
@@ -11,47 +11,58 @@ npm run build:dsh
 dsh plugin --profile tui add ./dsh
 ```
 
-The bundle targets the DSH `0.1.5-rc.2` package family and requires the profile's `agents`,
-`agent-presets`, `skills`, `tools`, and `subagents` services. It is experimental while DSH
-is pre-1.0.
+The adapter was exercised against the DSH component package family `0.1.5-rc.2`. The profile
+must provide `agents`, `agent-presets`, `skills`, `tools`, and `subagents`; configured MCP
+servers additionally require the native DSH MCP client services.
 
 ## Included catalog
 
 - All 17 canonical commands as user-invocable `la-briguade-*` workflow skills.
 - Selectable primary presets: `builder`, `orchestrator`, `planner`, and `ask`.
-- Generated canonical specialist prompts for coder, architecture, design, review, security,
-  context gathering, and sidekick roles.
-- `la_briguade_delegate`, a cancellable `spawn`/`fork` delegation tool with per-role tool
-  filters and a configurable maximum delegation depth.
-- `la_briguade_sidekick`, which creates or resumes DSH continuable code-review,
-  security-review, and documentation-sync children.
-- `la_briguade_personas` and `la_briguade_status` diagnostics.
-- Native edit-mismatch recovery through DSH tool lifecycle interception.
+- Generated canonical prompts for all enabled delegation specialists.
+- `la_briguade_delegate`: bounded, cancellable `spawn` or `fork` delegation. Its `mode`
+  parameter is required.
+- `la_briguade_sidekick`: creates or resumes continuable code-review, security-review, and
+  documentation-sync children. Its `new_session` parameter is required.
+- `la_briguade_personas` and `la_briguade_status`.
+- Native edit old-string-mismatch reread feedback through DSH tool interception.
 
-The generation script emits `content/manifest.json`, generated workflow skills, specialist
-prompt artifacts, and selectable preset compositions. Edit the repository's top-level
-`content/` source only; package `content/` and `presets/` are generated.
+`npm run build:dsh` produces the bundle's workflow skills, persona prompt files, primary preset
+compositions, and `content/manifest.json`. Edit top-level repository `content/` only; the package
+`content/` and `presets/` directories are generated artifacts.
 
-## Security model
+## Security and support boundary
 
-This bundle does **not** import OpenCode permissions, shell grants, external-directory
-permissions, model routes, or skill metadata as DSH authority. DSH's profile sandbox and
-approval policy remain authoritative. The adapter applies a conservative role matrix: coding
-is allowed only the ordinary core tools that the profile permits; reviewers/context roles are
-read/search only; and documentation sidekicks are constrained to documentation work.
+This bundle does **not** import OpenCode permissions, shell grants, external-directory grants,
+agent selection, model routes, or MCP declarations as DSH authority. DSH's active profile
+remains responsible for tool availability, sandboxing, approvals, network access, and process
+execution.
 
-MCP is disabled unless explicitly configured. The bridge supports DSH-native stdio and
-Streamable HTTP MCP tool servers only. `{env:NAME}` placeholders are resolved at activation
-without logging or generating their values. MCP Resources, Prompts, and legacy SSE-only
-endpoints are not supported.
+The adapter has explicit role tool filters: coding requests core edit/write/search/bash tools;
+review and local-context roles request read/search/skill tools; external-context requests DSH web
+tools. These are requests constrained by the host profile, not grants. The documentation-sync
+sidekick is instructed to modify documentation only, but its tool filter cannot enforce file
+extension or path restrictions; do not enable its write/edit tools without a suitable profile
+sandbox policy.
 
-## Test
+MCP is disabled unless configured under this bundle's `mcp` config. It supports native stdio and
+Streamable HTTP **tool** servers only. `{env:NAME}` tokens resolve in memory and are not logged or
+written to generated content. Legacy SSE-only servers, MCP Resources, MCP Prompts, and
+persona-scoped MCP visibility are not implemented.
+
+Source model options and the configuration fields `contentRoots`, `autoInject`, and
+`modelPolicies` are not active runtime features. Vendor prompts, model-specific prompt sections,
+content overrides, and auto-inject detection also remain unsupported in the current adapter.
+
+See [`../DEEPSEEK.md`](../DEEPSEEK.md) for the full capability matrix and configuration reference.
+
+## Test and release checks
 
 ```bash
 npm run test:dsh
 ```
 
-For a release check, also run from the repository root:
+For release validation from the repository root:
 
 ```bash
 npm run build
@@ -59,3 +70,7 @@ npm test
 npm audit
 npm_config_cache=/tmp/la-briguade-npm-cache npm pack --dry-run
 ```
+
+The latest audit reports existing high-severity development dependency findings in the
+Vitest/Vite/PostCSS graph for which npm reports no fix. Treat a non-zero audit exit as a release
+gate until that upstream dependency chain is remediated or risk-accepted.

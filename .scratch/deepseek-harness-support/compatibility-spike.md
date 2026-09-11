@@ -32,8 +32,8 @@ family rather than infer compatibility from the launcher alone.
   specialist prompt files, and primary-preset compositions. The generated manifest retains source
   provenance but does not transfer source permissions.
 - All specialist children use explicit role policies. No OpenCode permission map is inherited.
-- DSH model-route selection remains profile-owned. Source model metadata is diagnostic-only until
-  a provider-specific mapping is verified.
+- DSH model-route selection remains profile-owned. Source model metadata is currently ignored;
+  no provider-specific mapping or compatibility diagnostic is installed yet.
 - Sidekick reviews use DSH continuable children; no OpenCode CLI process/session lookup is used.
 - MCP requires explicit DSH configuration and accepts only native stdio and Streamable HTTP tools.
   Secret tokens resolve only in memory and are not reported in diagnostics.

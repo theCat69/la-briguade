@@ -4,9 +4,9 @@ la-briguade includes an experimental, native DeepSeek Harness (DSH) profile bund
 `dsh/`. It does not load the OpenCode plugin or transfer OpenCode permissions into DSH.
 
 > [!WARNING]
-> The supported adapter baseline is the DSH package family `0.1.5-rc.2`. The local `dsh`
-> launcher may report a different release candidate; pin and test the complete profile before
-> production use.
+> The adapter was exercised against the DSH component package family `0.1.5-rc.2`.
+> The local `dsh` launcher may report a different release candidate. Pin and test the complete
+> profile before relying on it for production work.
 
 ## Install
 
@@ -15,54 +15,77 @@ npm run build:dsh
 dsh plugin --profile tui add ./dsh
 ```
 
-The profile must supply `agents`, `agent-presets`, `skills`, `tools`, and `subagents`.
-MCP support additionally requires the DSH MCP client services. The profile's sandbox,
-approval, network, and process policies always remain authoritative.
+The active profile must provide `agents`, `agent-presets`, `skills`, `tools`, and `subagents`.
+Configured MCP servers additionally require the DSH MCP client and its services. The profile's
+sandbox, approval, network, and process policies always remain authoritative.
 
-## Available DSH-native capabilities
+## Implemented DSH-native capabilities
 
-| Capability | Status | Details |
+| Capability | Status | Current behavior |
 |---|---|---|
-| All 17 command workflows | Available | Generated as `la-briguade-<command>` user-invocable DSH skills from canonical Markdown. |
-| Primary personas | Available | `builder`, `orchestrator`, `planner`, and `ask` are selectable generated presets. |
-| Specialist personas | Available | All canonical specialist prompts are generated and available only through policy-scoped delegation. |
-| Delegation | Available | `la_briguade_delegate` supports `spawn` and `fork`, validates input/depth, scopes tools per role, forwards cancellation, bounds output, and disposes one-shot children. |
-| Persistent sidekick | Available | `la_briguade_sidekick` uses DSH continuable children for code review, security review, and documentation synchronization. |
-| Reliability hooks | Available | A DSH `tools/post-execute` interceptor appends reread guidance to edit old-string mismatch failures. Empty-response lifecycle diagnostics are registered when the host exposes the event. |
-| Safe MCP configuration | Available | Explicit DSH config accepts stdio and Streamable HTTP servers, validates namespaces, resolves `{env:VAR}` without logging values, and mounts native MCP clients. |
-| Diagnostics | Available | `la_briguade_status` reports safe registration and compatibility diagnostics. |
+| Command workflows | Available | Preparation generates all 17 canonical commands as `la-briguade-<command>` user-invocable skills. |
+| Primary personas | Available | Generated selectable presets: `builder`, `orchestrator`, `planner`, and `ask`. |
+| Specialist prompts | Available | Enabled canonical specialist prompts are generated into the bundle and used by `la_briguade_delegate`. |
+| Delegation | Available | `la_briguade_delegate` accepts a specialist, standalone task, and required `spawn` or `fork` mode; it validates input, applies the role policy, forwards cancellation, bounds output, and disposes one-shot children. |
+| Persistent sidekick | Available with limits | `la_briguade_sidekick` creates or resumes a DSH continuable child for code review, security review, or documentation sync. `new_session` is currently a required boolean parameter. |
+| Edit recovery | Available | A `tools/post-execute` interceptor appends a reread hint to recognized edit old-string mismatch failures. |
+| Empty-response reporting | Best effort | The adapter registers an `agent/turn-stopping` listener when the host accepts that event; it logs a warning and never retries automatically. |
+| MCP configuration | Available with limits | Explicit adapter config maps stdio and Streamable HTTP servers to the native DSH MCP client. |
+| Diagnostics | Available | `la_briguade_personas` lists enabled roles; `la_briguade_status` reports enabled personas, workflows, bounded diagnostics, and delegation depth. |
 
-## Security policy
+## Intentional limitations and differences
 
-Canonical OpenCode `permission`, `agents`, `detect`, shell, external-directory, model, and
-MCP metadata are never treated as DSH authority. The adapter uses an independent policy:
+- OpenCode `permission`, `agents`, `detect`, shell, external-directory, model, and embedded MCP
+  metadata are not imported as DSH authority or behavior.
+- The generated command bodies retain their canonical instructions, but OpenCode-only metadata
+  such as command agent/model/subtask hints is not translated into DSH orchestration.
+- The adapter does **not** currently apply source `model`, `variant`, `temperature`, `top_p`, or
+  `maxSteps` values. DSH profile route selection remains authoritative.
+- `contentRoots`, `autoInject`, and `modelPolicies` are accepted by the configuration schema for
+  forward compatibility but are not active runtime features yet. Do not rely on them for content
+  overrides, prompt injection, or model routing.
+- Vendor prompts, agent model-specific prompt sections, and OpenCode auto-inject detection are not
+  installed by this adapter.
+- Output truncation remains host-provided: the disabled OpenCode truncation behavior was not copied.
+- Documentation-sync sidekicks receive a documentation-only instruction, but their DSH tool filter
+  cannot enforce file-extension/path restrictions. Review profile sandbox policy before allowing
+  write/edit tools for this mode.
+- Sidekick reuse is tracked for the active adapter lifetime. A profile reload creates a new manager;
+  it does not rediscover a prior child solely from durable storage.
 
-- coding children may see `read`, `write`, `edit`, `grep`, `glob`, `bash`, and `skill` only
-  when the active DSH profile permits them;
-- planning, review, security, and local-context roles are read/search/skill only;
-- external research exposes only DSH web tools when those tools exist in the profile;
-- documentation sidekicks are instructed to edit documentation formats only; and
-- all child calls remain subject to DSH approval and sandbox decisions.
+## Security boundary
 
-MCP is opt-in in adapter configuration. Only stdio and Streamable HTTP tool servers are
-supported. Legacy SSE-only definitions, MCP Resources, and MCP Prompts are intentionally
-not mapped. Environment tokens are resolved at runtime only; values are never generated,
-logged, or reported by `la_briguade_status`.
+The adapter uses an independent least-privilege tool policy; it never inherits an OpenCode
+permission map. Coding children request core read/write/edit/search/bash/skill tools; review and
+local-context roles request read/search/skill tools. The external-context role requests DSH web
+tools, which must exist and be permitted by the active profile. All tool visibility, sandboxing,
+and approval outcomes remain controlled by DSH.
+
+MCP is opt-in through adapter configuration. Only stdio and Streamable HTTP **tools** are mapped;
+legacy SSE-only endpoints, MCP Resources, and MCP Prompts are not supported. `{env:NAME}` tokens
+are resolved in memory at activation and are not included in generated artifacts or status output.
+Missing tokens produce a redacted diagnostic. MCP tool visibility is profile-wide after mounting;
+the optional per-server `personas` config field is reserved and is not enforced yet.
 
 ## Configuration
 
-The `la-briguade-dsh` Cordis configuration supports bounded `maxDelegationDepth`, optional
-workflow/persona allowlists, explicit content roots, auto-injection settings, model policy
-hints, and explicit MCP definitions. Unsupported/unsafe configuration fails startup rather
-than being silently reinterpreted. Source model metadata is not used to override a selected
-DSH model route.
+Operational settings are:
 
-Example MCP configuration (only in a profile explicitly intended to enable it):
+- `maxDelegationDepth` — integer from 1 through 8; defaults to 1.
+- `enabledWorkflows` and `enabledPersonas` — non-empty lists act as allowlists; absent or empty
+  lists keep the complete generated catalog.
+- `mcp` — up to 10 explicit server definitions, each with `transport`, `serverName`, and either
+  stdio `command`/`args` or Streamable HTTP `url`.
+
+A stdio server additionally accepts `env`, `cwd`, `toolCallTimeoutMs`, and
+`failOnStartupError`; an HTTP server accepts `headers`, `toolCallTimeoutMs`, and
+`failOnStartupError`. Do not put credentials in profile YAML; use `{env:VAR_NAME}`.
 
 ```yaml
 - id: la-briguade-dsh
   name: la-briguade-dsh
   config:
+    maxDelegationDepth: 1
     mcp:
       docs:
         transport: stdio
@@ -81,5 +104,7 @@ npm run test:dsh
 npm test
 ```
 
-Generated `dsh/content/` and `dsh/presets/` are package artifacts. Edit top-level canonical
-`content/` and run `npm run build:dsh`; do not edit generated artifacts manually.
+The DSH suite covers canonical generation, the full workflow catalog, persona provenance,
+delegation policy validation, MCP secret-safe mapping, edit mismatch recognition, and bounded
+content parsing. Generated `dsh/content/` and `dsh/presets/` are artifacts: edit top-level
+`content/`, then run `npm run build:dsh`.
