@@ -45,3 +45,9 @@ test("should preserve provenance and all specialist prompts in the generated man
   }
   assert.equal(existsSync(join(packageDir, "content", "skills", "git-commit", "SKILL.md")), true);
 });
+
+test("should resolve bundled presets from the installed package rather than the profile", () => {
+  const patch = readFileSync(join(packageDir, "cordis.patch.yml"), "utf8");
+  assert.match(patch, /createRequire\(baseUrl\)\.resolve\('la-briguade-dsh\/package\.json'\)/u);
+  assert.match(patch, /'presets'/u);
+});

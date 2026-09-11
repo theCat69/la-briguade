@@ -17,5 +17,8 @@
     # DSH 0.1.5-rc.2 requires a default whenever this roster is mounted.
     default: builder
     roots:
-      - path: !!js new URL('presets/', baseUrl).pathname
+      # `baseUrl` is the generated profile's cordis.yml, not this package.
+      # Resolve the installed (or linked) bundle from that profile so this remains
+      # portable for both `dsh plugin add ./dsh` and published installations.
+      - path: !!js "process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('la-briguade-dsh/package.json')), 'presets')"
         trust: system
