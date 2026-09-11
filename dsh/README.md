@@ -28,7 +28,7 @@ provides it. Configured MCP servers additionally require the native DSH MCP clie
   parameter is required.
 - `la_briguade_sidekick`: creates or resumes continuable code-review, security-review, and
   documentation-sync children. Its `new_session` parameter is required.
-- `la_briguade_personas` and `la_briguade_status`.
+- `la_briguade_personas` and `la_briguade_status`, plus the direct `/la_briguade_status` slash command for rendering the same safe status snapshot without a model turn.
 - Native edit old-string-mismatch reread feedback through DSH tool interception.
 - Bundled auto-injected engineering guidance for la-briguade presets only. Detection uses the active session workspace and applies only canonical `agents:` persona targeting; it never imports OpenCode permissions or content roots.
 

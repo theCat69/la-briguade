@@ -15,7 +15,7 @@ import { collectBundledSkillMcps, mergeSkillMcps } from "./lib/skill-mcp.js";
 import { createSidekickManager } from "./lib/sidekick.js";
 
 export const name = "la-briguade-dsh";
-export const inject = ["agents", "skills", "subagents", "tools"];
+export const inject = ["agents", "skills", "subagents", "tools", "commands"];
 export { Config };
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
@@ -42,6 +42,7 @@ export async function apply(ctx, input = {}) {
     ctx.tools.register(createDelegateTool(ctx, state, config.maxDelegationDepth)),
     ctx.tools.register(createSidekickTool(sidekick)),
     ctx.tools.register(createStatusTool(state, config)),
+    ctx.commands.register(createStatusCommand(state, config)),
     ...installReliabilityHooks(ctx),
   );
   await mountMcp(ctx, state);
@@ -112,7 +113,14 @@ function createSidekickTool(sidekick) {
   return defineTool({ name: "la_briguade_sidekick", description: "Start or resume a persistent DSH-native review or documentation sidekick.", parameters: { mode: { type: "string", required: true }, task: { type: "string", required: true }, new_session: { type: "boolean", required: true } }, output: outputSchema({ mode: { type: "string", required: true }, childId: { type: "string", required: true }, resumed: { type: "boolean", required: true }, result: { type: "string", required: true } }, (value) => value.result), async execute(input, exec) { return sidekick.run(input, exec); }});
 }
 function createStatusTool(state, config) {
-  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true }, autoInjectEnabled: { type: "boolean", required: true }, autoInjectMaxDepth: { type: "number", required: true }, autoInjectBundledEntries: { type: "number", required: true }, autoInjectDiagnostics: { type: "array", items: { type: "string" }, required: true }, mcpBundled: { type: "array", items: { type: "string" }, required: true }, mcpExplicit: { type: "array", items: { type: "string" }, required: true }, mcpEffective: { type: "array", items: { type: "string" }, required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows, ${value.mcpEffective.length} MCP servers.`), async execute() { const autoInject = state.autoInject.status(); return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth, autoInjectEnabled: autoInject.enabled, autoInjectMaxDepth: autoInject.maxDepth, autoInjectBundledEntries: autoInject.bundledEntries, autoInjectDiagnostics: autoInject.diagnostics, mcpBundled: state.mcp.bundled, mcpExplicit: state.mcp.explicit, mcpEffective: Object.keys(state.mcp.effective).sort() }; }});
+  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true }, autoInjectEnabled: { type: "boolean", required: true }, autoInjectMaxDepth: { type: "number", required: true }, autoInjectBundledEntries: { type: "number", required: true }, autoInjectDiagnostics: { type: "array", items: { type: "string" }, required: true }, mcpBundled: { type: "array", items: { type: "string" }, required: true }, mcpExplicit: { type: "array", items: { type: "string" }, required: true }, mcpEffective: { type: "array", items: { type: "string" }, required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows, ${value.mcpEffective.length} MCP servers.`), async execute() { return statusValue(state, config); }});
+}
+function createStatusCommand(state, config) {
+  return { name: "la_briguade_status", description: "Show safe la-briguade DSH registration and compatibility status.", recordInput: false, handler: () => ({ kind: "success", text: JSON.stringify(statusValue(state, config), null, 2) }) };
+}
+function statusValue(state, config) {
+  const autoInject = state.autoInject.status();
+  return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth, autoInjectEnabled: autoInject.enabled, autoInjectMaxDepth: autoInject.maxDepth, autoInjectBundledEntries: autoInject.bundledEntries, autoInjectDiagnostics: autoInject.diagnostics, mcpBundled: state.mcp.bundled, mcpExplicit: state.mcp.explicit, mcpEffective: Object.keys(state.mcp.effective).sort() };
 }
 async function mountMcp(ctx, state) {
   const servers = resolveMcpServers(state.mcp.effective, process.env, state.diagnostics);

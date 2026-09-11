@@ -5,12 +5,14 @@ import { apply } from "../index.js";
 
 test("should return only declared properties from every la-briguade tool", async () => {
   const registered = new Map();
+  const commands = new Map();
   const parent = { id: "agent-1", session: { id: "session-1" } };
   const ctx = {
     provide: () => () => {},
     agents: { currentInitiator: () => parent },
     skills: { register: () => () => {} },
     tools: { register: (tool) => { registered.set(tool.name, tool); return () => {}; } },
+    commands: { register: (command) => { commands.set(command.name, command); return () => {}; } },
     subagents: {
       start: async () => ({
         result: Promise.resolve({ output: [{ type: "text", text: "done" }], stopReason: "completed" }),
@@ -37,4 +39,10 @@ test("should return only declared properties from every la-briguade tool", async
     const declared = Object.keys(tool.output.schema.properties).sort();
     assert.deepEqual(Object.keys(value).sort(), declared, `${name} output keys must match its strict schema`);
   }
+  const statusCommand = commands.get("la_briguade_status");
+  assert.equal(statusCommand.description, "Show safe la-briguade DSH registration and compatibility status.");
+  assert.deepEqual(statusCommand.handler({}), {
+    kind: "success",
+    text: JSON.stringify(outputs.get("la_briguade_status"), null, 2),
+  });
 });
