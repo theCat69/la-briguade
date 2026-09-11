@@ -1,4 +1,4 @@
-import { boundedOutput, sidekickPolicy } from "./delegation.js";
+import { boundedOutput, childToolInstruction } from "./delegation.js";
 
 const MODES = new Map([
   ["CODE_REVIEW", "sidekick-reviewer"],
@@ -31,8 +31,9 @@ export function createSidekickManager(ctx, maxDepth) {
         label: `la-briguade-${mode.toLowerCase()}`,
         request: {
           prompt: [{ type: "text", text: task.trim() }], parent, maxDepth,
-          persona: `You are la-briguade's ${MODES.get(mode)}. ${mode === "DOCUMENTATION_SYNC" ? "Only edit Markdown, text, AsciiDoc, prompts, and code examples; never edit source, manifests, schemas, generated files, or assets." : "Review only; do not mutate files."}`,
-          toolFilter: sidekickPolicy(mode),
+          // Core DSH Web tools belong to the inherited preset scope, so they
+          // cannot be named in native global-only `toolFilter` restrictions.
+          persona: `You are la-briguade's ${MODES.get(mode)}. ${mode === "DOCUMENTATION_SYNC" ? "Only edit Markdown, text, AsciiDoc, prompts, and code examples; never edit source, manifests, schemas, generated files, or assets." : "Review only; do not mutate files."}\n\n${childToolInstruction(MODES.get(mode))}`,
         },
         signal: exec.signal,
       });

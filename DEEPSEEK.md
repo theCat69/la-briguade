@@ -51,19 +51,21 @@ sandbox, approval, network, and process policies always remain authoritative.
 - Vendor prompts, agent model-specific prompt sections, and OpenCode auto-inject detection are not
   installed by this adapter.
 - Output truncation remains host-provided: the disabled OpenCode truncation behavior was not copied.
-- Documentation-sync sidekicks receive a documentation-only instruction, but their DSH tool filter
-  cannot enforce file-extension/path restrictions. Review profile sandbox policy before allowing
-  write/edit tools for this mode.
+- Documentation-sync sidekicks receive a documentation-only instruction; it is not path or
+  file-extension enforcement. Review profile sandbox policy before allowing write/edit tools for
+  this mode.
 - Sidekick reuse is tracked for the active adapter lifetime. A profile reload creates a new manager;
   it does not rediscover a prior child solely from durable storage.
 
 ## Security boundary
 
-The adapter uses an independent least-privilege tool policy; it never inherits an OpenCode
-permission map. Coding children request core read/write/edit/search/bash/skill tools; review and
-local-context roles request read/search/skill tools. The external-context role requests DSH web
-tools, which must exist and be permitted by the active profile. All tool visibility, sandboxing,
-and approval outcomes remain controlled by DSH.
+The adapter never inherits an OpenCode permission map. It supplies each child with a
+role-specific tool-use instruction: coding roles use core read/write/edit/search/bash/skill tools,
+review and local-context roles use read/search/skill tools, and external-context roles use DSH web
+tools. In DSH Web, those core tools are agent-preset scoped, but native child `toolFilter` accepts
+only global tools; passing the canonical allowlists would reject the child before it starts. The
+adapter consequently relies on the child instruction and DSH's active profile, which remains
+authoritative for tool visibility, sandboxing, and approval outcomes.
 
 MCP is opt-in through adapter configuration. Only stdio and Streamable HTTP **tools** are mapped;
 legacy SSE-only endpoints, MCP Resources, and MCP Prompts are not supported. `{env:NAME}` tokens

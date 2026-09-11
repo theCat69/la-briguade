@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { parseMarkdown } from "../lib/content.js";
-import { childPolicy, validateDelegation } from "../lib/delegation.js";
+import { childPolicy, childToolInstruction, validateDelegation } from "../lib/delegation.js";
 import { isEditMismatch } from "../lib/hooks.js";
 import { resolveMcpServers } from "../lib/mcp.js";
 
-test("should keep specialist permissions independent from canonical frontmatter", () => {
+test("should keep specialist tool boundaries independent from canonical frontmatter", () => {
   assert.deepEqual(childPolicy("security-reviewer"), { allow: ["read", "grep", "glob", "skill"] });
+  assert.match(childToolInstruction("local-context-gatherer"), /only these tools when they are available: read, grep, glob, skill/u);
+  assert.match(childToolInstruction("local-context-gatherer"), /Do not use other tools/u);
   assert.throws(() => validateDelegation({ persona: "unknown", task: "x" }, ["coder"]));
   assert.deepEqual(validateDelegation({ persona: "coder", task: " implement ", mode: "spawn" }, ["coder"]), { persona: "coder", task: "implement", mode: "spawn" });
 });

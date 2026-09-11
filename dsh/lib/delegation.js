@@ -41,14 +41,18 @@ export function childPolicy(persona) {
   return { allow: [...tools] };
 }
 
+/**
+ * DSH Web mounts core tools inside the selected agent-preset scope. Its native
+ * `toolFilter` can restrict only globally registered tools, so passing the
+ * canonical core-tool list would reject child creation before it starts.
+ */
+export function childToolInstruction(persona) {
+  const { allow } = childPolicy(persona);
+  return `Tool-use boundary: perform this role using only these tools when they are available: ${allow.join(", ")}. Do not use other tools. If the task requires another capability, explain the limitation to the parent instead.`;
+}
+
 export function boundedOutput(value, maximum = 20_000) {
   const text = typeof value === "string" ? value : "";
   if (text.length <= maximum) return text;
   return `${text.slice(0, maximum)}\n\n[la-briguade result truncated]`;
-}
-
-export function sidekickPolicy(mode) {
-  if (mode === "DOCUMENTATION_SYNC") return childPolicy("sidekick-librarian");
-  if (mode === "SECURITY_REVIEW") return childPolicy("sidekick-security-reviewer");
-  return childPolicy("sidekick-reviewer");
 }

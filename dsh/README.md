@@ -40,12 +40,14 @@ agent selection, model routes, or MCP declarations as DSH authority. DSH's activ
 remains responsible for tool availability, sandboxing, approvals, network access, and process
 execution.
 
-The adapter has explicit role tool filters: coding requests core edit/write/search/bash tools;
-review and local-context roles request read/search/skill tools; external-context requests DSH web
-tools. These are requests constrained by the host profile, not grants. The documentation-sync
-sidekick is instructed to modify documentation only, but its tool filter cannot enforce file
-extension or path restrictions; do not enable its write/edit tools without a suitable profile
-sandbox policy.
+The adapter gives each specialist a role-specific tool-use instruction: coding roles use core
+edit/write/search/bash tools; review and local-context roles use read/search/skill tools; and
+external-context roles use DSH web tools. DSH Web mounts those core tools inside the selected
+agent-preset scope, while native child `toolFilter` can restrict only global tools; the adapter
+therefore does not pass a `toolFilter` that would reject child creation. DSH's active profile
+remains the authority for tool visibility, sandboxing, and approvals. The documentation-sync
+sidekick is instructed to modify documentation only; this is not path or file-extension
+enforcement, so do not enable its write/edit tools without a suitable profile sandbox policy.
 
 MCP is disabled unless configured under this bundle's `mcp` config. It supports native stdio and
 Streamable HTTP **tool** servers only. `{env:NAME}` tokens resolve in memory and are not logged or

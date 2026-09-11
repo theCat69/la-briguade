@@ -7,7 +7,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 
 import { Config, resolveConfig } from "./lib/config.js";
 import { MAX_CONTENT_LENGTH, parseMarkdown } from "./lib/content.js";
-import { boundedOutput, childPolicy, PRIMARY_PERSONAS, SPECIALIST_PERSONAS, validateDelegation } from "./lib/delegation.js";
+import { boundedOutput, childToolInstruction, PRIMARY_PERSONAS, SPECIALIST_PERSONAS, validateDelegation } from "./lib/delegation.js";
 import { installReliabilityHooks } from "./lib/hooks.js";
 import { resolveMcpServers } from "./lib/mcp.js";
 import { createSidekickManager } from "./lib/sidekick.js";
@@ -83,7 +83,11 @@ function createDelegateTool(ctx, state, maxDepth) {
     if (parent === undefined) throw new Error("la_briguade_delegate must run from an active DSH agent.");
     const prompt = state.enabledPersonas.find((entry) => entry.id === request.persona)?.prompt;
     if (typeof prompt !== "string") throw new Error("The selected specialist prompt is unavailable.");
-    const run = await ctx.subagents.start(request.mode, { label: `la-briguade-${request.persona}`, prompt: [{ type: "text", text: request.task }], parent, signal: exec.signal, maxDepth, persona: prompt, toolFilter: childPolicy(request.persona) });
+    const persona = `${prompt}\n\n${childToolInstruction(request.persona)}`;
+    // DSH Web preset tools are scoped, while `toolFilter` only accepts global
+    // tools. The child inherits the parent's preset; constrain role tool use in
+    // its persona rather than causing native child creation to fail.
+    const run = await ctx.subagents.start(request.mode, { label: `la-briguade-${request.persona}`, prompt: [{ type: "text", text: request.task }], parent, signal: exec.signal, maxDepth, persona });
     try { const outcome = await run.result; const result = boundedOutput(extractText(outcome.output)); return { persona: request.persona, result: outcome.stopReason === "completed" ? result : `${result}\n\nStopped: ${outcome.stopReason}`, stopReason: outcome.stopReason }; }
     finally { await run.dispose(); }
   }});
