@@ -15,6 +15,7 @@ permission:
   question: "allow"
   "angular-cli_*": "allow"
   sidekick-agent: "allow"
+  "azure-devops_*": "allow"
   skill:
     "*": "deny"
     "project-coding": "allow"
