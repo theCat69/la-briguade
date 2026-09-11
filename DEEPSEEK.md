@@ -35,7 +35,8 @@ sandbox, approval, network, and process policies always remain authoritative.
 | Edit recovery | Available | A `tools/post-execute` interceptor appends a reread hint to recognized edit old-string mismatch failures. |
 | Empty-response reporting | Best effort | The adapter registers an `agent/turn-stopping` listener when the host accepts that event; it logs a warning and never retries automatically. |
 | MCP configuration | Available with limits | Explicit adapter config maps stdio and Streamable HTTP servers to the native DSH MCP client. |
-| Diagnostics | Available | `la_briguade_personas` lists enabled roles; `la_briguade_status` reports enabled personas, workflows, bounded diagnostics, and delegation depth. |
+| Diagnostics | Available | `la_briguade_personas` lists enabled roles; `la_briguade_status` reports enabled personas, workflows, delegation depth, and safe aggregate auto-injection facts. |
+| Auto-injected skills | Available with limits | Generated bundled guidance is selected from bounded DSH-filesystem inspection of the active session workspace and appended as one stable preset-scoped system-prompt section. |
 
 ## Intentional limitations and differences
 
@@ -45,11 +46,14 @@ sandbox, approval, network, and process policies always remain authoritative.
   such as command agent/model/subtask hints is not translated into DSH orchestration.
 - The adapter does **not** currently apply source `model`, `variant`, `temperature`, `top_p`, or
   `maxSteps` values. DSH profile route selection remains authoritative.
-- `contentRoots`, `autoInject`, and `modelPolicies` are accepted by the configuration schema for
-  forward compatibility but are not active runtime features yet. Do not rely on them for content
-  overrides, prompt injection, or model routing.
-- Vendor prompts, agent model-specific prompt sections, and OpenCode auto-inject detection are not
-  installed by this adapter.
+- `autoInject` is active only in generated la-briguade primary preset scopes. It defaults to
+  `enabled: true` and `maxDepth: 0` (bounded from 0 through 8), scans only the active session
+  workspace through DSH filesystem services, and caches a deterministic rendered block per
+  session/workspace/preset/depth. Relevant successful DSH `write` and `edit` calls invalidate that
+  workspace result for one controlled refresh. It does not read OpenCode global/project roots,
+  honor OpenCode permissions, or grant authority from canonical frontmatter.
+- `contentRoots` and `modelPolicies` remain inactive runtime features. Vendor prompts and agent
+  model-specific prompt sections are not installed by this adapter.
 - Output truncation remains host-provided: the disabled OpenCode truncation behavior was not copied.
 - Documentation-sync sidekicks receive a documentation-only instruction; it is not path or
   file-extension enforcement. Review profile sandbox policy before allowing write/edit tools for
@@ -78,6 +82,8 @@ the optional per-server `personas` config field is reserved and is not enforced 
 Operational settings are:
 
 - `maxDelegationDepth` — integer from 1 through 8; defaults to 1.
+- `autoInject.enabled` — defaults to `true`; set false to omit all auto-injected guidance and workspace detection.
+- `autoInject.maxDepth` — integer from 0 through 8; defaults to 0 and limits nested manifest detection.
 - `enabledWorkflows` and `enabledPersonas` — non-empty lists act as allowlists; absent or empty
   lists keep the complete generated catalog.
 - `mcp` — up to 10 explicit server definitions, each with `transport`, `serverName`, and either
@@ -92,6 +98,9 @@ A stdio server additionally accepts `env`, `cwd`, `toolCallTimeoutMs`, and
   name: la-briguade-dsh
   config:
     maxDelegationDepth: 1
+    autoInject:
+      enabled: true
+      maxDepth: 0
     mcp:
       docs:
         transport: stdio

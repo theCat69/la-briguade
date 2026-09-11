@@ -30,6 +30,7 @@ provides it. Configured MCP servers additionally require the native DSH MCP clie
   documentation-sync children. Its `new_session` parameter is required.
 - `la_briguade_personas` and `la_briguade_status`.
 - Native edit old-string-mismatch reread feedback through DSH tool interception.
+- Bundled auto-injected engineering guidance for la-briguade presets only. Detection uses the active session workspace and applies only canonical `agents:` persona targeting; it never imports OpenCode permissions or content roots.
 
 `npm run build:dsh` produces the bundle's workflow skills, persona prompt files, primary preset
 compositions, and `content/manifest.json`. Edit top-level repository `content/` only; the package
@@ -56,9 +57,17 @@ Streamable HTTP **tool** servers only. `{env:NAME}` tokens resolve in memory and
 written to generated content. Legacy SSE-only servers, MCP Resources, MCP Prompts, and
 persona-scoped MCP visibility are not implemented.
 
-Source model options and the configuration fields `contentRoots`, `autoInject`, and
-`modelPolicies` are not active runtime features. Vendor prompts, model-specific prompt sections,
-content overrides, and auto-inject detection also remain unsupported in the current adapter.
+`autoInject` is active for generated la-briguade primary presets. It defaults to enabled with
+`maxDepth: 0`; raise the depth (maximum 8) only when supported manifests live below the workspace
+root. Detection is bounded, skips common generated/dependency directories, uses DSH filesystem
+services within the session workspace, and caches its stable rendered section for the session.
+A successful DSH `write` or `edit` to a relevant detection filename triggers one refresh on the
+next assembly. The bundled catalog covers general coding plus TypeScript, Rust, Java, Angular,
+frontend, Next.js, React, React Native, Flutter, Dioxus, Axum, and Quarkus markers. It does not
+read OpenCode auto-inject roots or turn any skill metadata into permissions.
+
+`contentRoots` and `modelPolicies` are not active runtime features. Vendor prompts,
+model-specific prompt sections, and content overrides remain unsupported in the current adapter.
 
 See [`../DEEPSEEK.md`](../DEEPSEEK.md) for the full capability matrix and configuration reference.
 

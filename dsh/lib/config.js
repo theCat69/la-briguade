@@ -21,7 +21,7 @@ export const Config = z.object({
   enabledWorkflows: z.array(identifier).max(17),
   enabledPersonas: z.array(identifier).max(20),
   contentRoots: z.array(safePath).max(4),
-  autoInject: z.object({ enabled: z.boolean().default(true), maxDepth: z.number().step(1).min(0).max(8).default(1) }),
+  autoInject: z.object({ enabled: z.boolean().default(true), maxDepth: z.number().step(1).min(0).max(8).default(0) }),
   modelPolicies: z.dict(z.object({ reasoningEffort: z.string().pattern(/^(low|medium|high)$/u) })),
   mcp: z.dict(mcpServer, z.string().pattern(/^[A-Za-z0-9_-]{1,32}$/u)).max(10),
 });

@@ -7,7 +7,7 @@ const MODES = new Map([
 ]);
 
 /** Durable child ids are returned by DSH; this index only avoids an unnecessary list query while live. */
-export function createSidekickManager(ctx, maxDepth) {
+export function createSidekickManager(ctx, maxDepth, autoInject) {
   const children = new Map();
   return {
     async run(input, exec) {
@@ -38,6 +38,7 @@ export function createSidekickManager(ctx, maxDepth) {
         signal: exec.signal,
       });
       children.set(key, started.childId);
+      autoInject?.setPersona(started.childId, MODES.get(mode));
       return { mode, childId: started.childId, resumed: false, result: "Sidekick continuable child started and accepted the task." };
     },
     interrupt(parent, childId) { ctx.subagents.interrupt(childId, { kind: "ancestor", agent: parent }); },

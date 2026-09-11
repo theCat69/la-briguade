@@ -6,6 +6,7 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./auto-inject": "./lib/auto-inject.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
@@ -32,6 +33,8 @@
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-agent": "^0.1.5-rc.2",
     "@deepseek-ai/dsh-agent-presets": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-fs": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.5-rc.2",
     "@deepseek-ai/dsh-mcp-client": "^0.1.5-rc.2",
     "@deepseek-ai/dsh-persona": "^0.1.5-rc.2",
     "@deepseek-ai/dsh-skill": "^0.1.5-rc.2",

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { apply as applyMcpClient } from "@deepseek-ai/dsh-mcp-client";
 import { defineTool } from "@deepseek-ai/dsh-tools";
 
+import { createAutoInjectRuntime } from "./lib/auto-inject.js";
 import { Config, resolveConfig } from "./lib/config.js";
 import { MAX_CONTENT_LENGTH, parseMarkdown } from "./lib/content.js";
 import { boundedOutput, childToolInstruction, PRIMARY_PERSONAS, SPECIALIST_PERSONAS, validateDelegation } from "./lib/delegation.js";
@@ -22,9 +23,13 @@ const contentDir = join(packageDir, "content");
 /** Install the native, least-privilege DSH adapter. */
 export async function apply(ctx, input = {}) {
   const config = resolveConfig(input);
+  const autoInject = createAutoInjectRuntime(config.autoInject);
   const state = loadState(config);
+  state.autoInject = autoInject;
   const disposers = registerSkills(ctx, state);
-  const sidekick = createSidekickManager(ctx, config.maxDelegationDepth);
+  const unprovideAutoInject = ctx.provide("laBriguadeAutoInject", autoInject);
+  if (typeof unprovideAutoInject === "function") disposers.push(unprovideAutoInject);
+  const sidekick = createSidekickManager(ctx, config.maxDelegationDepth, autoInject);
   disposers.push(
     ctx.tools.register(createPersonasTool(state)),
     ctx.tools.register(createDelegateTool(ctx, state, config.maxDelegationDepth)),
@@ -88,15 +93,19 @@ function createDelegateTool(ctx, state, maxDepth) {
     // tools. The child inherits the parent's preset; constrain role tool use in
     // its persona rather than causing native child creation to fail.
     const run = await ctx.subagents.start(request.mode, { label: `la-briguade-${request.persona}`, prompt: [{ type: "text", text: request.task }], parent, signal: exec.signal, maxDepth, persona });
+    state.autoInject?.setPersona(run.localAgent?.session?.header?.id ?? run.localAgent?.id ?? run.id, request.persona);
     try { const outcome = await run.result; const result = boundedOutput(extractText(outcome.output)); return { persona: request.persona, result: outcome.stopReason === "completed" ? result : `${result}\n\nStopped: ${outcome.stopReason}`, stopReason: outcome.stopReason }; }
-    finally { await run.dispose(); }
+    finally {
+      await run.dispose();
+      state.autoInject?.clearPersona(run.localAgent?.session?.header?.id ?? run.localAgent?.id ?? run.id);
+    }
   }});
 }
 function createSidekickTool(sidekick) {
   return defineTool({ name: "la_briguade_sidekick", description: "Start or resume a persistent DSH-native review or documentation sidekick.", parameters: { mode: { type: "string", required: true }, task: { type: "string", required: true }, new_session: { type: "boolean", required: true } }, output: outputSchema({ mode: { type: "string", required: true }, childId: { type: "string", required: true }, resumed: { type: "boolean", required: true }, result: { type: "string", required: true } }, (value) => value.result), async execute(input, exec) { return sidekick.run(input, exec); }});
 }
 function createStatusTool(state, config) {
-  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows.`), async execute() { return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth }; }});
+  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true }, autoInjectEnabled: { type: "boolean", required: true }, autoInjectMaxDepth: { type: "number", required: true }, autoInjectBundledEntries: { type: "number", required: true }, autoInjectDiagnostics: { type: "array", items: { type: "string" }, required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows.`), async execute() { const autoInject = state.autoInject.status(); return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth, autoInjectEnabled: autoInject.enabled, autoInjectMaxDepth: autoInject.maxDepth, autoInjectBundledEntries: autoInject.bundledEntries, autoInjectDiagnostics: autoInject.diagnostics }; }});
 }
 async function mountMcp(ctx, config, state) {
   const servers = resolveMcpServers(config.mcp, process.env, state.diagnostics);

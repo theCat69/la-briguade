@@ -125,10 +125,12 @@ if (!existsSync(sourceContent)) throw new Error(`Cannot prepare DSH package: mis
 rmSync(packagedContent, { recursive: true, force: true });
 rmSync(packagedPresets, { recursive: true, force: true });
 cpSync(join(sourceContent, "skills"), join(packagedContent, "skills"), { recursive: true });
+cpSync(join(sourceContent, "auto-inject-skills"), join(packagedContent, "auto-inject-skills"), { recursive: true });
 
 const agents = generateAgents();
 const workflows = generateWorkflows();
-write(join(packagedContent, "manifest.json"), `${JSON.stringify({ version: 1, agents, workflows }, null, 2)}\n`);
+const autoInjectSkills = generateAutoInjectSkills();
+write(join(packagedContent, "manifest.json"), `${JSON.stringify({ version: 1, agents, workflows, autoInjectSkills }, null, 2)}\n`);
 
 function generateAgents() {
   const directory = join(sourceContent, "agents");
@@ -165,10 +167,17 @@ function generateWorkflows() {
   return entries;
 }
 
+function generateAutoInjectSkills() {
+  const directory = join(sourceContent, "auto-inject-skills");
+  return readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^[a-z][a-z0-9-]*$/u.test(entry.name))
+    .map((entry) => ({ id: entry.name, sourcePath: `content/auto-inject-skills/${entry.name}/SKILL.md` }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
 function generatePreset(record, body) {
   const presetDir = join(packagedPresets, record.id);
   write(join(presetDir, "preset.yml"), [`name: ${record.id}`, `description: ${JSON.stringify(record.description)}`, "order: 100", ""].join("\n"));
-  write(join(presetDir, "agent.cordis.yml"), ["- id: la-briguade-persona", "  name: '@deepseek-ai/dsh-persona'", "  config:", "    prefix: |-", ...body.split("\n").map((line) => `      ${line}`), STANDARD_AGENT_ROWS.trim(), ""].join("\n"));
+  write(join(presetDir, "agent.cordis.yml"), ["- id: la-briguade-persona", "  name: '@deepseek-ai/dsh-persona'", "  config:", "    prefix: |-", ...body.split("\n").map((line) => `      ${line}`), "- id: la-briguade-auto-inject", "  name: la-briguade-dsh/auto-inject", "  config:", `    persona: ${record.id}`, STANDARD_AGENT_ROWS.trim(), ""].join("\n"));
 }
 function parseMarkdown(raw, label) {
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/u.exec(raw);

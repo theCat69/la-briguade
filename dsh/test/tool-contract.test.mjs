@@ -7,6 +7,7 @@ test("should return only declared properties from every la-briguade tool", async
   const registered = new Map();
   const parent = { id: "agent-1", session: { id: "session-1" } };
   const ctx = {
+    provide: () => () => {},
     agents: { currentInitiator: () => parent },
     skills: { register: () => () => {} },
     tools: { register: (tool) => { registered.set(tool.name, tool); return () => {}; } },

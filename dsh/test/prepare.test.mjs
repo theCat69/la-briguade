@@ -24,6 +24,7 @@ for (const name of ["builder", "orchestrator", "planner", "ask"]) {
     assert.match(readFileSync(presetPath, "utf8"), new RegExp(`name: ${name}`));
     const composition = readFileSync(compositionPath, "utf8");
     assert.match(composition, /name: '@deepseek-ai\/dsh-persona'/u);
+    assert.match(composition, new RegExp(`name: la-briguade-dsh/auto-inject\\n  config:\\n    persona: ${name}`));
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-bash'/u);
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs'/u);
     assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs-search'/u);
