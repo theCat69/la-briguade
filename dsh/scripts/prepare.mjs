@@ -16,6 +16,104 @@ const REQUIRED_COMMANDS = [
   "implement", "just-do-it", "grilling", "handoff", "learn",
 ];
 
+// DSH Web disables these model-facing rows in the host composition. Every
+// selectable la-briguade primary preset must mount its own scoped copy.
+const STANDARD_AGENT_ROWS = `
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+- id: tool-bash
+  name: '@deepseek-ai/dsh-tool-bash'
+  disabled: !!js process.platform === 'win32'
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: !!js process.platform !== 'win32'
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+- id: command-goal
+  name: '@deepseek-ai/dsh-command-goal'
+- id: tool-goal
+  name: '@deepseek-ai/dsh-tool-goal'
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+- id: delegation
+  name: cordis:group
+  group: true
+  isolate:
+    workflowEngine: true
+  config:
+    - id: tool-subagent-control
+      name: '@deepseek-ai/dsh-tool-subagent-control'
+    - id: tool-subagent-list-agents
+      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+    - id: tool-subagent
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent
+        backgroundMode: continuable
+    - id: tool-subagent-fork
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: fork
+        toolName: subagent_fork
+        backgroundMode: continuable
+    - id: workflow-worker-thread
+      name: '@deepseek-ai/dsh-workflow-worker-thread'
+      config:
+        provider: spawn
+    - id: tool-workflow
+      name: '@deepseek-ai/dsh-tool-workflow'
+    - id: tool-ralph
+      name: '@deepseek-ai/dsh-tool-ralph'
+      config:
+        subagentProvider: spawn
+        maxRounds: 64
+- id: tool-ask-user
+  name: '@deepseek-ai/dsh-tool-ask-user'
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: true
+    searchTimeoutMs: 60000
+- id: present
+  name: '@deepseek-ai/dsh-tool-present'
+`;
+
 if (!existsSync(sourceContent)) throw new Error(`Cannot prepare DSH package: missing ${sourceContent}`);
 rmSync(packagedContent, { recursive: true, force: true });
 rmSync(packagedPresets, { recursive: true, force: true });
@@ -63,7 +161,7 @@ function generateWorkflows() {
 function generatePreset(record, body) {
   const presetDir = join(packagedPresets, record.id);
   write(join(presetDir, "preset.yml"), [`name: ${record.id}`, `description: ${JSON.stringify(record.description)}`, "order: 100", ""].join("\n"));
-  write(join(presetDir, "agent.cordis.yml"), ["- id: la-briguade-persona", "  name: '@deepseek-ai/dsh-persona'", "  config:", "    prefix: |-", ...body.split("\n").map((line) => `      ${line}`), ""].join("\n"));
+  write(join(presetDir, "agent.cordis.yml"), ["- id: la-briguade-persona", "  name: '@deepseek-ai/dsh-persona'", "  config:", "    prefix: |-", ...body.split("\n").map((line) => `      ${line}`), STANDARD_AGENT_ROWS.trim(), ""].join("\n"));
 }
 function parseMarkdown(raw, label) {
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/u.exec(raw);

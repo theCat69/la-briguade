@@ -22,7 +22,12 @@ for (const name of ["builder", "orchestrator", "planner", "ask"]) {
     const compositionPath = join(packageDir, "presets", name, "agent.cordis.yml");
     assert.equal(existsSync(presetPath), true);
     assert.match(readFileSync(presetPath, "utf8"), new RegExp(`name: ${name}`));
-    assert.match(readFileSync(compositionPath, "utf8"), /name: '@deepseek-ai\/dsh-persona'/u);
+    const composition = readFileSync(compositionPath, "utf8");
+    assert.match(composition, /name: '@deepseek-ai\/dsh-persona'/u);
+    assert.match(composition, /name: '@deepseek-ai\/dsh-tool-bash'/u);
+    assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs'/u);
+    assert.match(composition, /name: '@deepseek-ai\/dsh-tool-fs-search'/u);
+    assert.match(composition, /name: '@deepseek-ai\/dsh-tool-skill'/u);
   });
 }
 

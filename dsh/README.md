@@ -20,7 +20,9 @@ provides it. Configured MCP servers additionally require the native DSH MCP clie
 ## Included catalog
 
 - All 17 canonical commands as user-invocable `la-briguade-*` workflow skills.
-- Selectable primary presets: `builder`, `orchestrator`, `planner`, and `ask`.
+- Selectable primary presets: `builder`, `orchestrator`, `planner`, and `ask`. Each mounts the
+  scoped DSH coding-tool composition, including Bash/PowerShell, filesystem read/write/edit/search,
+  skills, goals, plans, subagents, workflows, web tools, and deliverables.
 - Generated canonical prompts for all enabled delegation specialists.
 - `la_briguade_delegate`: bounded, cancellable `spawn` or `fork` delegation. Its `mode`
   parameter is required.
