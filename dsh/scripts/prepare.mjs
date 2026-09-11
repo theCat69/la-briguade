@@ -130,7 +130,8 @@ cpSync(join(sourceContent, "auto-inject-skills"), join(packagedContent, "auto-in
 const agents = generateAgents();
 const workflows = generateWorkflows();
 const autoInjectSkills = generateAutoInjectSkills();
-write(join(packagedContent, "manifest.json"), `${JSON.stringify({ version: 1, agents, workflows, autoInjectSkills }, null, 2)}\n`);
+const skillMcps = generateSkillMcps();
+write(join(packagedContent, "manifest.json"), `${JSON.stringify({ version: 1, agents, workflows, autoInjectSkills, skillMcps }, null, 2)}\n`);
 
 function generateAgents() {
   const directory = join(sourceContent, "agents");
@@ -173,6 +174,22 @@ function generateAutoInjectSkills() {
     .filter((entry) => entry.isDirectory() && /^[a-z][a-z0-9-]*$/u.test(entry.name))
     .map((entry) => ({ id: entry.name, sourcePath: `content/auto-inject-skills/${entry.name}/SKILL.md` }))
     .sort((a, b) => a.id.localeCompare(b.id));
+}
+function generateSkillMcps() {
+  const directory = join(sourceContent, "skills");
+  const entries = [];
+  for (const skill of readdirSync(directory, { withFileTypes: true }).filter((entry) => entry.isDirectory() && /^[a-z][a-z0-9-]*$/u.test(entry.name)).map((entry) => entry.name).sort()) {
+    const parsed = parseMarkdown(read(join(directory, skill, "SKILL.md")), `${skill}/SKILL.md`);
+    const declarations = parsed.attributes.mcp;
+    if (declarations === null || typeof declarations !== "object" || Array.isArray(declarations)) continue;
+    for (const [key, declaration] of Object.entries(declarations)) {
+      if (!/^[A-Za-z0-9_-]{1,32}$/u.test(key) || declaration === null || typeof declaration !== "object" || Array.isArray(declaration)) continue;
+      const type = declaration.type;
+      if (type !== "local" && type !== "remote") continue;
+      entries.push({ skill, key, transport: type === "local" ? "stdio" : "streamable-http" });
+    }
+  }
+  return entries.sort((left, right) => `${left.skill}:${left.key}`.localeCompare(`${right.skill}:${right.key}`));
 }
 function generatePreset(record, body) {
   const presetDir = join(packagedPresets, record.id);

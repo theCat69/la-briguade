@@ -11,6 +11,7 @@ import { MAX_CONTENT_LENGTH, parseMarkdown } from "./lib/content.js";
 import { boundedOutput, childToolInstruction, PRIMARY_PERSONAS, SPECIALIST_PERSONAS, validateDelegation } from "./lib/delegation.js";
 import { installReliabilityHooks } from "./lib/hooks.js";
 import { resolveMcpServers } from "./lib/mcp.js";
+import { collectBundledSkillMcps, mergeSkillMcps } from "./lib/skill-mcp.js";
 import { createSidekickManager } from "./lib/sidekick.js";
 
 export const name = "la-briguade-dsh";
@@ -26,6 +27,12 @@ export async function apply(ctx, input = {}) {
   const autoInject = createAutoInjectRuntime(config.autoInject);
   const state = loadState(config);
   state.autoInject = autoInject;
+  state.skillMcps = collectBundledSkillMcps(join(contentDir, "skills"), state.diagnostics);
+  state.mcp = {
+    bundled: Object.keys(state.skillMcps.servers).sort(),
+    explicit: Object.keys(config.mcp ?? {}).sort(),
+    effective: mergeSkillMcps(state.skillMcps.servers, config.mcp, state.diagnostics),
+  };
   const disposers = registerSkills(ctx, state);
   const unprovideAutoInject = ctx.provide("laBriguadeAutoInject", autoInject);
   if (typeof unprovideAutoInject === "function") disposers.push(unprovideAutoInject);
@@ -37,7 +44,7 @@ export async function apply(ctx, input = {}) {
     ctx.tools.register(createStatusTool(state, config)),
     ...installReliabilityHooks(ctx),
   );
-  await mountMcp(ctx, config, state);
+  await mountMcp(ctx, state);
   return async () => {
     const parent = ctx.agents.currentInitiator();
     if (parent !== undefined) await sidekick.dispose(parent);
@@ -105,10 +112,10 @@ function createSidekickTool(sidekick) {
   return defineTool({ name: "la_briguade_sidekick", description: "Start or resume a persistent DSH-native review or documentation sidekick.", parameters: { mode: { type: "string", required: true }, task: { type: "string", required: true }, new_session: { type: "boolean", required: true } }, output: outputSchema({ mode: { type: "string", required: true }, childId: { type: "string", required: true }, resumed: { type: "boolean", required: true }, result: { type: "string", required: true } }, (value) => value.result), async execute(input, exec) { return sidekick.run(input, exec); }});
 }
 function createStatusTool(state, config) {
-  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true }, autoInjectEnabled: { type: "boolean", required: true }, autoInjectMaxDepth: { type: "number", required: true }, autoInjectBundledEntries: { type: "number", required: true }, autoInjectDiagnostics: { type: "array", items: { type: "string" }, required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows.`), async execute() { const autoInject = state.autoInject.status(); return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth, autoInjectEnabled: autoInject.enabled, autoInjectMaxDepth: autoInject.maxDepth, autoInjectBundledEntries: autoInject.bundledEntries, autoInjectDiagnostics: autoInject.diagnostics }; }});
+  return defineTool({ name: "la_briguade_status", description: "Report safe la-briguade DSH registration and compatibility diagnostics.", parameters: {}, output: outputSchema({ version: { type: "number", required: true }, personas: { type: "array", items: { type: "string" }, required: true }, workflows: { type: "array", items: { type: "string" }, required: true }, diagnostics: { type: "array", items: { type: "string" }, required: true }, maxDelegationDepth: { type: "number", required: true }, autoInjectEnabled: { type: "boolean", required: true }, autoInjectMaxDepth: { type: "number", required: true }, autoInjectBundledEntries: { type: "number", required: true }, autoInjectDiagnostics: { type: "array", items: { type: "string" }, required: true }, mcpBundled: { type: "array", items: { type: "string" }, required: true }, mcpExplicit: { type: "array", items: { type: "string" }, required: true }, mcpEffective: { type: "array", items: { type: "string" }, required: true } }, (value) => `la-briguade DSH: ${value.personas.length} personas, ${value.workflows.length} workflows, ${value.mcpEffective.length} MCP servers.`), async execute() { const autoInject = state.autoInject.status(); return { version: state.manifest.version, personas: state.enabledPersonas.map((entry) => entry.id), workflows: state.enabledWorkflows.map((entry) => entry.name), diagnostics: state.diagnostics.map((entry) => `${entry.sourcePath}: ${entry.message}`).slice(0, 50), maxDelegationDepth: config.maxDelegationDepth, autoInjectEnabled: autoInject.enabled, autoInjectMaxDepth: autoInject.maxDepth, autoInjectBundledEntries: autoInject.bundledEntries, autoInjectDiagnostics: autoInject.diagnostics, mcpBundled: state.mcp.bundled, mcpExplicit: state.mcp.explicit, mcpEffective: Object.keys(state.mcp.effective).sort() }; }});
 }
-async function mountMcp(ctx, config, state) {
-  const servers = resolveMcpServers(config.mcp, process.env, state.diagnostics);
+async function mountMcp(ctx, state) {
+  const servers = resolveMcpServers(state.mcp.effective, process.env, state.diagnostics);
   for (const server of servers) {
     try { await applyMcpClient(ctx, server); }
     catch (error) { state.diagnostics.push({ sourcePath: server.serverName, message: `MCP server unavailable (${errorMessage(error)})` }); }

@@ -52,10 +52,14 @@ remains the authority for tool visibility, sandboxing, and approvals. The docume
 sidekick is instructed to modify documentation only; this is not path or file-extension
 enforcement, so do not enable its write/edit tools without a suitable profile sandbox policy.
 
-MCP is disabled unless configured under this bundle's `mcp` config. It supports native stdio and
-Streamable HTTP **tool** servers only. `{env:NAME}` tokens resolve in memory and are not logged or
-written to generated content. Legacy SSE-only servers, MCP Resources, MCP Prompts, and
-persona-scoped MCP visibility are not implemented.
+Enabled MCP declarations in generated bundled `content/skills/*/SKILL.md` files are discovered
+and mounted automatically. This includes Context7: its bundled skill starts the declared stdio
+server without a profile `mcp` entry when the launching environment provides any required values
+such as `CONTEXT7_API_KEY`. Explicit entries under this bundle's `mcp` config override a bundled
+server with the same key. The adapter supports native stdio and Streamable HTTP **tool** servers
+only. `{env:NAME}` tokens resolve in memory and are not logged or written to generated content.
+Legacy SSE-only servers, MCP Resources, MCP Prompts, persona-scoped MCP visibility, and OpenCode
+user/project skill-root discovery are not implemented.
 
 `autoInject` is active for generated la-briguade primary presets. It defaults to enabled with
 `maxDepth: 0`; raise the depth (maximum 8) only when supported manifests live below the workspace

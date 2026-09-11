@@ -71,11 +71,16 @@ only global tools; passing the canonical allowlists would reject the child befor
 adapter consequently relies on the child instruction and DSH's active profile, which remains
 authoritative for tool visibility, sandboxing, and approval outcomes.
 
-MCP is opt-in through adapter configuration. Only stdio and Streamable HTTP **tools** are mapped;
-legacy SSE-only endpoints, MCP Resources, and MCP Prompts are not supported. `{env:NAME}` tokens
-are resolved in memory at activation and are not included in generated artifacts or status output.
-Missing tokens produce a redacted diagnostic. MCP tool visibility is profile-wide after mounting;
-the optional per-server `personas` config field is reserved and is not enforced yet.
+Bundled generated skills can declare MCP servers in `SKILL.md` frontmatter. At activation, the
+adapter discovers those package-owned declarations and mounts enabled entries automatically; for
+example, the bundled Context7 skill starts its stdio server when its command is available. Explicit
+adapter `mcp` configuration overrides a bundled declaration with the same key. Only stdio and
+Streamable HTTP **tools** are mapped; legacy SSE-only endpoints, MCP Resources, and MCP Prompts
+are not supported. `{env:NAME}` tokens are resolved in memory at activation and are not included in
+generated artifacts or status output. Missing tokens produce a redacted diagnostic. MCP tool
+visibility is profile-wide after mounting; the optional per-server `personas` config field is
+reserved and is not enforced yet. This discovery intentionally reads only the generated bundled
+catalog, not OpenCode global or project skill roots.
 
 ## Configuration
 
@@ -87,7 +92,8 @@ Operational settings are:
 - `enabledWorkflows` and `enabledPersonas` — non-empty lists act as allowlists; absent or empty
   lists keep the complete generated catalog.
 - `mcp` — up to 10 explicit server definitions, each with `transport`, `serverName`, and either
-  stdio `command`/`args` or Streamable HTTP `url`.
+  stdio `command`/`args` or Streamable HTTP `url`. These override an auto-discovered bundled
+  skill server with the same key; they are not needed for bundled Context7.
 
 A stdio server additionally accepts `env`, `cwd`, `toolCallTimeoutMs`, and
 `failOnStartupError`; an HTTP server accepts `headers`, `toolCallTimeoutMs`, and

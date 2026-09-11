@@ -21,7 +21,7 @@ function mapServer(key, server, environment, diagnostics) {
   if (server.transport === "stdio") {
     const command = resolveTokens(server.command, environment, diagnostics, key, "command");
     const args = (server.args ?? []).map((value) => resolveTokens(value, environment, diagnostics, key, "command"));
-    if (command === "" || args.some((value) => value === "" || UNSAFE_COMMAND_CHARS.test(value))) {
+    if (command === "" || UNSAFE_COMMAND_CHARS.test(command) || args.some((value) => value === "" || UNSAFE_COMMAND_CHARS.test(value))) {
       diagnostics.push({ sourcePath: key, message: "MCP stdio command contains an unsafe or missing value" });
       return undefined;
     }

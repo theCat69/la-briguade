@@ -51,6 +51,12 @@ test("should preserve provenance and all specialist prompts in the generated man
     assert.equal(existsSync(join(packageDir, "content", "personas", `${id}.md`)), true);
   }
   assert.equal(existsSync(join(packageDir, "content", "skills", "git-commit", "SKILL.md")), true);
+  assert.deepEqual(manifest.skillMcps, [
+    { skill: "context7", key: "context7", transport: "stdio" },
+    { skill: "drawio", key: "drawio", transport: "streamable-http" },
+    { skill: "next-devtools", key: "next-devtools", transport: "stdio" },
+    { skill: "serena", key: "serena", transport: "stdio" },
+  ]);
 });
 
 test("should resolve bundled presets from the installed package rather than the profile", () => {
