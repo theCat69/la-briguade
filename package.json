@@ -20,7 +20,9 @@
     "generate-schema": "npm run build && node scripts/generate-schema.mjs",
     "build:dsh": "node dsh/scripts/prepare.mjs",
     "test:dsh": "npm run build:dsh && npm --prefix dsh test",
-    "test": "vitest run && npm run test:dsh",
+    "build:codex": "node codex/scripts/prepare.mjs",
+    "test:codex": "npm run build:codex && npm --prefix codex test",
+    "test": "vitest run && npm run test:dsh && npm run test:codex",
     "test:watch": "vitest"
   },
   "files": [

@@ -1,0 +1,27 @@
+{
+  "name": "la-briguade-codex",
+  "version": "0.7.0",
+  "description": "Best-effort OpenAI Codex CLI bundle for la-briguade workflows and personas",
+  "type": "module",
+  "bin": {
+    "la-briguade-codex": "bin/la-briguade-codex.js"
+  },
+  "files": [
+    "README.md",
+    "AGENTS.md",
+    "bin",
+    "config.toml",
+    "manifest.json",
+    "agents",
+    "skills",
+    "scripts/prepare.mjs",
+    "scripts/smoke.mjs"
+  ],
+  "scripts": {
+    "prepare": "node scripts/prepare.mjs",
+    "prepack": "node scripts/prepare.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "license": "MIT"
+}

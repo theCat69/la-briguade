@@ -43,6 +43,17 @@ The DSH bundle generates all 17 la-briguade workflows, four selectable primary p
 
 DSH does **not** import OpenCode agent permissions, shell/external-directory grants, agent/model selections, or embedded MCP declarations as DSH authority. DSH sandbox and approval policies remain controlled by the active profile. MCP servers are enabled only through explicit adapter configuration, never from an implicit source permission. DSH's ordinary project and user skill roots (`.dsh/skills` and `.agents/skills`) remain host-provided. Content overrides, auto-injection, vendor/model prompt sections, model-field mapping, and persona-scoped MCP visibility are not currently implemented by this adapter. See [DeepSeek Harness support and capability status](DEEPSEEK.md) for the complete capability matrix and security boundary.
 
+### OpenAI Codex CLI (experimental)
+
+A separate [Codex CLI bundle](CODEX.md) generates the canonical personas and workflows as Codex-native
+artifacts. Build and install it locally with `npm run build:codex` followed by
+`npx --prefix codex la-briguade-codex install /path/to/project`. The installer writes specialist
+personas to `.agents/personas/` and workflow skills to `.agents/skills/`. Its model-free smoke test
+validates generated artifacts without starting Codex or calling a model; run it with `npm run
+test:codex`. Codex sandbox, approval, model, and network policies remain authoritative. The adapter
+intentionally excludes edit old-string-mismatch recovery, empty-response diagnostics, and
+bounded-content validation.
+
 ## Getting Started
 
 Open OpenCode in a project after installation. la-briguade registers its agents, skills, and commands in memory at startup; it does not copy files into your project.

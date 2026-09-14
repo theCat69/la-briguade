@@ -11,3 +11,8 @@ dist
 .serena
 dsh/content/
 dsh/presets/
+codex/agents/
+codex/skills/
+codex/AGENTS.md
+codex/config.toml
+codex/manifest.json
